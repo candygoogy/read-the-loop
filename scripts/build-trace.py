@@ -287,7 +287,10 @@ def build(events, prompt, times=None, run=None, session=None, then=None):
             "output_tokens": result["usage"]["output_tokens"],
             "cache_read_tokens": result["usage"]["cache_read_input_tokens"],
             "cache_write_tokens": result["usage"]["cache_creation_input_tokens"],
-            "cost_usd": round(result["total_cost_usd"], 4),
+            # On a resumed session total_cost_usd adds up the whole conversation; this run's own cost is in
+            # model_usage_since_last_result. For a fresh run the two are the same.
+            "cost_usd": round(sum(m["costUSD"] for m in result["model_usage_since_last_result"].values())
+                              if result.get("model_usage_since_last_result") else result["total_cost_usd"], 4),
             "duration_s": round(result["duration_ms"] / 1000, 1),
             "ttft_ms": result.get("ttft_ms"),
         },
