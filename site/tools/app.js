@@ -22,6 +22,8 @@
   const timeOf = (iso) => new Date(iso).toISOString().slice(11, 19);
   const code = (s) => `<code>${esc(s)}</code>`;
   const plain = (html) => html.replace(/<[^>]+>/g, "");
+  // The site's root relative to this page: "../" here, "../../" on a translated page (<body data-root>).
+  const ROOT = document.body.dataset.root || "../";
 
   // ---------- how the two sessions were started (our recording notes; the streams don't record it) ----------
   // The captured run (RECORDING-05.md): chapter 1's task, through the logging proxy on this machine.
@@ -153,10 +155,10 @@
   $("flags-05").innerHTML = flags(FLAGS_CAPTURE);
   $("flags-03").innerHTML = flags(FLAGS_BLACK);
   $("trace-links").innerHTML = list([
-    ["../data/tools-05.js", C.colophon.links.tools],
-    ["../data/trace-05.js", C.colophon.links.ch5],
-    ["../data/trace-03.js", C.colophon.links.black],
-    ["../data/trace-02-run2.js", C.colophon.links.ch1],
+    [`${ROOT}data/tools-05.js`, C.colophon.links.tools],
+    [`${ROOT}data/trace-05.js`, C.colophon.links.ch5],
+    [`${ROOT}data/trace-03.js`, C.colophon.links.black],
+    [`${ROOT}data/trace-02-run2.js`, C.colophon.links.ch1],
   ].map(([href, t]) => `<a href="${href}">${esc(t)}</a>`));
 
   // ---------- figure 1: the tool entries ----------
@@ -220,7 +222,7 @@
   const systemList = `<ol class="part-list">${TO.system.blocks.map((b, i) => `<li><span class="pl-main">${esc(A.systemBlock({ n: fmt(i + 1), chars: fmt(b.chars) }))}</span><span class="pl-sub">${esc(b.cache_control ? A.cacheMark : A.noCacheMark)}</span></li>`).join("")}</ol><p class="part-k">${esc(A.systemNote)}</p>`;
   const msgList = (userMsg ? `<p class="part-k">${esc(A.userMsg({ blocks: fmt(userMsg.blocks.length) }))}</p><ol class="part-list">${userMsg.blocks.map((b, j) =>
     `<li class="${j === promptIdx ? "is-prompt" : ""}"><span class="pl-main">${esc(j === promptIdx ? A.promptBlock({ chars: fmt(b.chars) }) : A.noteBlock({ chars: fmt(b.chars) }))}</span></li>`).join("")}</ol>` : "") +
-    (sysMsg ? `<p class="part-k">${esc(A.sysMsg({ chars: fmt(sysMsg.chars) }))}: ${esc(A.sysBlock)}</p>` : "");
+    (sysMsg ? `<p class="part-k">${esc(A.sysMsg({ chars: fmt(sysMsg.chars) }))}${esc(A.colon)}${esc(A.sysBlock)}</p>` : "");
   $("req-parts").innerHTML = parts.map((p) => `<div class="part" data-k="${p.k}">${head(p)}${p.k === "tools" ? toolsList : p.k === "system" ? systemList : msgList}</div>`).join("");
   // Pointing at a part's list lights its place in the bar.
   const reqFig = $("anatomy");

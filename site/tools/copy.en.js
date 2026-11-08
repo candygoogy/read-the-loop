@@ -47,6 +47,7 @@ window.COPY = {
     noteBlock: (d) => `a note from Claude Code: ${d.chars} characters`,
     promptBlock: (d) => `your sentence: ${d.chars} characters`,
     sysBlock: "not shown",
+    colon: ": ",
     prompt: "your sentence",
     label: (d) => `A bar drawn to scale. Of the first request's ${d.total} characters, tools take ${d.tools} (${d.toolsPct}), system ${d.system} (${d.systemPct}) and messages ${d.messages} (${d.messagesPct}). Your sentence is ${d.prompt} characters of it. The three lists below give each part's pieces.`,
     // The paragraph on what the request carries that the page doesn't show. Categories only, no values.

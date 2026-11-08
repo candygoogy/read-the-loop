@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>压缩 · Read the Loop</title>
+<meta name="description" content="对话太长时，Claude Code 会用模型写的一份摘要替换整段对话。本章在一次真实录制的 Claude Code 会话上做了压缩，看看摘要留下了什么，智能体之后还知道什么。">
+<link rel="canonical" href="https://loop.candygoogy.dev/zh/compaction/">
+<link rel="alternate" hreflang="en" href="https://loop.candygoogy.dev/compaction/">
+<link rel="alternate" hreflang="zh-CN" href="https://loop.candygoogy.dev/zh/compaction/">
+<link rel="alternate" hreflang="x-default" href="https://loop.candygoogy.dev/compaction/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="压缩 · Read the Loop">
+<meta property="og:description" content="对话太长时，Claude Code 会用模型写的一份摘要替换整段对话。本章在一次真实录制的 Claude Code 会话上做了压缩，看看摘要留下了什么，智能体之后还知道什么。">
+<meta property="og:url" content="https://loop.candygoogy.dev/zh/compaction/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/compaction.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop 第四章：压缩，配有一张根据录制记录绘制的图表">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../compaction/chapter.css">
+<style>
+  /* Chinese has no capitals or italics: the small uppercase labels keep only light tracking, and the
+     "not in the answer" line loses its slant. Our notes inside the summary get Chinese line spacing. */
+  .ev-call:lang(zh), .ev-proof > span:lang(zh), .ev-q:lang(zh), .q > span:lang(zh), .doc-head:lang(zh) { letter-spacing: 0.04em; }
+  .q-none:lang(zh) { font-style: normal; }
+  .hl-box:lang(zh), .tally:lang(zh), .q-note:lang(zh) { line-height: 1.75; }
+</style>
+</head>
+<body data-page="compaction" data-root="../../">
+
+<a class="skip-link" href="#s-game">跳到“留下了什么？”</a>
+
+<header class="masthead band">
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · 第四章（共八章）</p>
+  <h1>压缩</h1>
+  <p class="dek">对话太长的时候，Claude Code 可以让模型写一份摘要，用它替换整段对话。我们对一次真实的会话做了压缩，然后问智能体它做了什么。下面是它记住的，和它漏掉的。</p>
+</header>
+
+<main class="band">
+
+<section class="prose" aria-labelledby="s-why">
+  <h2 id="s-why">智能体为什么要压缩</h2>
+  <p data-c="why.p1"></p>
+  <p data-c="why.p2"></p>
+  <p class="notice" data-c="why.notice"></p>
+  <p data-c="why.p3"></p>
+
+  <figure class="fig wide" id="squash" aria-labelledby="squash-title">
+    <div class="fig-head">
+      <span class="fig-title" id="squash-title" data-c="squash.title"></span>
+      <fieldset class="mode" id="squash-mode">
+        <legend class="sr-only" data-c="squash.mode"></legend>
+      </fieldset>
+    </div>
+    <p class="big" aria-live="polite"><span class="big-n" id="squash-n"></span><span class="big-l" id="squash-l"></span></p>
+    <div class="cells-wrap" id="squash-grid" role="img"></div>
+    <div class="legend fig-legend" id="squash-legend"></div>
+    <p class="fig-note" data-c="squash.note"></p>
+  </figure>
+
+  <p data-c="why.p4"></p>
+</section>
+
+<section class="prose" id="s-game" tabindex="-1" aria-labelledby="game-title">
+  <h2 id="game-title" data-c="game.title"></h2>
+  <p data-c="game.p1"></p>
+  <p data-c="game.p2"></p>
+
+  <div class="survive wide">
+    <div class="sv-bar">
+      <p class="score" id="score"></p>
+      <button type="button" class="btn" id="reveal-all" data-c="game.revealAll"></button>
+    </div>
+    <ol class="events" id="events"></ol>
+    <p class="tally" id="tally" hidden></p>
+    <p class="sr-only" id="game-live" aria-live="polite"></p>
+  </div>
+</section>
+
+<section class="prose" aria-labelledby="sum-title">
+  <h2 id="sum-title" data-c="summary.title"></h2>
+  <p data-c="summary.p1"></p>
+  <article class="doc wide" id="summary-doc" aria-labelledby="summary-head">
+    <p class="doc-head" id="summary-head"></p>
+    <div class="doc-body" id="summary-body" lang="en"></div>
+  </article>
+  <p data-c="summary.p2"></p>
+</section>
+
+<section class="prose" aria-labelledby="next-title">
+  <h2 id="next-title" data-c="next.title"></h2>
+  <p data-c="next.p1"></p>
+  <p data-c="next.p2"></p>
+
+  <figure class="fig wide" id="sizes">
+    <figcaption class="fig-head"><span class="fig-title" data-c="next.figTitle"></span></figcaption>
+    <div id="sizes-body" role="img"></div>
+    <div class="legend fig-legend" id="sizes-legend"></div>
+  </figure>
+
+  <h3 data-c="next.filesTitle"></h3>
+  <ul class="files" id="files"></ul>
+  <p data-c="next.p3"></p>
+  <p data-c="next.p4"></p>
+  <p data-c="next.p5"></p>
+</section>
+
+<section class="prose" aria-labelledby="test-title">
+  <h2 id="test-title" data-c="test.title"></h2>
+  <p data-c="test.p1"></p>
+  <article class="doc answer wide" aria-labelledby="answer-head">
+    <p class="doc-head" id="answer-head"></p>
+    <div class="doc-body" id="answer-body" lang="en"></div>
+  </article>
+  <p data-c="test.p2"></p>
+  <div class="matrix-wrap wide" tabindex="0" role="region" aria-labelledby="matrix-caption">
+    <table class="matrix" id="matrix">
+      <caption id="matrix-caption" data-c="test.matrixCaption"></caption>
+    </table>
+  </div>
+  <p data-c="test.p3"></p>
+  <details class="more">
+    <summary data-c="test.keptTitle"></summary>
+    <div class="doc kept"><div class="doc-body" id="kept-body" lang="en"></div></div>
+  </details>
+</section>
+
+<section class="prose" aria-labelledby="cost-title">
+  <h2 id="cost-title" data-c="cost.title"></h2>
+  <p data-c="cost.p1"></p>
+  <p data-c="cost.p2" data-needs="prices"></p>
+  <figure class="fig" id="costs" data-needs="prices">
+    <figcaption class="fig-head"><span class="fig-title" data-c="cost.figTitle"></span></figcaption>
+    <div id="costs-body" role="img"></div>
+    <div class="legend fig-legend" id="costs-legend"></div>
+  </figure>
+  <p class="price-mismatch" id="price-mismatch" hidden data-c="cost.mismatch"></p>
+  <p data-c="cost.p3"></p>
+</section>
+
+<section class="stats" aria-label="压缩的几个数字">
+  <div><span class="n" data-v="pre"></span><span class="l" data-c="stats.pre"></span></div>
+  <div><span class="n" data-v="post"></span><span class="l" data-c="stats.post"></span></div>
+  <div><span class="n" data-v="next"></span><span class="l" data-c="stats.next"></span></div>
+  <div><span class="n" data-v="both"></span><span class="l" data-c="stats.cost"></span></div>
+</section>
+
+<section class="prose next" aria-labelledby="handoff-title">
+  <p class="kicker" data-c="handoff.kicker"></p>
+  <h2 id="handoff-title" data-c="handoff.title"></h2>
+  <p data-c="handoff.p1"></p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2 data-c="colophon.title"></h2>
+  <p data-c="colophon.model"></p>
+  <p data-c="colophon.flags"></p>
+  <pre class="flags" id="flags" lang="en"></pre>
+  <p data-c="colophon.autocompact"></p>
+  <p data-c="colophon.compact"></p>
+  <pre class="flags" id="flags-compact" lang="en"></pre>
+  <p data-c="colophon.after"></p>
+  <pre class="flags" id="flags-after" lang="en"></pre>
+  <p data-c="colophon.sources"></p>
+  <p id="price-note"></p>
+  <p data-c="colophon.paths"></p>
+  <p><span data-c="colophon.traces"></span><span id="trace-links"></span>。<span data-c="colophon.json"></span></p>
+  <p data-c="colophon.translated"></p>
+</footer>
+
+<nav class="chapter-nav band" aria-label="章节">
+  <div class="cn">
+    <a class="cn-toc" href="../index.html">全部章节</a>
+  </div>
+</nav>
+
+<script src="../../chapters.js"></script>
+<script src="../../data/trace-03.js"></script>
+<script src="copy.zh.js"></script>
+<script src="../../lib/trace-ui.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../../compaction/app.js"></script>
+<script src="../../lib/release.js"></script>
+</body>
+</html>

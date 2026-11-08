@@ -18,6 +18,12 @@
   const { fmt, list } = U.numbers(C.locale);
   const $ = (id) => document.getElementById(id);
   const fail = (msg) => console.error(`[chapter 4] ${msg}`);
+  // The site's root relative to this page: "../" here, "../../" on a translated page (<body data-root>).
+  const ROOT = document.body.dataset.root || "../";
+  // On a translated page, what the agent wrote or saw is marked as English, and our notes inside it as
+  // the page's language. Both are empty on the English page.
+  const REC = /^en\b/.test(C.locale) ? "" : ' lang="en"';
+  const OURS = REC ? ` lang="${esc(document.documentElement.lang)}"` : "";
 
   // ---------- settings we chose when recording (RECORDING-03.md); they aren't in the trace ----------
   const AUTOCOMPACT = 100000;
@@ -44,7 +50,7 @@
   };
 
   // ---------- formatting ----------
-  const money = (x, digits) => new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", minimumFractionDigits: digits, maximumFractionDigits: digits }).format(x);
+  const money = (x, digits) => new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", minimumFractionDigits: digits, maximumFractionDigits: digits }).format(x);
   const pct = (x) => new Intl.NumberFormat(C.locale, { style: "percent", maximumFractionDigits: 0 }).format(x);
   const dec1 = new Intl.NumberFormat(C.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const dateOf = (iso) => new Date(iso.slice(0, 10) + "T12:00:00Z").toLocaleDateString(C.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -343,7 +349,7 @@
     flags("flags", CMD_RUN);
     flags("flags-compact", CMD_COMPACT);
     flags("flags-after", CMD_AFTER(AF.prompt));
-    $("trace-links").innerHTML = `<a href="../data/trace-03.js">${esc(C.colophon.traceName)}</a>`;
+    $("trace-links").innerHTML = `<a href="${ROOT}data/trace-03.js">${esc(C.colophon.traceName)}</a>`;
     $("price-note").innerHTML = verified ? C.colophon.prices(d) : "";
   }
 
@@ -430,7 +436,7 @@
           `<p class="ev-call">${esc(C.callN(e.d.call))}</p>` +
           `<h3 class="ev-title">${esc(copy.title)}</h3>` +
           `<p class="ev-text">${copy.text(e.d)}</p>` +
-          `<div class="ev-proof"><span>${esc(C.game.proof)}</span><pre>${e.proof}</pre></div>` +
+          `<div class="ev-proof"><span>${esc(C.game.proof)}</span><pre${REC}>${e.proof}</pre></div>` +
         `</div>` +
         `<div class="ev-side">` +
           `<div class="track" aria-hidden="true">${C.game.stages.map((s, j) => (j ? `<i class="tl"><s></s></i>` : "") + `<span class="tn"><b></b>${esc(s)}</span>`).join("")}</div>` +
@@ -456,11 +462,11 @@
     const v = C.game;
     const head = guess === null ? "" : guess === e.outcome ? `<b class="ok">${esc(v.right)}</b> ` : `<b class="no">${esc(v.wrong({ guess: v.options[guess] }))}</b> `;
     let h = `<p class="verdict">${head}${esc(v.verdict[e.outcome])}</p>`;
-    if (e.sumQ) h += `<blockquote class="q q-sum"><span>${esc(v.inSummary)}</span>${quote(e.sumQ)}</blockquote>`;
-    if (e.ansQ) h += `<blockquote class="q q-ans"><span>${esc(v.inAnswer)}</span>${quote(e.ansQ)}</blockquote>`;
+    if (e.sumQ) h += `<blockquote class="q q-sum"${REC}><span${OURS}>${esc(v.inSummary)}</span>${quote(e.sumQ)}</blockquote>`;
+    if (e.ansQ) h += `<blockquote class="q q-ans"${REC}><span${OURS}>${esc(v.inAnswer)}</span>${quote(e.ansQ)}</blockquote>`;
     else {
       h += `<p class="q-none">${esc(v.notInAnswer)}</p>`;
-      if (e.insteadQ) h += `<blockquote class="q q-ans"><span>${esc(v.instead)}</span>${quote(e.insteadQ)}</blockquote>`;
+      if (e.insteadQ) h += `<blockquote class="q q-ans"${REC}><span${OURS}>${esc(v.instead)}</span>${quote(e.insteadQ)}</blockquote>`;
     }
     if (e.keptToo && e.inKept === false && e.ansQ) h += `<p class="q-note">${esc(v.keptNote(e.d))}</p>`;
     return h;
@@ -547,7 +553,7 @@
       }
       if (code !== null) { code.push(line.slice(Math.min(fenceIn, line.match(/^ */)[0].length))); return; }
       if (!line.trim()) { html += `<div class="d-gap"></div>`; return; }
-      const boxes = marks.filter((m) => m.a >= a && m.a < b).map((m) => `<div class="hl-box" id="box-${m.key}" hidden></div>`).join("");
+      const boxes = marks.filter((m) => m.a >= a && m.a < b).map((m) => `<div class="hl-box" id="box-${m.key}"${OURS} hidden></div>`).join("");
       let m;
       if ((m = line.match(/^(#{1,3} |\d+\. )(.*)$/)) && (m[1].startsWith("#") || /:$/.test(line))) {
         html += `<p class="d-h">${segs(a + (m[1].startsWith("#") ? m[1].length : 0), b)}</p>`;
@@ -593,7 +599,7 @@
     if (m.kind === "note") return `<p>${C.summary.notes[m.n.key](d)}</p>`;
     const e = m.e;
     return `<p class="box-call">${esc(C.summary.callOf(e.d.call))} · ${esc(C.events[e.key].title)}</p>` +
-      `<p>${C.events[e.key].text(e.d)}</p><pre>${e.proof}</pre>`;
+      `<p>${C.events[e.key].text(e.d)}</p><pre${REC}>${e.proof}</pre>`;
   }
   function buildSummary() {
     const marks = summaryMarks();

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>工具与权限 · Read the Loop</title>
+<meta name="description" content="模型对它能用的每个工具都被告知了什么，它的请求又由谁来决定能不能运行。用真实录制的 Claude Code 会话来说明。">
+<link rel="canonical" href="https://loop.candygoogy.dev/zh/tools/">
+<link rel="alternate" hreflang="en" href="https://loop.candygoogy.dev/tools/">
+<link rel="alternate" hreflang="zh-CN" href="https://loop.candygoogy.dev/zh/tools/">
+<link rel="alternate" hreflang="x-default" href="https://loop.candygoogy.dev/tools/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="工具与权限 · Read the Loop">
+<meta property="og:description" content="模型对它能用的每个工具都被告知了什么，它的请求又由谁来决定能不能运行。用真实录制的 Claude Code 会话来说明。">
+<meta property="og:url" content="https://loop.candygoogy.dev/zh/tools/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/tools.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop 第五章：工具与权限，配有一张根据录制记录绘制的图表">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../tools/chapter.css">
+<!-- Chinese has no capitals: the card heads' uppercase would only shout the tool name ("请求 · BASH"). -->
+<!-- The quiz summary's call column: room for "第 43 次调用（共 44 次）" on one line. -->
+<style>
+  .card-head { text-transform: none; }
+  @media (min-width: 40.01rem) { .q-list li { grid-template-columns: 10rem minmax(0, 1fr) 8.5rem 9rem; } }
+</style>
+</head>
+<body data-page="tools" data-root="../../">
+
+<a class="skip-link" href="#check">跳到权限测验</a>
+
+<header class="masthead band">
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · 第五章（共八章）</p>
+  <h1>工具与权限</h1>
+  <p class="dek">模型自己什么也运行不了。它只能提出请求，而且要用外壳程序看得懂的格式。本章先拆开一个真实的请求，看看模型对每个工具都被告知了什么，再跟着一次更长的会话，看看哪些请求能运行由谁来决定。</p>
+</header>
+
+<main class="band">
+
+<section class="prose" aria-labelledby="s-manual">
+  <h2 id="s-manual">工具说明</h2>
+  <p data-c="manual.p1"></p>
+  <p data-c="manual.p2"></p>
+
+  <figure class="viz wide" id="tools" aria-labelledby="tools-title">
+    <figcaption class="viz-head">
+      <span class="viz-title" id="tools-title" data-c="tools.title"></span>
+      <span class="viz-legend" id="tools-legend"></span>
+    </figcaption>
+    <div class="tool-grid" id="tool-grid"></div>
+    <p class="viz-note" data-c="tools.scaleNote"></p>
+  </figure>
+
+  <p data-c="manual.p3"></p>
+  <p data-c="manual.p4"></p>
+  <p data-c="manual.p5"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-anatomy">
+  <h2 id="s-anatomy">一个请求里有什么</h2>
+  <p data-c="anatomy.p1"></p>
+
+  <figure class="viz wide" id="anatomy">
+    <figcaption class="viz-head">
+      <span class="viz-title" data-c="anatomy.title"></span>
+    </figcaption>
+    <div class="req" id="req"></div>
+    <p class="viz-readout" id="req-total"></p>
+    <div class="req-parts" id="req-parts"></div>
+  </figure>
+
+  <p data-c="anatomy.identity" id="identity"></p>
+  <p data-c="anatomy.settings"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-decide">
+  <h2 id="s-decide">谁来决定什么可以运行</h2>
+  <p data-c="decide.p1"></p>
+  <p data-c="decide.p2"></p>
+  <div class="allow" id="allowlist"></div>
+  <p data-c="decide.p3"></p>
+  <p data-c="decide.p4"></p>
+</section>
+
+<section class="prose" id="check" tabindex="-1" aria-labelledby="s-check">
+  <h2 id="s-check">你来做权限检查</h2>
+  <p data-c="check.p1"></p>
+  <p data-c="check.p2"></p>
+  <div class="quiz wide" id="quiz"></div>
+</section>
+
+<section class="prose" aria-labelledby="s-refusals">
+  <h2 id="s-refusals" data-c="refusals.title"></h2>
+  <p data-c="refusals.p1"></p>
+  <ol class="refusals wide" id="refusals"></ol>
+  <p data-c="refusals.p2"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-puzzle">
+  <h2 id="s-puzzle" data-c="puzzle.title"></h2>
+  <p data-c="puzzle.p1"></p>
+  <ul class="ran-anyway" id="ran-anyway"></ul>
+  <p data-c="puzzle.p2"></p>
+  <p data-c="puzzle.p3"></p>
+</section>
+
+<section class="stats" aria-label="合计">
+  <div><span class="n" data-v="nTools"></span><span class="l" data-c="stats.tools"></span></div>
+  <div><span class="n" data-v="toolsChars"></span><span class="l" data-c="stats.chars"></span></div>
+  <div><span class="n" data-v="bash"></span><span class="l" data-c="stats.bash"></span></div>
+  <div><span class="n" data-v="denied"></span><span class="l" data-c="stats.denied"></span></div>
+</section>
+
+<section class="prose next" aria-labelledby="next-title">
+  <p class="kicker" data-c="next.kicker"></p>
+  <h2 id="next-title" data-c="next.title"></h2>
+  <p data-c="next.p1"></p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2 data-c="colophon.title"></h2>
+  <p data-c="colophon.capture"></p>
+  <pre class="flags" id="flags-05" lang="en"></pre>
+  <p data-c="colophon.proxy"></p>
+  <p data-c="colophon.differ"></p>
+  <p data-c="colophon.est"></p>
+  <p data-c="colophon.black"></p>
+  <pre class="flags" id="flags-03" lang="en"></pre>
+  <p data-c="colophon.denied"></p>
+  <p data-c="colophon.paths"></p>
+  <p><span data-c="colophon.traces"></span><span id="trace-links"></span>。<span data-c="colophon.json"></span></p>
+  <p>中文由 Claude 翻译，<a data-repo="issues" href="https://github.com/candygoogy/read-the-loop/issues">欢迎指正</a>。录制内容保持英文原文。</p>
+</footer>
+
+<nav class="chapter-nav band" aria-label="章节">
+  <div class="cn">
+    <a class="cn-toc" href="../index.html">全部章节</a>
+  </div>
+</nav>
+
+<script>window.TRACES = {};</script>
+<script src="../../data/tools-05.js"></script>
+<script src="../../data/trace-05.js"></script>
+<script>TRACES.capture = TRACE;</script>
+<script src="../../data/trace-02-run2.js"></script>
+<script>TRACES.ch1 = TRACE;</script>
+<script src="../../data/trace-03.js"></script>
+<script>TRACES.black = TRACE;</script>
+<script src="copy.zh.js"></script>
+<script src="../../lib/trace-ui.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../../tools/app.js"></script>
+<script src="../../chapters.js"></script>
+<script src="../../lib/release.js"></script>
+</body>
+</html>
