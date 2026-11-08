@@ -1,0 +1,276 @@
+{
+  "source": "Request bodies of recording 05, captured by scripts/capture-proxy.py; tokens from raw-05's stream.",
+  "claude_code_version": "2.1.319",
+  "model": "claude-opus-5-5",
+  "requests": 4,
+  "request_keys": [
+    "context_management",
+    "max_tokens",
+    "messages",
+    "metadata",
+    "model",
+    "output_config",
+    "stream",
+    "system",
+    "thinking",
+    "tools"
+  ],
+  "settings": {
+    "max_tokens": 128000,
+    "stream": true,
+    "thinking": {
+      "type": "adaptive",
+      "display": "updates"
+    },
+    "output_config": {
+      "effort": "medium"
+    },
+    "context_management": {
+      "edits": [
+        {
+          "type": "clear_thinking_20251015",
+          "keep": "all"
+        }
+      ]
+    }
+  },
+  "tools": [
+    {
+      "name": "Bash",
+      "description_chars": 2226,
+      "schema_chars": 1720,
+      "tool_json_chars": 4009,
+      "properties": [
+        "command",
+        "timeout",
+        "description",
+        "run_in_background",
+        "dangerouslyDisableSandbox"
+      ],
+      "required": [
+        "command"
+      ],
+      "other_keys": {},
+      "excerpt": "Executes a bash command and returns its output.",
+      "excerpt_truncated": false
+    },
+    {
+      "name": "Edit",
+      "description_chars": 360,
+      "schema_chars": 552,
+      "tool_json_chars": 964,
+      "properties": [
+        "file_path",
+        "old_string",
+        "new_string",
+        "replace_all"
+      ],
+      "required": [
+        "file_path",
+        "old_string",
+        "new_string"
+      ],
+      "other_keys": {},
+      "excerpt": "Performs exact string replacement in a file.",
+      "excerpt_truncated": false
+    },
+    {
+      "name": "Glob",
+      "description_chars": 140,
+      "schema_chars": 539,
+      "tool_json_chars": 731,
+      "properties": [
+        "pattern",
+        "path"
+      ],
+      "required": [
+        "pattern"
+      ],
+      "other_keys": {},
+      "excerpt": "Fast file pattern matching.",
+      "excerpt_truncated": false
+    },
+    {
+      "name": "Grep",
+      "description_chars": 477,
+      "schema_chars": 2672,
+      "tool_json_chars": 3224,
+      "properties": [
+        "pattern",
+        "path",
+        "glob",
+        "output_mode",
+        "-B",
+        "-A",
+        "-C",
+        "context",
+        "-n",
+        "-i",
+        "-o",
+        "type",
+        "head_limit",
+        "offset",
+        "multiline"
+      ],
+      "required": [
+        "pattern"
+      ],
+      "other_keys": {},
+      "excerpt": "Content search built on ripgrep.",
+      "excerpt_truncated": false
+    },
+    {
+      "name": "DeferredToolPlaceholder",
+      "description_chars": 83,
+      "schema_chars": 33,
+      "tool_json_chars": 204,
+      "properties": [],
+      "required": [],
+      "other_keys": {
+        "defer_loading": true
+      },
+      "excerpt": "Reserved placeholder that keeps deferred tool loading active; never call this tool.",
+      "excerpt_truncated": false
+    },
+    {
+      "name": "Read",
+      "description_chars": 790,
+      "schema_chars": 1071,
+      "tool_json_chars": 1919,
+      "properties": [
+        "file_path",
+        "offset",
+        "limit",
+        "pages",
+        "allow_large"
+      ],
+      "required": [
+        "file_path"
+      ],
+      "other_keys": {},
+      "excerpt": "Reads a file from the local filesystem.",
+      "excerpt_truncated": false
+    }
+  ],
+  "tools_json_chars": 11058,
+  "tools_description_chars": 4076,
+  "tools_not_in_init": [
+    "DeferredToolPlaceholder"
+  ],
+  "init_tools": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "system": {
+    "note": "Size only; the text is not published.",
+    "text_chars": 4172,
+    "json_chars": 4372,
+    "blocks": [
+      {
+        "type": "text",
+        "chars": 99,
+        "cache_control": false
+      },
+      {
+        "type": "text",
+        "chars": 135,
+        "cache_control": true
+      },
+      {
+        "type": "text",
+        "chars": 4134,
+        "cache_control": true
+      }
+    ]
+  },
+  "call1": {
+    "messages": 2,
+    "message_shapes": [
+      {
+        "role": "user",
+        "chars": 1529,
+        "blocks": [
+          {
+            "type": "text",
+            "chars": 767,
+            "cache_control": false
+          },
+          {
+            "type": "text",
+            "chars": 612,
+            "cache_control": false
+          },
+          {
+            "type": "text",
+            "chars": 120,
+            "cache_control": false
+          }
+        ],
+        "other_keys": []
+      },
+      {
+        "role": "system",
+        "chars": 1246,
+        "blocks": [
+          {
+            "type": "text",
+            "chars": 1180,
+            "cache_control": true
+          }
+        ],
+        "other_keys": [
+          "output_config"
+        ]
+      }
+    ],
+    "parts_chars": {
+      "system": 4372,
+      "tools": 11058,
+      "messages": 2778
+    },
+    "parts_total_chars": 18208,
+    "context_tokens": 6666,
+    "estimate": {
+      "method": "context_tokens x each part's share of the characters; the recording has no per-part token count",
+      "tools_tokens": 4048,
+      "system_tokens": 1601,
+      "messages_tokens": 1017,
+      "tools_share": 0.6073,
+      "system_share": 0.2401
+    }
+  },
+  "across_requests": {
+    "tools_identical": true,
+    "system_identical": true,
+    "model_identical": true,
+    "settings_identical": true,
+    "metadata_identical": false,
+    "messages_count": [
+      2,
+      5,
+      8,
+      11
+    ],
+    "messages_kept_from_previous": [
+      null,
+      1,
+      2,
+      5
+    ],
+    "messages_kept_ignoring_cache_markers": [
+      null,
+      2,
+      5,
+      8
+    ],
+    "context_tokens": [
+      6666,
+      6760,
+      11642,
+      12533
+    ]
+  }
+}
