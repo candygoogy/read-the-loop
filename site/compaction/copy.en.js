@@ -1,0 +1,216 @@
+// English copy for chapter 4: narration and every UI label. Numbers never appear here. Each function
+// gets `d`, the values app.js reads from the recording (window.TRACE), already formatted and escaped.
+// Quotes of the model's own text come in `d` too; this file never types them. A translated page loads
+// its own copy file instead of this one.
+window.COPY = {
+  locale: "en-US",
+
+  tokens: (n) => `${n} tokens`,
+  gap: (h, m) => `${h} ${h === "1" ? "hour" : "hours"} ${m} minutes`,
+  callN: (n) => `Call ${n}`,
+
+  why: {
+    p1: () => `Chapter 2 showed that an agent sends the model the whole conversation on every call, and that the conversation only grows. Chapter 3 showed how a cache makes all that re-reading cheap. Neither stops the growth, and there is a limit to how much a model can take in on one call: its <strong>context window</strong>.`,
+    p2: (d) => `<strong>Compaction</strong> is how Claude Code keeps a long session going. It asks the model to write a summary of the conversation so far, and from then on it sends the summary in place of the conversation. It does this by itself once the conversation reaches a certain size. You can set that size: we started the session with <code>${d.flag}</code>, which means ${d.autocompact} tokens, the smallest Claude Code's help text allows (<q>${d.range}</q>).`,
+    notice: (d) => `<strong>What we did.</strong> This session never got that big: its last call read ${d.last} tokens. So we compacted it by hand, with Claude Code's <code>/compact</code> command, which was done ${d.afterRun} seconds after the run's last reply. Then, ${d.gap} later, we resumed the session and asked one question to see what the agent remembered: <q>${d.prompt}</q> Both steps were ours, not the agent's.`,
+    p3: (d) => `Here is the session's last conversation, drawn as in chapter 2, next to what was left of it afterwards. Switch between the two.`,
+    p4: (d) => `What was left is ${d.pct} of what was there: ${d.post} tokens out of ${d.pre}. Everything else is gone from the conversation the model gets. What did those few thousand tokens keep?`,
+  },
+
+  squash: {
+    title: "The conversation, before and after compaction",
+    mode: "Which conversation to show",
+    before: "Before",
+    after: "After compaction",
+    beforeL: "tokens before compaction",
+    afterL: "tokens after, by Claude Code's count",
+    legendSys: "set-up and the issue",
+    legendModel: "what the model wrote",
+    legendBack: "what came back",
+    legendAfter: "what was left",
+    legendGone: "gone",
+    labelBefore: (d) => `${d.cells} squares, one per ${d.unit} tokens: the ${d.pre} tokens of conversation before compaction, coloured by kind.`,
+    labelAfter: (d) => `${d.cellsAfter} filled squares out of ${d.cells}, one per ${d.unit} tokens: the ${d.post} tokens Claude Code counted after compaction. The other squares are outlines, for what was dropped.`,
+    note: (d) => `One square is ${d.unit} tokens. Before: the conversation the last call read, coloured as in chapter 2, plus the model's last reply; that is the size Claude Code reported just before compacting. After: the size it reported right after. The recording gives that second number but not what it is made of, so it has one colour.`,
+  },
+
+  game: {
+    title: "What survived?",
+    p1: (d) => `Before you read the summary, guess. Below are ${d.n} things that happened during the session. Each one may have been lost when the conversation was summarised, kept in the summary but left out of the answer to our question, or made it all the way into the answer.`,
+    p2: (d) => `We chose these ${d.n} because they matter for how the fix came about, including the two times the tests failed along the way. That choice is ours, and a different pick could come out differently. Each verdict comes from matching the summary's text and the answer's text when this page loads, not from our notes.`,
+    question: "Where did it end up?",
+    options: {
+      lost: "Lost in the summary",
+      summary: "In the summary, not in the answer",
+      answer: "In the answer",
+    },
+    stages: ["session", "summary", "answer"],
+    revealAll: "Show me all of them",
+    score: (d) => `${d.done} of ${d.n} revealed · ${d.right} guessed right`,
+    scoreNone: (d) => `${d.n} events, none revealed yet`,
+    right: "Right.",
+    wrong: (d) => `You said: ${d.guess}.`,
+    verdict: {
+      lost: "The summary dropped it.",
+      summary: "The summary kept it. The answer left it out.",
+      answer: "It made it into the answer.",
+    },
+    inSummary: "The summary says",
+    inAnswer: "The answer says",
+    notInAnswer: "The answer doesn't mention it.",
+    instead: "What the answer says about this",
+    keptNote: (d) => `The run's own last message didn't mention this. The answer has it from the summary.`,
+    tally: (d) => `Of these ${d.n} events, the summary kept ${d.inSummary} and the answer ${d.inAnswer}. ${d.leftOut}`,
+    tallyLeftOut: (d) => `The ones left out of the answer: ${d.list}.`,
+    proof: "What the trace shows",
+  },
+
+  // One per event: a short title and what happened, in our words. `d` has the call numbers and counts.
+  events: {
+    refused: {
+      title: "Its first command is refused",
+      text: (d) => `On call ${d.call} the agent tries to make a test file outside the project folder. That part of the command needed approval, nobody was there to give it, and it came back as an error. Later in the session, ${d.more} more commands were refused.`,
+      short: "the refused commands",
+    },
+    scratch: {
+      title: "It works in a scratch folder, then deletes it",
+      text: (d) => `So it writes its test files into a folder of its own inside the project, <code>${d.dir}</code>, on call ${d.call}. On call ${d.callEnd}, just before the end, it deletes that folder.`,
+      short: "the scratch folder",
+    },
+    helper: {
+      title: "A new check for one-item subscripts",
+      text: (d) => `On call ${d.call} it adds a function, <code>${d.name}</code>, so that Black keeps the comma in something like <code>${d.subCase}</code>, where removing it would change what the code means.`,
+      short: "the new check",
+    },
+    fail1: {
+      title: "The tests fail: it broke an existing case",
+      text: (d) => `Call ${d.call} runs Black's own tests for the first time. One fails: <code>${d.test}</code>, a case that was passing before. The first version of the fix had changed its expected output.`,
+      short: "the first failure",
+    },
+    fail2: {
+      title: "The tests fail again: a second-pass difference",
+      text: (d) => `After a fix for that, call ${d.call} runs the tests again and <code>${d.test}</code> fails. Black formats code twice to check that the result doesn't change, and here the second pass came out different. It takes until call ${d.callFix} to find the cause and fix it.`,
+      short: "the second failure",
+    },
+    pass: {
+      title: "All the tests pass",
+      text: (d) => `Call ${d.call}: <code>${d.line}</code>. The run after it adds test cases for the issue's examples and gets the same result.`,
+      short: "the passing tests",
+    },
+    mypy: {
+      title: "It can't type-check",
+      text: (d) => `On call ${d.call} it tries to run mypy, a type checker. It isn't installed.`,
+      short: "the missing type checker",
+    },
+    reformat: {
+      title: "Black reformats a file after the last test run",
+      text: (d) => `The last test run is call ${d.callTest}. On call ${d.call} the agent runs Black over its own changes, and Black rewrites <code>${d.file}</code>. The tests were not run again after that.`,
+      short: "the reformat after the last test run",
+    },
+  },
+
+  summary: {
+    title: "What the summary says",
+    p1: (d) => `This is the whole summary, as Claude Code put it at the start of the new conversation. The model wrote it in ${d.sections} numbered sections. The highlighted passages refer to things that happened in the session; select one to see the call it describes. Code blocks are folded.`,
+    p2: (d) => `It is thorough. It names every changed file, both new functions and the new test cases, and it gives both test failures a section of their own, <q>${d.errorsName}</q>. A few things in it are odd. It opens by saying the conversation <q>${d.ranOut}</q>, which it hadn't. And its section <q>${d.pendingName}</q> includes instructions about commit messages and pull requests that neither the issue nor our question asked for. The recording doesn't show where they come from.`,
+    docLabel: "The summary the model wrote",
+    head: (d) => `The summary · written by the model · ${d.chars} characters`,
+    code: (n) => `code, ${n} ${n === "1" ? "line" : "lines"}`,
+    callOf: (n) => `Call ${n}`,
+    notes: {
+      ranOut: () => `It didn't run out of context. We asked for this compaction, and the last call read well under the size we had set.`,
+      kept: () => `The message kept word for word was the run's last answer. The trace doesn't record which message it was; Claude Code's session file does, and we read it for our notes.`,
+      transcript: (d) => `The model could have read the old conversation from that file. When we asked our question, it used no tools at all, so it didn't.`,
+      attribution: () => `Nobody in this session asked for this: not the issue, and not our question. The recording doesn't show where it comes from. The answer to our question didn't act on it.`,
+    },
+  },
+
+  next: {
+    title: "What came back with it",
+    p1: (d) => `Claude Code reported ${d.post} tokens after the compaction. The call that answered our question read ${d.next}, ${d.ratio} times as much. The ${d.diff} tokens of difference are what Claude Code sends around the summary: the set-up (its instructions and a description of each tool), the last message of the old conversation, kept word for word, and copies of files the agent had been working on.`,
+    p2: () => `The trace lists those files. The rest of that list comes from Claude Code's session file, which we read for our notes. Neither one splits the call's tokens into those parts, so the figure shows only what was measured.`,
+    figTitle: "Three sizes, in tokens, to one scale",
+    rowPre: (d) => `Before compaction: ${d.pre}`,
+    rowPost: (d) => `After, by Claude Code's count: ${d.post}`,
+    rowNext: (d) => `What the next call read: ${d.next}`,
+    legendCached: "read from the cache",
+    legendFresh: "written to the cache again",
+    legendPre: "before compaction",
+    label: (d) => `Three rows of squares, one square per ${d.unit} tokens. Before compaction, ${d.pre} tokens. After, by Claude Code's count, ${d.post}. The next call read ${d.next}: ${d.cached} from the cache and ${d.fresh} written new.`,
+    filesTitle: "Files Claude Code attached after the summary",
+    full: (d) => `in full · ${d.chars} characters`,
+    stub: "named, without its contents",
+    p3: (d) => `Of these ${d.fileCount} files, ${d.fullCount} came back in full, both of them test files the agent had added cases to. The other ${d.stubCount} were only named, with a note that the model could read them if it needed them. It didn't read them: the answer to our question used no tools.`,
+    p4: (d) => `Of the ${d.next} tokens, ${d.cached} came from the cache. That is ${d.same} the run's first call read from the cache, before the conversation had any rounds in it. Everything after that start was new: ${d.fresh} tokens, nearly all of them written to the cache again.`,
+    sameExact: (d) => `exactly as many as`,
+    sameNear: (d) => `close to the ${d.c1} that`,
+    p5: (d) => `Our question came ${d.gap} after the compaction, which is longer than the hour that this session's cache copies are kept (chapter 3). The recording doesn't show where those ${d.cached} tokens were cached from. In chapter 3's small experiment, the question after a compaction read nothing from the cache at all.`,
+  },
+
+  test: {
+    title: "The memory test",
+    p1: (d) => `Our question was <q>${d.prompt}</q> The model answered without reading a single file. Its answer, in full:`,
+    answerHead: (d) => `The answer · after compaction · ${d.out} tokens`,
+    p2: () => `We checked the answer against what the session did. What it says is right. Each point is also somewhere in what the model was given: the summary, or the old conversation's last message, kept word for word. The table shows where each one appears. It can't show which one the model used.`,
+    matrixCaption: "Points from the answer, and where each one appears",
+    cols: ["The answer says", "The session", "The summary", "The kept last message"],
+    yes: "yes",
+    no: "no",
+    notShown: "not in the visible text",
+    p3: (d) => `What the answer leaves out is how the fix came about. The tests failed twice on the way: first the fix broke an existing case, then a case came out different on Black's second pass. The summary describes both under <q>${d.errorsName}</q>, so the model had them. The answer mentions neither. It lists the change that fixed the second failure as one of the cases the fix allows: <q>${d.allowed}</q> The recording shows that much. It can't show why the model left them out.`,
+    keptTitle: "The run's last message, the one that was kept",
+    rows: {
+      files: (d) => `Which ${d.n} files it changed`,
+      defs: () => `The names of the two new functions`,
+      tests: (d) => `The last test result, <code>${d.line}</code>`,
+      mypy: () => `That mypy isn't installed`,
+      order: () => `That the last test run came before Black reformatted a file`,
+      pr: () => `Why the changelog entry has no pull request number`,
+      indent: () => `That the odd indentation is an older, separate problem`,
+    },
+  },
+
+  cost: {
+    title: "What it cost",
+    p1: (d) => `Compaction costs money too. Writing the summary cost ${d.compact}, as Claude Code recorded it. The recording gives only that total, not the tokens behind it.`,
+    p2: (d) => `Our question cost ${d.after}. With the prices from chapter 3, ${d.writeCost} of that, ${d.writePct}, paid for writing the ${d.written} tokens to the cache again. The answer's ${d.out} tokens cost ${d.outCost}, and the ${d.cached} read from the cache ${d.readCost}.`,
+    p3: (d) => `Together, the compaction and one question come to ${d.both}. The whole run, all ${d.calls} calls of it, cost ${d.run}.`,
+    figTitle: "Two costs, in US dollars, to one scale",
+    rowCompact: (d) => `Writing the summary: ${d.compact}`,
+    rowAfter: (d) => `Our question afterwards: ${d.after}`,
+    recorded: "recorded total, not split",
+    legendCached: "read from the cache",
+    legendFresh: "written to the cache",
+    legendOut: "what the model wrote",
+    label: (d) => `Two bars on one scale. Writing the summary cost ${d.compact}. The question afterwards cost ${d.after}: ${d.readCost} for reading from the cache, ${d.writeCost} for writing to it, ${d.outCost} for the answer.`,
+    mismatch: () => `The published prices don't reproduce this call's recorded cost, so this page doesn't split it.`,
+  },
+
+  stats: {
+    pre: "tokens before compaction",
+    post: "after, by Claude Code's count",
+    next: "read by the next call",
+    cost: "to compact, and to ask once",
+  },
+
+  handoff: {
+    kicker: "Next",
+    title: `<a href="../tools/index.html">Chapter 5: Tools and permissions</a>`,
+    p1: (d) => `In this session, ${d.denied} commands were refused because they needed an approval nobody was there to give, and some others outside the allowed list ran anyway. Chapter 5 looks at what the model is told about each tool it can use, and at the rules that decide what may run.`,
+  },
+
+  colophon: {
+    title: "About the recording",
+    model: (d) => `${d.source} Model <code>${d.model}</code>, Claude Code <code>${d.ccv}</code>, effort left at its default. This is the session from chapters 2 and 3, recorded once, with no re-runs.`,
+    flags: "The session was started with:",
+    autocompact: (d) => `<code>${d.flag}</code> is our setting. Claude Code's help text describes the option as <q>${d.help}</q>. The session never reached that size, so it never compacted by itself.`,
+    compact: "Then we compacted it by hand, resuming the session with the same settings:",
+    after: (d) => `We asked our one question ${d.gap} later, again resuming the session with the same settings. Before that, we deleted one file from the project folder: a Python cache file written by our own checks after the run. The agent's files were as it left them.`,
+    sources: () => `What comes from where. The trace holds the summary, the sizes Claude Code reported before and after the compaction, its cost, the files it attached (with their character counts), and the question's usage and answer. Which message was kept word for word, and what else the question's call was sent, come from Claude Code's session file. We read that file for our recording notes; it isn't published, because it holds local paths.`,
+    prices: (d) => `Prices: Anthropic's pricing page, <a href="${d.url}">${d.urlText}</a>, row ${d.row}, checked on ${d.checked}, as in chapter 3. The computed cost of our question, ${d.computed}, matches the recorded ${d.recorded}.`,
+    paths: (d) => `The model saw the real folder path. This page shows it as <code>${d.alias}</code>, and the summary's path to the old conversation is shortened the same way.`,
+    traces: "The trace:",
+    traceName: "the session, the compaction and the question",
+    json: "The same data as JSON is in the repo's <code>data/</code> folder.",
+  },
+};
