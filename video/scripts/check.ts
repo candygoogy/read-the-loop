@@ -5,6 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildTimeline, FPS, NARRATION, zhCaptions } from "../src/timeline.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.join(here, "../..");
@@ -55,4 +56,25 @@ const edit = trace.calls.flatMap((c: { output: { tool?: string }[] }) => c.outpu
 console.log(`trace: model_calls ${trace.totals.model_calls} (calls listed: ${trace.calls.length}), duration_s ${trace.totals.duration_s}`);
 console.log(`trace: context_tokens ${ctx.join(" + ")} = ${ctx.reduce((a, b) => a + b, 0)}`);
 console.log(`trace: Edit replaces ${edit.input.old_string.split("\n").length} line(s) with ${edit.input.new_string.split("\n").length}`);
+// The Chinese subtitles: each line once, in order, with its own text, and on every frame the line of that frame's
+// phase (the same lookup Subtitles.tsx uses, so the burned-in cut and the SRT agree).
+const tl = buildTimeline(trace);
+const caps = zhCaptions(trace);
+const texts = caps.map((c) => c.text);
+const unique = new Set(texts).size === texts.length;
+const ordered = caps.every((c, i) => i === 0 || c.startMs >= caps[i - 1].endMs);
+const own = caps.every((c, i) => c.text === NARRATION[tl.phases[i].id].zh);
+let wrongFrames = 0;
+for (let f = 0; f < tl.total; f++) {
+  const ms = (f / FPS) * 1000;
+  const shown = caps.findIndex((c) => ms >= c.startMs && ms < c.endMs);
+  const phase = tl.phases.findIndex((p) => f >= p.from && f < p.to);
+  if (shown !== phase) wrongFrames++;
+}
+const subsOk = unique && ordered && own && wrongFrames === 0;
+ok &&= subsOk;
+console.log(
+  `${subsOk ? "ok  " : "FAIL"} subtitles: ${caps.length} lines, unique ${unique}, in order ${ordered}, own text ${own}, ` +
+    `frames showing another phase's line: ${wrongFrames}`,
+);
 if (!ok) process.exit(1);

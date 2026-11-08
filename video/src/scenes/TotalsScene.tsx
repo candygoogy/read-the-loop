@@ -81,6 +81,7 @@ export const TotalsScene: React.FC = () => {
         <SmallPrint top={842}>
           Seconds: Claude Code's own timer. Tokens: what each call read, added up over the calls.
         </SmallPrint>
+        <SmallPrint top={884}>loop.candygoogy.dev</SmallPrint>
       </div>
     </AbsoluteFill>
   );

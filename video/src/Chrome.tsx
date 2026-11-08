@@ -22,7 +22,7 @@ export const TopBar: React.FC = () => (
     }}
   >
     <span style={{ color: C.model, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-      Inside the Loop · chapter 1
+      Read the Loop · chapter 1
     </span>
     <span style={{ color: C.ink3, fontWeight: 500 }}>
       real session · {meta.model} · Claude Code {meta.ccv} · run {meta.run} of {meta.runs}

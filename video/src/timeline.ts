@@ -103,12 +103,18 @@ export const buildTimeline = (trace: TraceLike) => {
   return { scenes, callSlots, promptDur: PROMPT, phases, total };
 };
 
+/** Frame boundary in whole milliseconds. Rounded down, never to nearest: frame f starts at f * 33.33 ms, and
+ * rounding 19566.67 up to 19567 kept the previous subtitle on screen for frame f (both in the burned-in cut and in
+ * a player reading the SRT), so the first frame of each line showed the line before it. Rounding down puts every
+ * frame in exactly its own phase's subtitle. */
+const frameToMs = (frame: number) => Math.floor((frame / FPS) * 1000);
+
 /** Subtitles in the shape of @remotion/captions' Caption type. */
 export const zhCaptions = (trace: TraceLike) =>
   buildTimeline(trace).phases.map((p) => ({
     text: NARRATION[p.id].zh,
-    startMs: Math.round((p.from / FPS) * 1000),
-    endMs: Math.round((p.to / FPS) * 1000),
+    startMs: frameToMs(p.from),
+    endMs: frameToMs(p.to),
     timestampMs: null,
     confidence: null,
   }));

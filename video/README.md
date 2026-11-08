@@ -1,6 +1,6 @@
 # Hero video
 
-The README video for Inside the Loop, made with [Remotion](https://www.remotion.dev). It has its own
+The README video for Read the Loop, made with [Remotion](https://www.remotion.dev). It has its own
 `package.json` so that the site stays build-free; nothing under `site/` is built or changed.
 
 - Every number and every word the agent wrote or saw is read from `../data/trace-02-run2.json` (`src/data.ts`).

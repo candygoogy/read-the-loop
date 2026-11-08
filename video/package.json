@@ -2,7 +2,7 @@
   "name": "inside-the-loop-video",
   "version": "1.0.0",
   "private": true,
-  "description": "README hero video for Inside the Loop, rendered from the recorded trace",
+  "description": "README hero video for Read the Loop, rendered from the recorded trace",
   "type": "module",
   "scripts": {
     "studio": "remotion studio",
