@@ -8,19 +8,22 @@
   const U = window.TraceUI;
   const R = window.TRACES || {};
   const TO = window.TOOLS;
-  const LOCALE = "en-US";
-  const { fmt } = U.numbers(LOCALE);
-  const pct1 = (x) => new Intl.NumberFormat(LOCALE, { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(x);
-  const sum = (a) => a.reduce((x, y) => x + y, 0);
   const UNIT = 500; // tokens per square in chapter 2's picture (a drawing choice)
 
-  const COPY = {
+  // The captions. A translated contents page sets window.CONTENTS_COPY (same keys, and its locale)
+  // before this script.
+  const COPY = window.CONTENTS_COPY || {
+    locale: "en-US",
     loop: (d) => `${d.calls} calls, each reading the whole conversation: ${d.first} tokens at the start, ${d.last} at the end`,
     context: (d) => `The last of ${d.calls} calls read ${d.last} tokens. One square is ${d.unit}.`,
     cache: (d) => `${d.pct} of what ${d.calls} calls read came from the cache`,
     compaction: (d) => `${d.pre} tokens of conversation before compaction, ${d.post} after. Areas to scale.`,
     tools: (d) => `Of the first request's characters: tools ${d.tools}, system ${d.system}, messages ${d.messages}`,
   };
+  const LOCALE = COPY.locale;
+  const { fmt } = U.numbers(LOCALE);
+  const pct1 = (x) => new Intl.NumberFormat(LOCALE, { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(x);
+  const sum = (a) => a.reduce((x, y) => x + y, 0);
 
   function figure(id, art, caption) {
     const fig = document.getElementById(id);

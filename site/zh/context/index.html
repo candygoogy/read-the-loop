@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>上下文窗口 · Read the Loop</title>
+<meta name="description" content="AI 编程智能体每次调用模型，都要把整段对话从头再读一遍。本章用一次真实录制的 Claude Code 会话修复开源工具 black 的 bug，逐次测量每次调用读了多少，并按同一比例画出来。">
+<link rel="canonical" href="https://loop.candygoogy.dev/zh/context/">
+<link rel="alternate" hreflang="en" href="https://loop.candygoogy.dev/context/">
+<link rel="alternate" hreflang="zh-CN" href="https://loop.candygoogy.dev/zh/context/">
+<link rel="alternate" hreflang="x-default" href="https://loop.candygoogy.dev/context/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="上下文窗口 · Read the Loop">
+<meta property="og:description" content="AI 编程智能体每次调用模型，都要把整段对话从头再读一遍。本章用一次真实录制的 Claude Code 会话修复开源工具 black 的 bug，逐次测量每次调用读了多少，并按同一比例画出来。">
+<meta property="og:url" content="https://loop.candygoogy.dev/zh/context/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/context.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop 第二章：上下文窗口，配有一张根据录制记录绘制的图表">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../context/chapter.css">
+<!-- Chinese has no capitals: the detail heading's uppercase would only shout the English word "issue". -->
+<style>.dt-name { text-transform: none; letter-spacing: 0.02em; }</style>
+</head>
+<body data-page="context" data-root="../../">
+
+<a class="skip-link" href="#explore">跳到会话浏览器</a>
+
+<header class="masthead band">
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · 第二章（共八章）</p>
+  <h1>上下文窗口</h1>
+  <p class="dek">模型在两次调用之间什么都不记得，所以智能体每次都要把整段对话发给它。在真实项目上，这段对话涨得很快。下面是一次真实的会话，逐次调用测量。</p>
+</header>
+
+<main class="band">
+
+<section class="prose" aria-labelledby="real-title">
+  <h2 id="real-title">真实项目里的一个 bug</h2>
+  <p data-c="intro.ch1"></p>
+  <blockquote class="prompt issue" id="issue-title" lang="en"></blockquote>
+  <details class="more">
+    <summary data-c="intro.showPrompt"></summary>
+    <pre class="prompt-full" id="prompt-full" lang="en"></pre>
+  </details>
+  <p data-c="intro.plain"></p>
+  <p data-c="intro.run"></p>
+</section>
+
+<section class="prose" aria-labelledby="ctx-title">
+  <h2 id="ctx-title">上下文和上下文窗口</h2>
+  <p data-c="context.define"></p>
+  <p data-c="context.compare"></p>
+  <figure class="chart">
+    <figcaption class="chart-title" data-c="context.figTitle"></figcaption>
+    <div class="chart-box" id="compare-chart"></div>
+    <p class="chart-note" data-c="context.caption"></p>
+  </figure>
+</section>
+
+<section class="prose ex-sec" id="explore" tabindex="-1" aria-labelledby="ex-title">
+  <h2 id="ex-title" data-c="explore.title"></h2>
+  <p data-c="explore.intro"></p>
+
+  <div class="explorer wide">
+    <div class="ex-top">
+      <p class="ex-where"><span class="ex-call" id="ex-call"></span> <span class="ex-clock" id="ex-clock"></span></p>
+      <p class="ex-count"><span id="ex-reads"></span><span class="ex-sofar" id="ex-sofar"></span></p>
+    </div>
+    <div class="ex-bar">
+      <button type="button" class="ex-step" id="ex-prev"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3 5 8l5 5"/></svg></button>
+      <div class="ex-track">
+        <input type="range" id="ex-scrub" step="1">
+        <div class="ex-strip" id="ex-strip" aria-hidden="true"></div>
+      </div>
+      <button type="button" class="ex-step" id="ex-next"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></button>
+    </div>
+    <div class="ex-phases" id="ex-phases" role="group"></div>
+
+    <div class="ex-body">
+      <div class="ex-main">
+        <div class="waffle" id="waffle" role="listbox"></div>
+        <div class="legend ex-legend" id="ex-legend"></div>
+      </div>
+      <div class="ex-side">
+        <div class="ex-detail" id="ex-detail"></div>
+        <div class="ex-phase">
+          <h3 class="ex-phase-name" id="ex-phase-name"></h3>
+          <p id="ex-phase-text"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="prose" aria-labelledby="fills-title">
+  <h2 id="fills-title" data-c="fills.title"></h2>
+  <p data-c="fills.p1"></p>
+  <p data-c="fills.p2"></p>
+  <figure class="chart">
+    <figcaption class="chart-title" data-c="fills.figTitle"></figcaption>
+    <div class="chart-box" id="kinds-chart"></div>
+    <p class="chart-note" data-c="fills.note"></p>
+  </figure>
+</section>
+
+<section class="prose" aria-labelledby="reread-title">
+  <h2 id="reread-title" data-c="reread.title"></h2>
+  <p data-c="reread.p1"></p>
+  <p data-c="reread.p2"></p>
+  <figure class="chart wide">
+    <figcaption class="chart-title" data-c="reread.figTitle"></figcaption>
+    <div class="legend chart-legend"><span><i class="key k-sum"></i><span data-c="reread.seriesSum"></span></span><span><i class="key k-ctx"></i><span data-c="reread.seriesCtx"></span></span></div>
+    <div class="chart-box" id="reread-chart"></div>
+    <p class="chart-note" data-c="reread.caption"></p>
+  </figure>
+</section>
+
+<section class="prose" aria-labelledby="speed-title">
+  <h2 id="speed-title" data-c="speed.title"></h2>
+  <p data-c="speed.p1"></p>
+  <p data-c="speed.p2"></p>
+  <div class="pair wide">
+    <figure class="chart">
+      <figcaption class="chart-title" id="speed-ctx-title"></figcaption>
+      <div class="chart-box" id="speed-ctx"></div>
+    </figure>
+    <figure class="chart">
+      <figcaption class="chart-title" id="speed-out-title"></figcaption>
+      <div class="chart-box" id="speed-out"></div>
+    </figure>
+  </div>
+  <p data-c="speed.p3"></p>
+  <p data-c="speed.p4"></p>
+  <details class="more table-wrap">
+    <summary data-c="table.summary"></summary>
+    <div class="table-scroll" tabindex="0" role="region" aria-labelledby="calls-caption">
+      <table class="calls">
+        <caption id="calls-caption"></caption>
+        <thead id="calls-head"></thead>
+        <tbody id="calls-body"></tbody>
+      </table>
+    </div>
+  </details>
+</section>
+
+<section class="prose" aria-labelledby="outcome-title">
+  <h2 id="outcome-title" data-c="outcome.title"></h2>
+  <p data-c="outcome.p1"></p>
+  <p data-c="outcome.p2"></p>
+  <p data-c="outcome.p3"></p>
+  <p data-c="outcome.p4"></p>
+</section>
+
+<section class="stats" aria-label="会话总计">
+  <div><span class="n" data-v="calls"></span><span class="l" data-c="stats.calls"></span></div>
+  <div><span class="n" data-v="duration"></span><span class="l" data-c="stats.duration"></span></div>
+  <div><span class="n" data-v="sumRead"></span><span class="l" data-c="stats.sumRead"></span></div>
+  <div><span class="n" data-v="cost"></span><span class="l" data-c="stats.cost"></span></div>
+</section>
+
+<section class="prose next" aria-labelledby="next-title">
+  <p class="kicker" data-c="next.kicker"></p>
+  <h2 id="next-title" data-c="next.title"></h2>
+  <p data-c="next.p1"></p>
+  <p data-c="next.p2"></p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2 data-c="colophon.title"></h2>
+  <p data-c="colophon.model"></p>
+  <p><span data-c="colophon.flags"></span></p>
+  <pre class="flags" id="flags" lang="en"></pre>
+  <p data-c="colophon.autocompact"></p>
+  <p data-c="colophon.oneRun"></p>
+  <p data-c="colophon.permissions"></p>
+  <p data-c="colophon.setup"></p>
+  <p data-c="colophon.web"></p>
+  <p data-c="colophon.paths"></p>
+  <p data-c="colophon.times"></p>
+  <p><span data-c="colophon.traces"></span><span id="trace-links"></span>。<span data-c="colophon.json"></span></p>
+  <p data-c="colophon.translated"></p>
+</footer>
+
+<nav class="chapter-nav band" aria-label="章节">
+  <div class="cn">
+    <a class="cn-toc" href="../index.html">全部章节</a>
+  </div>
+</nav>
+
+<script src="../../chapters.js"></script>
+<script>window.TRACES = {};</script>
+<script src="../../data/trace-02-run2.js"></script>
+<script>TRACES.ch1 = TRACE;</script>
+<script src="../../data/trace-03.js"></script>
+<script src="copy.zh.js"></script>
+<script src="../../lib/trace-ui.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../../context/app.js"></script>
+<script src="../../lib/release.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // Writes site/sitemap.xml from site/chapters.js: the contents page and every published chapter, nothing
-// else. Run it after publishing a chapter. scripts/check-site.js fails when the file is out of date.
+// else, in English and then in each other language they exist in (chapters.js `langs`). Run it after publishing a chapter. scripts/check-site.js fails when the file is out of date.
 // Usage: node scripts/sitemap.js [--check]
 const fs = require("fs");
 const path = require("path");
@@ -15,7 +15,10 @@ function chapters() {
 
 function sitemap(C) {
   const urls = ["/"].concat(C.list.filter((c) => c.published).map((c) => `/${c.slug}/`));
-  const more = C.list.filter((c) => c.published).flatMap((c) => (c.langs || []).filter((l) => l !== "en").map((l) => `/${l}/${c.slug}/`));
+  // Then each other language: its contents page, then its published chapters.
+  const others = [...new Set([...(C.langs || []), ...C.list.flatMap((c) => c.langs || [])])].filter((l) => l !== "en");
+  const more = others.flatMap((l) => ((C.langs || []).includes(l) ? [`/${l}/`] : [])
+    .concat(C.list.filter((c) => c.published && (c.langs || []).includes(l)).map((c) => `/${l}/${c.slug}/`)));
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.concat(more).map((u) => `  <url><loc>${C.site}${u}</loc></url>\n`).join("") + "</urlset>\n";
 }

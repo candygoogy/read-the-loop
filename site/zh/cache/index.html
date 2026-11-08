@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>缓存 · Read the Loop</title>
+<meta name="description" content="AI 编程智能体每次调用都把整段对话重新发一遍，为什么还不贵？用一次真实录制的会话来说明，再看看什么会让缓存没有命中。">
+<link rel="canonical" href="https://loop.candygoogy.dev/zh/cache/">
+<link rel="alternate" hreflang="en" href="https://loop.candygoogy.dev/cache/">
+<link rel="alternate" hreflang="zh-CN" href="https://loop.candygoogy.dev/zh/cache/">
+<link rel="alternate" hreflang="x-default" href="https://loop.candygoogy.dev/cache/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="缓存 · Read the Loop">
+<meta property="og:description" content="AI 编程智能体每次调用都把整段对话重新发一遍，为什么还不贵？用一次真实录制的会话来说明，再看看什么会让缓存没有命中。">
+<meta property="og:url" content="https://loop.candygoogy.dev/zh/cache/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/cache.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop 第三章：缓存，配一张根据录制记录画出的图表">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../cache/chapter.css">
+<style>
+  /* Chinese can break between any two characters: keep each column head of the table whole. */
+  .viz-table thead th { word-break: keep-all; }
+</style>
+</head>
+<body data-page="cache" data-root="../../">
+
+<a class="skip-link" href="#reads">跳到第一张图</a>
+
+<header class="masthead band">
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · 第三章（共八章）</p>
+  <h1>缓存</h1>
+  <p class="dek">智能体每次调用模型，都要把整段对话发过去，其中大部分是模型刚刚读过的内容。缓存让这第二遍读取变得便宜。本章用一次真实的会话说明能便宜多少，再用几个小实验看看缓存什么时候没有命中。</p>
+</header>
+
+<main class="band">
+
+<section class="prose" aria-labelledby="s-reads">
+  <h2 id="s-reads">每次都从头读一遍</h2>
+  <p>第一章讲了这个循环：模型在两次调用之间什么都不保留，所以外壳程序（harness）每次都要把整段对话发给它。在一个小游戏上，这只是寥寥几次调用。本章看一次更长的会话。我们从 Black（一个格式化 Python 代码的工具）的问题跟踪器里找了一份真实的 bug 报告，连同 Black 的源代码一起交给 Claude Code。报告的标题是：</p>
+  <blockquote class="prompt" data-v="issueTitle"></blockquote>
+  <p>这次会话共调用模型 <span data-v="calls"></span> 次，用时 <span data-v="duration"></span> 秒，录制于 <span data-v="date"></span>，模型是 <span data-v="model"></span>。对话从第一次调用时的 <span data-v="first"></span> 个 token（词元，一个词或词的一部分）涨到最后一次的 <span data-v="last"></span> 个。把所有调用加起来，模型一共读了 <strong data-v="sumRead"></strong> 个 token。</p>
+  <p>这些读取大多来自<strong>缓存</strong>（cache）：模型提供方为它最近见过的文本存下的一份副本。API 为每次调用报告的用量，把模型读取的内容分成两部分：从这份副本读取的 token，和新的 token。下图逐次调用画出这两部分。</p>
+
+  <figure class="viz wide" id="reads" aria-labelledby="reads-title">
+    <figcaption class="viz-head">
+      <span class="viz-title" id="reads-title"></span>
+      <span class="viz-legend" id="reads-legend"></span>
+    </figcaption>
+    <div class="viz-body" id="reads-body"></div>
+  </figure>
+
+  <p>从第二次调用起，上一次调用读过的内容几乎都能在缓存里找到。<span data-v="prevNote"></span>只有之后新加的部分是新的：每次 <span data-v="minNew"></span> 到 <span data-v="maxNew"></span> 个 token。整个会话里，模型读取的内容有 <strong data-v="pctCached"></strong> 来自缓存。</p>
+  <p>就连第一次调用读取的 <span data-v="first"></span> 个 token 里，也有 <span data-v="c1cached"></span> 个来自缓存。这份录制说明不了它们从哪里来，很可能来自我们当天早些时候用 Claude Code 录制的其他会话。</p>
+</section>
+
+<section class="prose" aria-labelledby="s-cost" data-needs="prices">
+  <h2 id="s-cost">缓存让价格降了多少</h2>
+  <p>从缓存读取的 token 不是免费的，但很便宜。Anthropic 的定价页面列出了 <span data-v="model"></span> 每百万 token 的价格：正常输入 <span data-v="pInput"></span>，从缓存读取的输入 <span data-v="pRead"></span>，模型写出的内容 <span data-v="pOutput"></span>。从缓存读取一个 token，价格是正常价格的 <strong data-v="readPct"></strong>。</p>
+  <p>录制记录里只有整个会话的总费用：<span data-v="recorded"></span>。用这些价格和每次调用的 token 数，我们算出 <span data-v="computed"></span>，相差不到一美分。所以下面每次调用的费用是我们根据公布的价格算出来的，并用这个总额核对过，录制里并没有记下它们。</p>
+
+  <figure class="viz wide" id="costs" aria-labelledby="costs-title">
+    <figcaption class="viz-head">
+      <span class="viz-title" id="costs-title"></span>
+      <span class="viz-legend" id="costs-legend"></span>
+    </figcaption>
+    <div class="viz-controls">
+      <fieldset class="mode" id="cost-mode">
+        <legend class="sr-only" id="cost-mode-label"></legend>
+      </fieldset>
+      <p class="hero" aria-live="polite"><span class="hero-n" id="hero-n"></span><span class="hero-l" id="hero-l"></span></p>
+    </div>
+    <div class="viz-body" id="costs-body"></div>
+  </figure>
+
+  <p>如果没有缓存，同样这些调用要花 <strong data-v="nocache"></strong>，是现在的 <span data-v="times"></span> 倍。会话越往后，差距越大，因为每次调用都要读整段对话，而对话只会越来越长。有了缓存，模型写出的 <span data-v="outTok"></span> 个 token 反而比它读取的全部内容还贵，占总费用的 <span data-v="outPct"></span>。</p>
+
+  <details class="viz-table wide">
+    <summary id="table-summary"></summary>
+    <p class="table-note" id="table-note"></p>
+    <div class="table-wrap" tabindex="0" role="region" aria-labelledby="table-summary"><table id="table"></table></div>
+  </details>
+</section>
+
+<section class="prose" aria-labelledby="s-writes">
+  <h2 id="s-writes">先得写进去</h2>
+  <p>缓存里只有放进去的东西。在上面的图里，每次调用新增的 token 就是写入缓存的部分，下一次调用才能读到它们。<span data-v="writeNote"></span></p>
+  <p>写入分两种，定价页面分开列出：一种副本保留 <span data-v="ttlShort"></span> 分钟，每百万 token <span data-v="pW5"></span>；另一种保留一小时，<span data-v="pW1"></span>。这次会话的写入全是保留一小时的那种，共 <span data-v="w1total"></span> 个 token，较短的那种是 <span data-v="w5total"></span> 个。</p>
+  <p>第一章的录制里能看到一次写入被读回来。在第 <span data-v="r1"></span> 次运行中，第一次调用从缓存读取了 <span data-v="r1cached"></span> 个 token，<span data-v="r1new"></span> 个全是新的。第 <span data-v="r2"></span> 次运行在第 <span data-v="r1"></span> 次结束 <span data-v="gapMin"></span> 分钟后开始。它的第一次调用读取的 <span data-v="r2ctx"></span> 个 token 里，有 <span data-v="r2cached"></span> 个来自缓存，很可能就是第 <span data-v="r1"></span> 次运行写入的那份副本。<span data-v="gapNote"></span></p>
+</section>
+
+<section class="prose" aria-labelledby="s-breaks">
+  <h2 id="s-breaks">什么会让缓存失效</h2>
+  <p>为了看清缓存什么时候会没有命中，我们在 <span data-v="spikeDate"></span> 自己做了几个小实验。一个小文件夹里放了 Python 标准库的四个文件，Claude Code（模型是 <span data-v="spikeModel"></span>）读了这些文件，并逐个做了介绍。然后我们问了几个简短的问题。每个问题都重新启动一次 Claude Code，恢复同一段对话，每次只改一个地方。我们让模型不用任何工具直接回答，所以每个问题只有一次调用。</p>
+
+  <div class="trials wide" id="trials"></div>
+
+  <p>多加的那条指令没有让缓存失效，不过录制记录也说明不了它到底有没有传给模型。换模型就是另一回事了：<span data-v="otherModel"></span> 在缓存里几乎找不到这段对话，只好把大部分内容重新写入。换回 <span data-v="spikeModel"></span> 之后，缓存里还留着之前那份副本。这只是同一天里、在一段小对话上问的四个问题，只能说明发生了什么，说明不了原因。</p>
+</section>
+
+<section class="stats" aria-label="会话合计">
+  <div><span class="n" data-v="calls"></span><span class="l">次模型调用</span></div>
+  <div><span class="n" data-v="cacheTotal"></span><span class="l">个 token 从缓存读取</span></div>
+  <div><span class="n" data-v="writeTotal"></span><span class="l">个 token 写入缓存</span></div>
+  <div><span class="n" data-v="recorded"></span><span class="l">录制的费用</span></div>
+</section>
+
+<section class="prose next">
+  <p class="kicker">下一章</p>
+  <h2><a href="../../compaction/index.html">第四章：压缩</a></h2>
+  <p>这次会话在对话长到模型装不下之前就结束了。真到了那一步，Claude Code 可以对对话进行压缩（compaction）：用一份更短的摘要替换整段对话。会话结束后我们让它压缩了一次，<span data-v="pre"></span> 个 token 的对话变成了 <span data-v="post"></span> 个 token 的摘要。这份摘要是新的文本。在我们的实验里，压缩之后的第一次调用没有从缓存读到任何内容，把整段对话重新写入了一遍。摘要留下了什么，智能体又忘了什么？</p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2>关于录制</h2>
+  <p>这是一次真实的 Claude Code 会话，用 <code>claude -p --output-format stream-json</code> 录制。路径和本地用户名做了脱敏处理，其他内容没有改动。会话信息：模型 <code data-v="model"></code>，Claude Code <code data-v="ccv"></code>，推理强度（effort）保持默认。允许使用的工具：<span data-v="tools"></span>。提示就是这个 issue 提交时的标题和正文，原样未改。文件夹里是 Black 在修复提交之前那个提交的源代码，本页称它为 <code data-v="alias"></code>。</p>
+  <p>token 数是 API 在每次调用中报告的用量：从缓存读取的 token、写入缓存的 token（保留时间较短的和保留一小时的分开计）、少量既不是读取也不是写入的输入 token，以及模型写出的 token。一次调用读取的量是前三项之和。</p>
+  <p id="price-note"></p>
+  <p>实验：<span data-v="spikeList"></span>。每个实验都用 <code>claude -p --resume</code> 恢复同一段对话。其中一个用 <code data-v="sysFlag"></code> 改了开场设定，一个用 <code data-v="modelFlag"></code> 换了模型。Claude Code 给出的恢复会话的费用，是到当时为止整段对话的累计费用，所以本页不显示这些实验的费用。</p>
+  <p>有一个实验没有发布：压缩之后马上问的那个问题，也就是完全没有从缓存读取的那一次。那段对话的前面，我们的一条命令出了错，把一个本地文件夹的路径带了进去。模型的回答里重复了这个路径，而我们的脱敏检查不允许发布任何含有这种路径的录制记录。</p>
+  <p>录制记录：<span id="trace-links"></span>。同样的数据有 JSON 格式的版本，在仓库的 <code>data/</code> 文件夹里。</p>
+  <p><a href="https://github.com/candygoogy/read-the-loop/issues">中文由 Claude 翻译，欢迎指正。</a>录制内容保持英文原文。</p>
+</footer>
+
+<nav class="chapter-nav band" aria-label="章节">
+  <div class="cn">
+    <a class="cn-toc" href="../index.html">全部章节</a>
+  </div>
+</nav>
+
+<script>window.TRACES = {};</script>
+<script src="../../data/trace-03.js"></script>
+<script>TRACES.run = TRACE;</script>
+<script src="../../data/trace-02-run1.js"></script>
+<script>TRACES.ch1a = TRACE;</script>
+<script src="../../data/trace-02-run2.js"></script>
+<script>TRACES.ch1b = TRACE;</script>
+<script src="../../data/trace-spike-a2-same.js"></script>
+<script>TRACES.same = TRACE;</script>
+<script src="../../data/trace-spike-a2-sysprompt.js"></script>
+<script>TRACES.sysprompt = TRACE;</script>
+<script src="../../data/trace-spike-a2-model.js"></script>
+<script>TRACES.model = TRACE;</script>
+<script src="../../data/trace-spike-a2-back.js"></script>
+<script>TRACES.back = TRACE;</script>
+<script src="copy.zh.js"></script>
+<script src="../../lib/trace-ui.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../../cache/app.js"></script>
+<script src="../../chapters.js"></script>
+<script src="../../lib/release.js"></script>
+</body>
+</html>

@@ -9,6 +9,7 @@ window.COPY = {
   seconds: (s) => `${s} s`,
   tokens: (n) => `${n} tokens`,
   plusTokens: (n) => `+${n} tokens`,
+  toolCount: (n, tool) => `${n} ${tool}`,
 
   // What the model was asked, in plain words.
   intro: {
@@ -189,6 +190,7 @@ window.COPY = {
     traces: "The traces:",
     traceCh2: "this session",
     traceCh1: "chapter 1's session",
+    traceSep: ", ",
     json: "The same data as JSON is in the repo's <code>data/</code> folder.",
   },
 };

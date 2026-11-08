@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智能体就是一个循环 · Read the Loop</title>
+<meta name="description" content="语言模型只会读文本、写文本。跟着一次真实录制的 Claude Code 会话，看它怎样一轮一轮地修好一个小游戏里的 bug。">
+<link rel="canonical" href="https://loop.candygoogy.dev/zh/loop/">
+<link rel="alternate" hreflang="en" href="https://loop.candygoogy.dev/loop/">
+<link rel="alternate" hreflang="zh-CN" href="https://loop.candygoogy.dev/zh/loop/">
+<link rel="alternate" hreflang="x-default" href="https://loop.candygoogy.dev/loop/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:locale:alternate" content="en_GB">
+<meta property="og:title" content="智能体就是一个循环 · Read the Loop">
+<meta property="og:description" content="语言模型只会读文本、写文本。跟着一次真实录制的 Claude Code 会话，看它怎样一轮一轮地修好一个小游戏里的 bug。">
+<meta property="og:url" content="https://loop.candygoogy.dev/zh/loop/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/loop.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop 第一章的英文预览图：An agent is a loop（智能体就是一个循环），配一张根据录制绘制的图表">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../harness-step.css">
+</head>
+<body data-page="loop" data-root="../../">
+
+<a class="skip-link" href="#setup">跳过游戏</a>
+<a class="skip-link" href="#player">跳到逐步播放器</a>
+
+<header class="masthead band">
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · 第一章（共八章）</p>
+  <h1>智能体就是一个循环</h1>
+  <p class="dek">语言模型只会做一件事：读入文本，再写出更多文本。它打不开文件，跑不了测试，也玩不了游戏。下面，一个模型要修好一个小游戏里的 bug，而它自始至终看不到这个游戏。先自己玩一下，几秒钟之内就能看到这个 bug。</p>
+</header>
+
+<main class="band">
+
+<section class="game-open" aria-labelledby="game-before-title">
+  <h2 class="sr-only" id="game-before-title">修复前的游戏</h2>
+  <figure class="game wide" data-game="before" data-title="修复前的游戏：文件和交给智能体时一模一样">
+    <div class="game-frame"></div>
+    <figcaption>
+      <span class="game-label">修复前</span>
+      用球拍接住球，别让它掉下去。球拍跟着你的手指或鼠标走；用键盘的话，先点一下游戏或者用 Tab 键进入，再按方向键或 A、D 键。注意看第一个球：它落在球拍的右半边，直接掉了下去。
+    </figcaption>
+  </figure>
+</section>
+
+<section class="prose" id="setup" tabindex="-1">
+  <h2>背景</h2>
+  <p>这个游戏你多半见过：底下一块球拍，上面一排排砖块，一个球在中间来回弹。可在这里，球落到球拍的右半边会直接穿过去，好像那里什么都没有。落在左半边，它就照常弹起来。</p>
+  <p>我们把这个游戏的文件夹交给了 AI 编程智能体（agent）Claude Code，只输入了一句话：</p>
+  <blockquote class="prompt" data-v="prompt" lang="en"></blockquote>
+  <p>智能体看不到这个游戏，更别说玩了。它能请求的操作只有 <span data-v="toolCount"></span> 种：<span data-v="toolPlain"></span>。所以它只能从代码和游戏的测试入手。测试文件里有 <span data-v="testCount"></span> 个小检查，用 Node（一个运行 JavaScript 的程序）就能跑，什么都不用安装。</p>
+  <p>整个会话用了 <span data-v="duration"></span> 秒，其间模型被调用了 <span data-v="calls"></span> 次。录制于 <span data-v="date"></span>，模型是 <span data-v="model" lang="en"></span>。这个任务我们录了 <span data-v="runOf"></span> 次，这里展示的是第 <span data-v="runIndex"></span> 次。选哪一次，用的是录制前就定好的规则：第一个在修复前后都跑了测试的运行。全部 <span data-v="runOf"></span> 次都放在代码仓库里。在一个玩具游戏上成功一次，证明不了智能体会修 bug；第七章讲的正是它们修不好的时候。</p>
+  <p>用下面的按钮、滑块或键盘方向键，一次一次地查看这些调用。也可以点“按真实速度观看”，按它们当时发生的速度重放。</p>
+</section>
+
+<section class="player" id="player" tabindex="-1" aria-labelledby="player-title">
+  <h2 class="sr-only" id="player-title">逐步查看录制的会话</h2>
+  <div class="player-head">
+    <div class="step-meta">
+      <span class="step-num" id="step-num"></span>
+      <span class="step-who" id="step-who"></span>
+    </div>
+    <div class="controls">
+      <div class="transport" role="group" aria-label="步骤控制">
+        <button type="button" id="prev"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3 5 8l5 5"/></svg></button>
+        <button type="button" id="play"></button>
+        <button type="button" id="next"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></button>
+      </div>
+      <button type="button" id="live" class="live-btn"></button>
+    </div>
+  </div>
+  <div class="timebar">
+    <input type="range" id="scrub" min="0" value="0" step="1">
+    <span class="clock" id="clock"></span>
+  </div>
+  <p class="live-status" id="live-status" aria-live="polite"></p>
+  <p class="sr-only" id="step-status" aria-live="polite"></p>
+
+  <div class="stage">
+    <div class="col-left">
+      <svg class="loop" id="loop" viewBox="0 0 360 300" role="img" aria-labelledby="loop-title">
+        <title id="loop-title">循环：模型把请求发给外壳程序，外壳程序在你的电脑上执行它，再把结果发回给模型。</title>
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <path class="edge" id="e-to-model" d="M 128 214 C 70 200, 64 140, 92 104" marker-end="url(#ah)"/>
+        <path class="edge" id="e-to-harness" d="M 150 86 C 196 104, 196 168, 168 196" marker-end="url(#ah)"/>
+        <path class="edge" id="e-to-pc" d="M 226 252 C 248 258, 266 248, 268 232" marker-end="url(#ah)"/>
+        <path class="edge" id="e-from-pc" d="M 252 168 C 230 164, 212 178, 206 200" marker-end="url(#ah)"/>
+        <g class="node" id="n-model" transform="translate(120 70)">
+          <circle r="48"/>
+          <text y="-8">模型</text>
+          <text class="sub" y="10">文本进</text>
+          <text class="sub" y="23">文本出</text>
+        </g>
+        <g class="node" id="n-harness" transform="translate(170 236)">
+          <rect x="-54" y="-30" width="108" height="60" rx="10"/>
+          <text y="-4">外壳程序</text>
+          <text class="sub" y="14">Claude Code</text>
+        </g>
+        <g class="node" id="n-pc" transform="translate(300 190)">
+          <rect x="-46" y="-36" width="92" height="72" rx="6" class="pc"/>
+          <text y="-6">你的</text>
+          <text y="12">电脑</text>
+        </g>
+        <text class="edge-label" id="l-to-model" x="36" y="168">目前的全部内容</text>
+        <text class="edge-label" id="l-to-harness" x="200" y="128">一个请求</text>
+        <text class="edge-label" id="l-pc" x="296" y="250">执行它</text>
+      </svg>
+
+      <figure class="code-fig">
+        <figcaption>整个思路，十行代码</figcaption>
+<pre class="loopcode" id="loopcode"><code><span data-l="1">messages = [instructions, your_message]</span>
+<span data-l="2">while True:</span>
+<span data-l="3">    reply = model(messages)  <i># 每次都读入全部内容</i></span>
+<span data-l="4">    messages.append(reply)</span>
+<span data-l="5">    if not reply.requests:   <i># 没有请求：结束</i></span>
+<span data-l="6">        break</span>
+<span data-l="7">    for request in reply.requests:</span>
+<span data-l="8">        result = run(request)  <i># 外壳程序来执行</i></span>
+<span data-l="9">        messages.append(result)</span>
+<span data-l="10">show(reply.text)</span></code></pre>
+      </figure>
+    </div>
+
+    <div class="col-right">
+      <h3 class="step-title" id="step-title" tabindex="-1"></h3>
+      <p class="step-text" id="step-text"></p>
+      <div class="step-actions" id="step-actions"></div>
+      <div class="cards" id="cards"></div>
+    </div>
+  </div>
+
+  <div class="context">
+    <div class="context-head">
+      <span class="context-label" id="context-label"></span>
+      <span class="context-count" id="context-count"></span>
+    </div>
+    <div class="stack" id="stack" role="img"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+</section>
+
+<section class="game-close prose" aria-labelledby="game-after-title">
+  <h2 id="game-after-title">修好的游戏</h2>
+  <p>这是修好的游戏，其中的 <code data-v="mainFile"></code> 和智能体改完时一模一样，别的什么都没动。再看一次第一个球。</p>
+  <figure class="game wide" data-game="after" data-title="修复后的游戏：智能体改过的文件，原样加载">
+    <div class="game-frame"></div>
+    <figcaption>
+      <span class="game-label">修复后</span>
+      操作和前面一样：用手指、鼠标，或者点进游戏后按方向键。
+    </figcaption>
+  </figure>
+</section>
+
+<section class="prose">
+  <h2>值得注意的三件事</h2>
+
+  <h3>修改前后它都检查了</h3>
+  <p>模型从来没看到过这个游戏。改动任何东西之前，它先跑了测试，传回来一个失败的测试：<q data-v="failName" lang="en"></q>。修改出现在下一次调用里，同时还有第二次测试运行，这一次全部 <span data-v="tests"></span> 个都通过了。这两步各是循环的一轮，每次的结果都是外壳程序贴进来的文本。规则选中这一次运行，也是这个原因：<span data-v="otherRuns"></span></p>
+
+  <h3>每一次都把全部内容读一遍</h3>
+  <p>模型在两次调用之间什么都不保留。对话就是它的记忆，所以外壳程序每次都把整段对话发过去。为了改 <span data-v="newLines"></span> 行代码，<span data-v="calls"></span> 次调用一共读了 <strong data-v="sumRead"></strong> 个 token，其中 <span data-v="cacheTotal"></span> 个从缓存读取。缓存在第三章讲。</p>
+
+  <h3>“完成”是模型自己说了算</h3>
+  <p>没有谁叫智能体停下。它最后一条回复里没有请求，外壳程序就停了。同一条回复说，智能体检查过快速运动的球不会越过球拍，而这项检查只以几句话的形式存在于回复里。在这里，测试和修好的游戏都支持它的主要结论。什么都无法印证的情况，第七章再讲。</p>
+</section>
+
+<section class="stats" aria-label="会话总计">
+  <div><span class="n" data-v="calls"></span><span class="l">次模型调用</span></div>
+  <div><span class="n" data-v="duration"></span><span class="l">秒</span></div>
+  <div><span class="n" data-v="cost"></span><span class="l">按标价计算</span></div>
+  <div><span class="n" data-v="linesChanged"></span><span class="l">改前 → 改后的行数</span></div>
+</section>
+
+<section class="prose next">
+  <p class="kicker">下一章</p>
+  <h2><a href="../context/index.html">第二章：上下文窗口</a></h2>
+  <p>在一个只有 <span data-v="fileCount"></span> 个文件的玩具项目上，<span data-v="calls"></span> 次调用下来，对话从 <span data-v="first"></span> 个 token 涨到了 <span data-v="lastTokens"></span> 个，是开始时的 <span data-v="ratio"></span> 倍。涨出来的大部分，<span data-v="readAdded"></span> 个 token，是它读的代码。真实的项目有成千上万个文件，会话一跑就是几个小时。项目是真的、会话又很长的时候，模型读到的是什么？</p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2>关于这次录制</h2>
+  <p class="zh-note">录制内容保持英文原文。中文由 Claude 翻译，<a data-repo="issues" href="https://github.com/candygoogy/read-the-loop/issues">欢迎指正</a>。</p>
+  <p><span data-v="source" lang="en"></span> 模型 <code data-v="model"></code>，Claude Code <code data-v="ccv"></code>，推理强度（effort）保持默认。允许使用的工具：<span data-v="tools" lang="en"></span>。</p>
+  <p>模型看到的是真实的文件夹路径。本页把它换成了 <code data-v="alias"></code>，所以命令里写的是 <code data-v="cdPart"></code>：真实的 shell 不会展开引号里的 <code>~</code>。</p>
+  <p>token 数是 API 在每次调用时报告的用量。时间是每一行输出到达的时刻，从录制程序启动 Claude Code 时算起。按 Claude Code 自己的计时，这次会话用了 <span data-v="duration"></span> 秒；实时时钟停在 <span data-v="clockEnd"></span>。</p>
+  <p>我们一共录了 <span data-v="runOf"></span> 次。录制前定下的规则是：选第一个在修复前后都跑了测试的运行；一个都没有的话，就选第一次。</p>
+  <ul class="runs" id="runs"></ul>
+  <p>更早还录过一批，共三次，因为录制方式有问题被弃用了，和运行得好不好无关：那几次录下的会话继承了启动它们的那个会话的设置，其中包括更高的推理强度。三次做的都是同样的修复。它们的原始录制保存在仓库之外，录制记录已经删除。</p>
+  <p>录制记录：<span id="trace-links"></span>。同样的数据也以 JSON 格式放在仓库的 <code>data/</code> 文件夹里。</p>
+</footer>
+
+<nav class="chapter-nav band" aria-label="章节">
+  <div class="cn">
+    <a class="cn-toc" href="../index.html">全部章节</a>
+  </div>
+</nav>
+
+<script>window.TRACES = {};</script>
+<script src="../../data/trace-02-run1.js"></script>
+<script>TRACES[TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-02-run3.js"></script>
+<script>TRACES[TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-02-run2.js"></script>
+<script>TRACES[TRACE.run.index] = TRACE;</script>
+<script src="copy.zh.js"></script>
+<script src="../../harness-step.js"></script>
+<script src="../../lib/trace-ui.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../../loop/app.js"></script>
+<script src="../../chapters.js"></script>
+<script src="../../lib/release.js"></script>
+</body>
+</html>

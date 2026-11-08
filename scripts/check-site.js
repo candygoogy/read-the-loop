@@ -2,12 +2,14 @@
 // 1. Requests: opens every .html page under site/ (and the test demo and the preview-card template),
 //    scrolls it to the end, and logs every request it makes. Anything other than file:, data: or blob:
 //    fails. The full log goes to <out-dir>/requests.txt.
-// 2. Meta tags on the contents page, every chapter page and 404.html: title, description, canonical,
-//    Open Graph and Twitter tags, theme colours, icons; the preview image must exist and be 1200 × 630.
+// 2. Meta tags on the contents page, every chapter page and 404.html, in every language: lang, title,
+//    description, canonical, hreflang alternates, Open Graph and Twitter tags, theme colours, icons; the
+//    preview image must exist and be 1200 × 630 (pages in another language reuse the English card).
 // 3. Releases (site/chapters.js, drawn by site/lib/release.js): no links to unpublished chapters, the
 //    preview note only on unpublished ones, the end notice only on published ones, the contents page
-//    sorted right. Then the same with chapters.js changed in the browser: a release date, chapter 4
-//    published, and a second language.
+//    sorted right, the language switch on every page that exists in two languages (and only there),
+//    linking each of them. Then the same with chapters.js changed in the browser: a release date,
+//    chapter 4 published, and a chapter losing its translation.
 // 4. Hosting files: sitemap.xml up to date, robots.txt, CNAME, .nojekyll.
 // Usage: node scripts/check-site.js [out-dir]
 const path = require("path");
@@ -43,24 +45,36 @@ function pngSize(file) {
   return b.toString("ascii", 1, 4) === "PNG" ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null;
 }
 
+// Languages: the code chapters.js uses, and what the page's <html lang> says.
+const HTML_LANG = { en: "en", zh: "zh-CN" };
+const langsOf = (slug) => (slug ? (C.list.find((c) => c.slug === slug) || {}).langs || ["en"] : C.langs || ["en"]);
+const urlOf = (slug, l) => `${C.site}/${l !== "en" ? l + "/" : ""}${slug ? slug + "/" : ""}`;
+
 // What every page's head must say. `slug` is "" for the contents page, null for the 404 page.
-function expectedHead(slug) {
-  if (slug === null) return { title: `Page not found · ${C.name}`, noindex: true };
+function expectedHead(slug, lang = "en") {
+  if (slug === null) return { title: `Page not found · ${C.name}`, noindex: true, lang: "en" };
   const ch = C.list.find((c) => c.slug === slug);
+  const title = ch && (lang === "en" ? ch.title : (ch.titles || {})[lang]);
+  const langs = langsOf(slug);
   return {
-    title: ch ? `${ch.title} · ${C.name}` : null,
-    canonical: `${C.site}/${slug ? slug + "/" : ""}`,
+    lang: HTML_LANG[lang] || lang,
+    title: ch ? `${title} · ${C.name}` : null,
+    canonical: urlOf(slug, lang),
     image: `${C.site}/og/${slug || "contents"}.png`,
     type: slug ? "article" : "website",
+    // Chinese says the same in fewer characters.
+    description: lang === "zh" ? [30, 120] : [70, 170],
+    alternates: langs.length > 1 ? Object.fromEntries(langs.map((l) => [HTML_LANG[l] || l, urlOf(slug, l)]).concat([["x-default", urlOf(slug, "en")]])) : {},
   };
 }
 
-async function checkHead(p, rel, slug) {
-  const want = expectedHead(slug);
+async function checkHead(p, rel, slug, lang = "en") {
+  const want = expectedHead(slug, lang);
   const h = await p.evaluate(() => {
     const m = (sel) => { const e = document.querySelector(sel); return e ? e.getAttribute("content") || e.getAttribute("href") : null; };
     return {
       lang: document.documentElement.lang,
+      alternates: Object.fromEntries([...document.querySelectorAll('link[rel="alternate"][hreflang]')].map((e) => [e.getAttribute("hreflang"), e.getAttribute("href")])),
       title: document.title,
       description: m('meta[name="description"]'),
       canonical: m('link[rel="canonical"]'),
@@ -80,10 +94,11 @@ async function checkHead(p, rel, slug) {
     };
   });
   const bad = (what) => fail(`${rel}: ${what}`);
-  if (h.lang !== "en") bad(`lang "${h.lang}"`);
+  if (h.lang !== want.lang) bad(`lang "${h.lang}", expected "${want.lang}"`);
   if (want.title && h.title !== want.title) bad(`title "${h.title}", expected "${want.title}"`);
   if (!want.title && !h.title.startsWith(C.name)) bad(`title "${h.title}" doesn't start with ${C.name}`);
-  if (!h.description || h.description.length < 70 || h.description.length > 170) bad(`description length ${h.description && h.description.length}`);
+  const [dMin, dMax] = want.description || [70, 170];
+  if (!h.description || h.description.length < dMin || h.description.length > dMax) bad(`description length ${h.description && h.description.length}`);
   if (h.h1 !== 1) bad(`${h.h1} h1 elements`);
   if (h.fontLinks) bad("Google Fonts link");
   if (h.themes.length !== 2 || !h.themes.some(([m]) => /light/.test(m)) || !h.themes.some(([m]) => /dark/.test(m))) bad(`theme-color ${JSON.stringify(h.themes)}`);
@@ -94,6 +109,7 @@ async function checkHead(p, rel, slug) {
     return h;
   }
   if (h.canonical !== want.canonical) bad(`canonical ${h.canonical}, expected ${want.canonical}`);
+  if (JSON.stringify(h.alternates) !== JSON.stringify(want.alternates)) bad(`hreflang ${JSON.stringify(h.alternates)}, expected ${JSON.stringify(want.alternates)}`);
   if (h.ogUrl !== h.canonical) bad("og:url differs from canonical");
   if (h.ogTitle !== h.title) bad("og:title differs from title");
   if (h.ogDescription !== h.description) bad("og:description differs from description");
@@ -124,7 +140,9 @@ const releaseState = (p) => p.evaluate(() => {
     toc: [...document.querySelectorAll("ol.toc > li")].map((li) => `${li.dataset.ch}${li.querySelector("h3 a") ? " linked" : ""}`),
     later: [...document.querySelectorAll("ol.toc-later > li")].map((li) => `${li.dataset.ch}${li.querySelector("a") ? " linked" : ""}${li.querySelector(".toc-art") ? " +picture" : ""} ${(li.querySelector(".toc-when") || {}).textContent || ""}`.trim()),
     lang: [...document.querySelectorAll(".lang-switch a")].map((a) => `${a.textContent} ${a.getAttribute("href")}${a.getAttribute("aria-current") ? " (current)" : ""}`),
+    langLinks: [...document.querySelectorAll(".lang-switch a")].map((a) => [a.getAttribute("hreflang"), a.href.slice(root.href.length), !!a.getAttribute("aria-current")]),
     credit: !!document.querySelector(".site-credit a[href]") || !!document.querySelector("footer a[data-repo][href]"),
+    ch3: (document.querySelector('li[data-ch="3"] h3 a') || {}).href || null,
   };
 });
 
@@ -164,16 +182,24 @@ const tweak = (fn) => `(() => {
     const fonts = reqs.filter((r) => r.startsWith("font ")).map((r) => path.basename(r)).join(", ");
     let line = `${rel}: ${reqs.length} requests, ${external.length} outside the site; fonts: ${fonts || "none"}`;
 
-    const slug = rel === "site/index.html" ? "" : rel === "site/404.html" ? null : (rel.match(/^site\/([^/]+)\/index\.html$/) || [])[1];
+    // site/index.html, site/<slug>/index.html, and the same under site/<lang>/ for another language.
+    const m = rel.match(/^site\/(?:(zh)\/)?(?:([^/]+)\/)?index\.html$/);
+    const lang = (m && m[1]) || "en";
+    const slug = rel === "site/404.html" ? null : m ? m[2] || "" : undefined;
     const ch = C.list.find((c) => c.slug === slug);
     if (slug === "" || slug === null || ch) {
-      const h = await checkHead(p, rel, slug);
+      const h = await checkHead(p, rel, slug, lang);
       line += `\n    title "${h.title}" | canonical ${h.canonical || "-"} | og:image ${h.ogImage || "-"} | description ${h.description.length} chars`;
     }
     if (ch || slug === "") {
       const s = await releaseState(p);
       if (s.badLinks.length) fail(`${rel}: links to unpublished chapters ${s.badLinks}`);
-      if (s.lang.length) fail(`${rel}: language switch shown with one language`);
+      // The switch: every language the page exists in, this one current, each at its own address.
+      const langs = langsOf(slug);
+      const wantSwitch = langs.length > 1 ? langs.map((l) => [l, (l !== "en" ? `${l}/` : "") + (slug ? `${slug}/` : "") + "index.html", l === lang]) : [];
+      if (JSON.stringify(s.langLinks) !== JSON.stringify(wantSwitch)) fail(`${rel}: language switch ${JSON.stringify(s.langLinks)}, expected ${JSON.stringify(wantSwitch)}`);
+      wantSwitch.forEach(([, f]) => { if (!fs.existsSync(path.join(site, f))) fail(`${rel}: language switch links ${f}, which doesn't exist`); });
+      if (s.lang.length) line += `\n    switch [${s.lang.join(" | ")}]`;
       if (!s.credit) fail(`${rel}: no link to the repo`);
       if (ch) {
         if (ch.published && (s.preview || !s.coming || s.robots)) fail(`${rel}: published, but preview ${s.preview}, notice ${!!s.coming}, robots ${s.robots}`);
@@ -227,13 +253,15 @@ const tweak = (fn) => `(() => {
   // The static noindex tag stays in the file until a real release removes it (line 179 fails a published page that keeps it).
   if (s.preview || !s.coming || s.badLinks.length) fail("ch4 out: chapter 4 still a preview");
 
-  const zh = (x) => { x.langs = ["en", "zh"]; x.list[2].langs = ["en", "zh"]; };
-  for (const f of ["index.html", "cache/index.html", "loop/index.html"]) {
-    s = await scenario("zh", zh, f);
-    console.log(`  zh added (contents and ch3), ${f}: switch [${s.lang.join(" | ")}]`);
-    const wantSwitch = f !== "loop/index.html";
-    if (wantSwitch !== (s.lang.length === 2)) fail(`zh: switch on ${f} is ${s.lang.length ? "shown" : "hidden"}`);
-    if (wantSwitch && !s.lang.some((l) => /zh\/(cache\/)?index\.html$/.test(l))) fail(`zh: switch on ${f} doesn't link the zh page`);
+  // Chapter 3 loses its translation: its switch goes, the zh contents page links the English chapter 3,
+  // and the other pages keep theirs.
+  const noZh3 = (x) => { x.list[2].langs = ["en"]; };
+  for (const f of ["cache/index.html", "loop/index.html", "zh/index.html"]) {
+    s = await scenario("no zh ch3", noZh3, f);
+    console.log(`  ch3 English only, ${f}: switch [${s.lang.join(" | ")}]${f === "zh/index.html" ? ` | ch3 links ${s.ch3}` : ""}`);
+    const wantSwitch = f !== "cache/index.html";
+    if (wantSwitch !== (s.lang.length === 2)) fail(`no zh ch3: switch on ${f} is ${s.lang.length ? "shown" : "hidden"}`);
+    if (f === "zh/index.html" && !/\/site\/cache\/index\.html$/.test(s.ch3 || "")) fail(`no zh ch3: zh contents links chapter 3 at ${s.ch3}`);
   }
 
   console.log("\n4. hosting files");

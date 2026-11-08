@@ -36,11 +36,13 @@
   const { esc, list } = { esc: U.esc, list: U.numbers(C.locale).list };
   const { fmt } = U.numbers(C.locale);
   const $ = (id) => document.getElementById(id);
+  // The site's root, relative to this page: "../" for site/cache/, "../../" for a translation at site/<lang>/cache/.
+  const ROOT = document.body.dataset.root || "../";
   const calls = T.calls;
   const N = calls.length;
 
   // ---------- formatting ----------
-  const money = (x, digits) => new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", minimumFractionDigits: digits, maximumFractionDigits: digits }).format(x);
+  const money = (x, digits) => new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", minimumFractionDigits: digits, maximumFractionDigits: digits }).format(x);
   const perM = (x) => money(x, Number.isInteger(x) ? 0 : 2);
   const pct = (x, digits = 0) => new Intl.NumberFormat(C.locale, { style: "percent", maximumFractionDigits: digits, minimumFractionDigits: digits }).format(x);
   const compact = (x) => new Intl.NumberFormat(C.locale, { notation: "compact", maximumFractionDigits: 1 }).format(x);
@@ -346,10 +348,10 @@
     : C.prose.priceMismatch({ url: esc(PRICES.url), checked: dateOf(PRICES.checked) });
 
   const links = [
-    ["../data/trace-03.js", C.prose.traceRun],
-    ["../data/trace-02-run1.js", C.prose.traceCh1(fmt(R.ch1a.run.index))],
-    ["../data/trace-02-run2.js", C.prose.traceCh1(fmt(R.ch1b.run.index))],
-    ...TRIALS.map((x) => [`../data/trace-spike-a2-${x.key}.js`, C.trials[x.key].title.toLowerCase()]),
+    [`${ROOT}data/trace-03.js`, C.prose.traceRun],
+    [`${ROOT}data/trace-02-run1.js`, C.prose.traceCh1(fmt(R.ch1a.run.index))],
+    [`${ROOT}data/trace-02-run2.js`, C.prose.traceCh1(fmt(R.ch1b.run.index))],
+    ...TRIALS.map((x) => [`${ROOT}data/trace-spike-a2-${x.key}.js`, C.trials[x.key].title.toLowerCase()]),
   ];
   $("trace-links").innerHTML = list(links.map(([href, t]) => `<a href="${href}">${esc(t)}</a>`));
 

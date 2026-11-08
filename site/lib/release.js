@@ -6,7 +6,9 @@
 //   about the next chapter to come, on an unpublished one the preview note at the top.
 // On every page: removes links to unpublished chapters (wherever the narration has them), and draws the
 // language switch in the masthead once the page exists in more than one language.
-// Every label is in L below, one entry per language; the page's <html lang> picks it.
+// Every label is in L below, one entry per language; the page's <html lang> picks it. Chapter titles
+// come from chapters.js (`titles` for languages other than English), and links go to the page's own
+// language wherever the chapter exists in it, to English otherwise.
 (() => {
   "use strict";
   const C = window.CHAPTERS;
@@ -33,10 +35,43 @@
       language: "Language",
       credit: "Read the Loop was made with Claude Code, from recordings of Claude Code. Code: MIT licence. Text, figures and recordings: CC BY 4.0.",
       source: "Source and credits on GitHub",
+      // Between two sentences, and at the end of one.
+      gap: " ",
+      stop: ".",
+      colon: ": ",
+    },
+    zh: {
+      locale: "zh-CN",
+      chapter: (n) => `第${zhN(n)}章`,
+      chapterTitle: (n, t) => `第${zhN(n)}章：${t}`,
+      soon: "即将推出",
+      on: (date) => `${date}推出`,
+      prev: "上一章",
+      next: "下一章",
+      start: "从这里开始",
+      read: "阅读",
+      preview: "预览：这一章还没有正式发布。",
+      out: (a, b) => (a === b ? `第${zhN(a)}章已经发布。` : `第${zhN(a)}至${zhN(b)}章已经发布。`),
+      oneAtATime: "新章节一章一章地发布。",
+      watch: "在 GitHub 上选择 Watch → Releases",
+      watchTail: "，新章节发布时就会收到通知。",
+      star: "在 GitHub 上加星标",
+      allOut: "全部章节都已发布。",
+      language: "语言",
+      credit: "Read the Loop 用 Claude Code 制作，内容来自 Claude Code 的录制。代码采用 MIT 许可证；文字、图表和录制采用 CC BY 4.0 许可。",
+      source: "源代码与致谢在 GitHub 上",
+      gap: "",
+      stop: "。",
+      colon: "：",
     },
   };
-  const lang = (document.documentElement.lang || "en").split("-")[0];
-  const T = L[lang] || L.en;
+  // Chapter numbers in Chinese text: 一 to 十, then digits.
+  function zhN(n) {
+    return n >= 1 && n <= 10 ? "一二三四五六七八九十"[n - 1] : String(n);
+  }
+  const lang0 = (document.documentElement.lang || "en").split("-")[0];
+  const lang = L[lang0] ? lang0 : "en";
+  const T = L[lang];
 
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const chev = (d) => `<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
@@ -48,10 +83,13 @@
   const root = self ? new URL("../", self) : new URL("./", location.href);
   const served = /^https?:$/.test(root.protocol);
   const pagePath = (slug, l) => (l && l !== "en" ? `${l}/` : "") + (slug ? `${slug}/` : "") + (served ? "" : "index.html");
-  const href = (slug, l = lang) => new URL(pagePath(slug, l), root).href;
-
   const list = C.list;
   const bySlug = Object.fromEntries(list.map((c) => [c.slug, c]));
+  // A page's address in a language: the chapter's (or, for slug "", the contents page's) own
+  // language if it has it, English otherwise.
+  const langsOf = (slug) => (slug ? (bySlug[slug] && bySlug[slug].langs) || ["en"] : C.langs || ["en"]);
+  const href = (slug, l = lang) => new URL(pagePath(slug, langsOf(slug).includes(l) ? l : "en"), root).href;
+  const titleOf = (c) => (lang !== "en" && c.titles && c.titles[lang]) || c.title;
   const page = document.body.dataset.page;
   const here = bySlug[page];
 
@@ -90,7 +128,7 @@
 
   // ---------- language switch ----------
   function languageSwitch() {
-    const langs = here ? here.langs || ["en"] : C.langs || ["en"];
+    const langs = langsOf(here ? here.slug : "");
     const head = document.querySelector(".masthead");
     if (!head || langs.length < 2) return;
     const slug = here ? here.slug : "";
@@ -120,13 +158,13 @@
       text.className = "toc-text";
       if (c.published) {
         li.className = "toc-item";
-        text.innerHTML = `<span class="toc-n">${esc(T.chapter(c.n))}</span><h3><a href="${esc(href(c.slug))}">${esc(c.title)}</a></h3>`;
+        text.innerHTML = `<span class="toc-n">${esc(T.chapter(c.n))}</span><h3><a href="${esc(href(c.slug))}">${esc(titleOf(c))}</a></h3>`;
         if (blurb) text.appendChild(blurb);
         text.insertAdjacentHTML("beforeend", `<span class="toc-go" aria-hidden="true">${esc(go)}${chev(CHEV_NEXT)}</span>`);
         front.push(li);
       } else {
         li.className = fig ? "toc-soon has-viz" : "toc-soon";
-        text.innerHTML = `<span class="toc-n">${esc(T.chapter(c.n))}<span class="toc-when"> · ${esc(status(c))}</span></span><h3>${esc(c.title)}</h3>`;
+        text.innerHTML = `<span class="toc-n">${esc(T.chapter(c.n))}<span class="toc-when"> · ${esc(status(c))}</span></span><h3>${esc(titleOf(c))}</h3>`;
         if (blurb) text.appendChild(blurb);
         back.push(li);
       }
@@ -148,7 +186,7 @@
     const card = (c, dir) => {
       const cls = `cn-link cn-${dir}`;
       const label = dir === "prev" ? T.prev : T.next;
-      const title = `<span class="cn-title">${esc(T.chapterTitle(c.n, c.title))}</span>`;
+      const title = `<span class="cn-title">${esc(T.chapterTitle(c.n, titleOf(c)))}</span>`;
       if (c.published) {
         const d = dir === "prev" ? `<span class="cn-dir">${chev(CHEV_PREV)}${esc(label)}</span>` : `<span class="cn-dir">${esc(label)}${chev(CHEV_NEXT)}</span>`;
         return `<a class="${cls}" href="${esc(href(c.slug))}" rel="${dir}">${d}${title}</a>`;
@@ -176,15 +214,15 @@
     // "Chapters 1 to 3 are out" only where the chapter to come isn't the very next one.
     const outN = list.filter((c) => c.published).map((c) => c.n);
     const contiguous = outN.every((n, k) => n === k + 1);
-    const lead = coming !== list[i + 1] && contiguous ? `${T.out(1, outN[outN.length - 1])} ${T.oneAtATime}` : T.oneAtATime;
+    const lead = coming !== list[i + 1] && contiguous ? `${T.out(1, outN[outN.length - 1])}${T.gap}${T.oneAtATime}` : T.oneAtATime;
     // Where the page's own "Next" section already introduces that chapter, the card doesn't name it again.
     const named = coming === list[i + 1] && sections.length > 0;
-    const title = esc(T.chapterTitle(coming.n, coming.title));
+    const title = esc(T.chapterTitle(coming.n, titleOf(coming)));
     host.insertAdjacentHTML("beforeend",
-      `<aside class="coming" aria-label="${esc(status(coming))}: ${title}">` +
+      `<aside class="coming" aria-label="${esc(status(coming))}${esc(T.colon)}${title}">` +
         `<p class="coming-when">${esc(status(coming))}</p>` +
         (named ? "" : `<p class="coming-title">${title}</p>`) +
-        `<p>${esc(lead)} <a href="${repo}">${esc(T.watch)}</a>${esc(T.watchTail)}</p>` +
+        `<p>${esc(lead)}${esc(T.gap)}<a href="${repo}">${esc(T.watch)}</a>${esc(T.watchTail)}</p>` +
         star +
       `</aside>`);
   }
@@ -202,11 +240,12 @@
     }
   }
 
-  // Links to the repo take its address from chapters.js; every chapter's colophon ends with the credit.
+  // Links to the repo take its address from chapters.js (data-repo="issues" goes to <repo>/issues);
+  // every chapter's colophon ends with the credit.
   function repoLinks() {
     const foot = here && document.querySelector("footer.colophon");
-    if (foot) foot.insertAdjacentHTML("beforeend", `<p class="site-credit">${esc(T.credit)} <a data-repo>${esc(T.source)}</a>.</p>`);
-    document.querySelectorAll("a[data-repo]").forEach((a) => { a.href = C.repo; });
+    if (foot) foot.insertAdjacentHTML("beforeend", `<p class="site-credit">${esc(T.credit)}${esc(T.gap)}<a data-repo>${esc(T.source)}</a>${esc(T.stop)}</p>`);
+    document.querySelectorAll("a[data-repo]").forEach((a) => { a.href = C.repo + (a.dataset.repo ? `/${a.dataset.repo}` : ""); });
   }
 
   if (page === "contents") contents();

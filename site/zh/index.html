@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Read the Loop · AI 编程智能体是怎样工作的</title>
+<meta name="description" content="一份图解，讲 AI 编程智能体是怎样工作的。全部基于我们录制的真实 Claude Code 会话，你可以一步一步地查看。共八章。">
+<link rel="canonical" href="https://loop.candygoogy.dev/zh/">
+<link rel="alternate" hreflang="en" href="https://loop.candygoogy.dev/">
+<link rel="alternate" hreflang="zh-CN" href="https://loop.candygoogy.dev/zh/">
+<link rel="alternate" hreflang="x-default" href="https://loop.candygoogy.dev/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:locale:alternate" content="en_GB">
+<meta property="og:title" content="Read the Loop · AI 编程智能体是怎样工作的">
+<meta property="og:description" content="一份图解，讲 AI 编程智能体是怎样工作的。全部基于我们录制的真实 Claude Code 会话，你可以一步一步地查看。共八章。">
+<meta property="og:url" content="https://loop.candygoogy.dev/zh/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/contents.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop 的英文预览图：讲 AI 编程智能体如何工作的图解，配一张根据录制会话绘制的图表">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body data-page="contents">
+
+<header class="masthead band">
+  <p class="kicker">一份图解</p>
+  <h1>Read the Loop</h1>
+  <p class="dek">AI 编程智能体到底是怎样工作的？我们录下了真实的会话，你可以一步一步地看。</p>
+</header>
+
+<main class="band toc-main">
+  <h2 class="sr-only">章节</h2>
+  <!-- Every chapter is here; site/lib/release.js sorts them into the two lists from site/chapters.js.
+       The markup below is the launch state, for a reader without JavaScript. -->
+  <ol class="toc">
+    <li class="toc-item" data-ch="1" data-go="从这里开始">
+      <div class="toc-text">
+        <span class="toc-n">第一章</span>
+        <h3><a href="loop/index.html">智能体就是一个循环</a></h3>
+        <p>模型只会读文本、写文本。看一次真实的会话怎样修好一个小游戏里的 bug，一轮接一轮，而它从头到尾都看不到这个游戏。</p>
+        <span class="toc-go" aria-hidden="true">从这里开始<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span>
+      </div>
+      <figure class="toc-viz" id="viz-loop"></figure>
+    </li>
+    <li class="toc-item" data-ch="2">
+      <div class="toc-text">
+        <span class="toc-n">第二章</span>
+        <h3><a href="context/index.html">上下文窗口</a></h3>
+        <p>模型每次调用要读多少内容，在一次真实的会话里，这些加起来又有多少。</p>
+        <span class="toc-go" aria-hidden="true">阅读<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span>
+      </div>
+      <figure class="toc-viz" id="viz-context"></figure>
+    </li>
+    <li class="toc-item" data-ch="3">
+      <div class="toc-text">
+        <span class="toc-n">第三章</span>
+        <h3><a href="cache/index.html">缓存</a></h3>
+        <p>把整段对话再读一遍，为什么花不了多少钱，又是什么会让缓存失效。</p>
+        <span class="toc-go" aria-hidden="true">阅读<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span>
+      </div>
+      <figure class="toc-viz" id="viz-cache"></figure>
+    </li>
+  </ol>
+
+  <h2 class="toc-later-head" id="later-title">接下来的章节</h2>
+  <ol class="toc-later" start="4" aria-labelledby="later-title">
+    <li class="toc-soon has-viz" data-ch="4">
+      <div class="toc-text">
+        <span class="toc-n">第四章<span class="toc-when"> · 即将推出</span></span>
+        <h3>压缩</h3>
+        <p>对话被压缩成一份摘要时会发生什么，之后智能体还知道些什么。</p>
+      </div>
+      <figure class="toc-viz" id="viz-compaction"></figure>
+    </li>
+    <li class="toc-soon has-viz" data-ch="5">
+      <div class="toc-text">
+        <span class="toc-n">第五章<span class="toc-when"> · 即将推出</span></span>
+        <h3>工具与权限</h3>
+        <p>模型从每个工具的说明里得知了什么，又是谁决定什么可以运行。</p>
+      </div>
+      <figure class="toc-viz" id="viz-tools"></figure>
+    </li>
+    <li class="toc-soon" data-ch="6">
+      <div class="toc-text">
+        <span class="toc-n">第六章<span class="toc-when"> · 即将推出</span></span>
+        <h3>子智能体</h3>
+        <p>为一个支线任务另开一段全新的对话，以及从那里带回来的东西。</p>
+      </div>
+    </li>
+    <li class="toc-soon" data-ch="7">
+      <div class="toc-text">
+        <span class="toc-n">第七章<span class="toc-when"> · 即将推出</span></span>
+        <h3>失败模式</h3>
+        <p>原地打转、凭空捏造的函数、谎报的“完成”，以及针对每一种的防护手段。</p>
+      </div>
+    </li>
+    <li class="toc-soon" data-ch="8">
+      <div class="toc-text">
+        <span class="toc-n">第八章<span class="toc-when"> · 即将推出</span></span>
+        <h3>自己动手做一个智能体</h3>
+        <p>一个能在浏览器里运行的小智能体，背后的模型由一段录制重放。</p>
+      </div>
+    </li>
+  </ol>
+</main>
+
+<footer class="colophon band" aria-labelledby="about-title">
+  <h2 id="about-title">关于本站</h2>
+  <p>Read the Loop 是用 Claude Code 做的，展示的也是 Claude Code 工作时的录制：它运行的命令、传回来的结果、模型自己写的话，以及每一个数字，都读取自这些录制。只有讲解是人写的。</p>
+  <p>代码采用 MIT 许可证，文字、图表和录制采用 CC BY 4.0 许可。源代码、许可证和致谢都在 <a data-repo>GitHub 上</a>。</p>
+  <p class="zh-note">录制内容保持英文原文。中文由 Claude 翻译，<a data-repo="issues" href="https://github.com/candygoogy/read-the-loop/issues">欢迎指正</a>。</p>
+</footer>
+
+<script>window.TRACES = {};</script>
+<script src="../data/trace-02-run2.js"></script>
+<script>TRACES.loop = TRACE;</script>
+<script src="../data/trace-03.js"></script>
+<script>TRACES.context = TRACE;</script>
+<script src="../data/tools-05.js"></script>
+<script src="../lib/trace-ui.js"></script>
+<script src="contents.zh.js"></script>
+<script src="../contents.js"></script>
+
+<script src="../chapters.js"></script>
+<script src="../lib/release.js"></script>
+</body>
+</html>

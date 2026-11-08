@@ -14,6 +14,9 @@
   const { fmt, pl, list } = U.numbers(C.locale);
   const { esc, base, secs, clock, toolsOf, textsOf, lineCount, readLines, range } = U;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+  // The site's root, relative to this page: <body data-root> on a page deeper than site/loop/
+  // (site/zh/loop/ sets "../../"). The games, the stills and the trace links are under it.
+  const ROOT = document.body.dataset.root || "../";
 
   const allTools = calls.flatMap(toolsOf);
 
@@ -400,7 +403,8 @@
 
   // ---------- reading-pace play ----------
   function dwell(s) {
-    const words = (C.steps[s.key].text(d).replace(/<[^>]+>/g, " ").match(/\S+/g) || []).length;
+    // A word, or one Chinese character (Chinese has no spaces between words).
+    const words = (C.steps[s.key].text(d).replace(/<[^>]+>/g, " ").match(/[\u3400-\u9fff]|[^\s\u3400-\u9fff]+/g) || []).length;
     return Math.min(12000, Math.max(5000, 2500 + words * 160));
   }
   function setPlayLabel() {
@@ -537,13 +541,13 @@
   // until the reader presses play, on any device.
   document.querySelectorAll(".game").forEach((fig) => {
     const box = fig.querySelector(".game-frame");
-    const src = `../game/run${T.run.index}/${fig.dataset.game}/index.html`;
+    const src = `${ROOT}game/run${T.run.index}/${fig.dataset.game}/index.html`;
     // The still is the first frame the game draws (both games draw the same one), light or dark.
     function poster() {
       box.innerHTML =
         `<button type="button" class="game-poster">` +
-          `<picture><source srcset="../img/game-start-dark.webp" media="(prefers-color-scheme: dark)">` +
-          `<img class="game-still" src="../img/game-start-light.webp" width="720" height="480" alt="" loading="lazy" decoding="async"></picture>` +
+          `<picture><source srcset="${ROOT}img/game-start-dark.webp" media="(prefers-color-scheme: dark)">` +
+          `<img class="game-still" src="${ROOT}img/game-start-light.webp" width="720" height="480" alt="" loading="lazy" decoding="async"></picture>` +
           `<span class="game-play">${ICON.play}<span>${esc(C.game.play)}</span></span>` +
         `</button>`;
       box.querySelector(".game-poster").addEventListener("click", start);
@@ -596,7 +600,7 @@
     else el.innerHTML = v;
   });
   $("runs").innerHTML = runInfo.map((r) => `<li>${esc(C.prose.runLine(r))}${r.index === T.run.index ? esc(C.prose.runShown) : ""}</li>`).join("");
-  $("trace-links").innerHTML = list(runInfo.map((r) => `<a href="../data/trace-02-run${r.index}.js">${esc(C.prose.traceLink(r.k))}</a>`));
+  $("trace-links").innerHTML = list(runInfo.map((r) => `<a href="${ROOT}data/trace-02-run${r.index}.js">${esc(C.prose.traceLink(r.k))}</a>`));
 
   setPlayLabel();
   setLiveLabel();

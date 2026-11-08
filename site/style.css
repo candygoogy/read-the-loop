@@ -1196,3 +1196,33 @@ a.cn-link:active { transform: scale(0.98); }
   html { scroll-behavior: auto; }
 }
 .colophon .site-credit { margin-top: 1.4rem; padding-top: 1rem; border-top: 1px dashed var(--rule); }
+
+/* ---------- Chinese pages (site/zh/) ---------- */
+/* System CJK fonts only, nothing downloaded. Latin letters and digits still come from Fraunces,
+   Source Serif 4 and IBM Plex Mono, which are first in each stack; Chinese characters fall through
+   to a serif CJK face where one is installed (Noto Serif CJK / Source Han Serif, Songti on macOS for
+   headings), otherwise to the system's sans (PingFang, Hiragino Sans GB, Microsoft YaHei, Noto Sans CJK). */
+:root:lang(zh) {
+  --cjk-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC";
+  --cjk-serif: "Noto Serif CJK SC", "Source Han Serif SC", "Noto Serif SC";
+  --display: "Fraunces", var(--cjk-serif), "Songti SC", var(--cjk-sans), Georgia, serif;
+  --body: "Source Serif 4", var(--cjk-serif), var(--cjk-sans), Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, var(--cjk-sans), monospace;
+}
+/* Chinese needs more room between lines than Latin, and no tight tracking. Each rule tests the
+   element's own language, so recorded English inside a Chinese page (lang="en") keeps the Latin
+   settings. */
+body:lang(zh) { line-height: 1.8; }
+h1:lang(zh) { line-height: 1.15; letter-spacing: 0.01em; font-size: clamp(2.5rem, 7.6vw, 5.6rem); }
+.dek:lang(zh) { line-height: 1.65; }
+.prose h2:lang(zh), .toc h3:lang(zh) { line-height: 1.3; letter-spacing: 0.01em; }
+.prose h3:lang(zh), .step-title:lang(zh), .cn-title:lang(zh), .prose .coming .coming-title:lang(zh) { line-height: 1.4; letter-spacing: 0; }
+.game figcaption:lang(zh), .card .note:lang(zh), .toc-later p:lang(zh), .prose .coming:lang(zh) { line-height: 1.75; }
+.colophon:lang(zh) { line-height: 1.75; }
+.context-count:lang(zh), .stats .l:lang(zh), .legend:lang(zh) { line-height: 1.6; }
+.toc-cap:lang(zh), .live-status:lang(zh), .hs .hs-note:lang(zh) { line-height: 1.6; }
+/* Small labels: uppercase does nothing to Chinese, and wide tracking pulls the characters apart. */
+.kicker:lang(zh), .toc-n:lang(zh), .toc-later-head:lang(zh), .cn-dir:lang(zh), .step-who:lang(zh),
+.prose .coming .coming-when:lang(zh), .card-head:lang(zh) { letter-spacing: 0.04em; }
+/* Chinese has no italics; a slanted CJK face is a synthetic one. */
+em:lang(zh), i:lang(zh), .card pre .more:lang(zh) { font-style: normal; }

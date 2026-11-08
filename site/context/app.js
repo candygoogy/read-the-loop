@@ -13,6 +13,8 @@
   const { fmt, pl, list } = U.numbers(C.locale);
   const $ = (id) => document.getElementById(id);
   const SVGNS = "http://www.w3.org/2000/svg";
+  // The site's root relative to this page: "../" here, "../../" on a translated page (<body data-root>).
+  const ROOT = document.body.dataset.root || "../";
 
   // ---------- settings we chose when recording (RECORDING-03.md); they aren't in the trace ----------
   const AUTOCOMPACT = 100000; // --autocompact 100k
@@ -148,7 +150,7 @@
 
   const d = {
     calls: fmt(N), toolCalls: fmt(allTools.length),
-    toolCountList: list(toolCounts.map(([k, v]) => `${fmt(v)} ${k}`)),
+    toolCountList: list(toolCounts.map(([k, v]) => C.toolCount(fmt(v), k))),
     durationLong: C.durationLong(fmt(durM), fmt(durR)), duration: C.duration(fmt(durM), fmt(durR)),
     date: new Date(T.recorded + "T12:00:00Z").toLocaleDateString(C.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }),
     model: esc(T.model), ccv: esc(T.claude_code_version), source: esc(T.source), tools: esc(list(T.tools_available)),
@@ -648,7 +650,7 @@
   fill();
   $("speed-ctx-title").textContent = C.speed.panelCtx(d.rCtx);
   $("speed-out-title").textContent = C.speed.panelOut(d.rOut);
-  $("trace-links").innerHTML = `<a href="../data/trace-03.js">${esc(C.colophon.traceCh2)}</a>, <a href="../data/trace-02-run2.js">${esc(C.colophon.traceCh1)}</a>`;
+  $("trace-links").innerHTML = `<a href="${ROOT}data/trace-03.js">${esc(C.colophon.traceCh2)}</a>${esc(C.colophon.traceSep)}<a href="${ROOT}data/trace-02-run2.js">${esc(C.colophon.traceCh1)}</a>`;
   initExplorer();
   buildTable();
   responsive($("compare-chart"), drawCompare);
