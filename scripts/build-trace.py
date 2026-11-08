@@ -16,9 +16,9 @@ A tool step whose id is in the result event's permission_denials list gets resul
 
 --then adds a manual /compact recorded on the same session (claude -p "/compact" --resume <id>) as
 trace.compaction, with any model calls of that segment in trace.compaction.calls. --session reads
-Claude Code's own session file: it gives each call's final output_tokens and, after the compaction
-boundary, the files Claude Code attached again (trace.compaction.reattached). Only those fields are
-copied from it; the session file holds much more (prompt snapshots, request blobs, account ids).
+Claude Code's own session file: it gives each call's final output_tokens (the run's and the
+compaction segment's) and, after the compaction boundary, the files Claude Code attached again
+(trace.compaction.reattached). Only those fields are copied from it; the session file holds much more (prompt snapshots, request blobs, account ids).
 
 --after adds a later prompt on the same session, recorded after the compaction (claude -p "<prompt>"
 --resume <id>), as trace.after_compaction: {prompt, calls, totals, final_answer}. Its calls have the
@@ -31,13 +31,13 @@ Timing: t_ms is ms since the start of the session. With --times (written by scri
 the moment each line arrived; without it, it comes from the events' own timestamps, and the start is
 the first model event minus the recorded time to first token (ttft_ms).
 
---fixture copies the fixture to <files-out>/before/, replays the recorded Edit and Write calls onto
-<files-out>/after/, and fails unless after/ matches the recording folder byte for byte (so a file
+--fixture copies the fixture to <files-out>/before/, replays the recorded Edit and Write calls (of the
+run, then of the --then and --after segments, in that order) onto <files-out>/after/, and fails unless after/ matches the recording folder byte for byte (so a file
 changed some other way, e.g. by Bash, is caught). node_modules, __pycache__ and dotfiles are ignored.
 
 Before writing, a leak check fails the build if any string in the trace still holds the recording
 folder (also as ~/.claude/projects names it, D--x-y), the local user name, a home folder (":\\Users",
-"/Users/") or a drive path ("D:\\", "C:/").
+"/Users/"), a drive path ("D:\\", "C:/"), a session id or an email address (rules in leakcheck.py).
 A home folder already redacted to "you" (C:\\Users\\you\\...) is allowed.
 """
 import argparse
@@ -49,6 +49,9 @@ import pathlib
 import re
 import shutil
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import leakcheck  # noqa: E402  (scripts/leakcheck.py, shared with extract-tools.py)
 
 IGNORED_DIRS = {"node_modules", "__pycache__"}
 
@@ -170,14 +173,17 @@ def collect_calls(events, t, result):
     return by_id
 
 
-def final_usage(by_id, session, result):
+def final_usage(by_id, session, result, whole=True):
     """Set each call's output_tokens from the session file.
 
     The stream can't give it: every assistant event of one call carries the same usage, taken when the
     message started (output_tokens is a few tokens, stop_reason is null). In recording 03 those add up to
     1,291 against result.usage.output_tokens 24,637; recordings 01 and 02 are short in the same way. The
     session file's assistant records carry the final usage, and those add up to the result exactly, which
-    is checked here. Their input and cache fields must match the stream's."""
+    is checked here (whole=True). Their input and cache fields must match the stream's.
+
+whole=False is for the compaction segment: its summarising call shows no assistant event in the
+stream, so the calls that do can only add up to at most the result's output_tokens."""
     final = {r["message"]["id"]: r["message"]["usage"] for r in session if r.get("type") == "assistant"}
     for mid, call in by_id.items():
         u = final.get(mid)
@@ -191,7 +197,7 @@ def final_usage(by_id, session, result):
             sys.exit(f"The session file's usage for {mid} doesn't match the stream's.")
         call["output_tokens"] = u["output_tokens"]
     total = sum(c["output_tokens"] for c in by_id.values())
-    if total != result["usage"]["output_tokens"]:
+    if total > result["usage"]["output_tokens"] or (whole and total != result["usage"]["output_tokens"]):
         sys.exit(f"Per-call output tokens add up to {total}, but the result says {result['usage']['output_tokens']}.")
 
 
@@ -217,6 +223,7 @@ def build_compaction(events, t, run_result, session=None):
     summary = next(e for i, e in events if i > i_b and e.get("type") == "user" and e.get("isSynthetic"))
     content = summary["message"]["content"]
     result = next(e for _, e in events if e.get("type") == "result")
+    calls = collect_calls(events, t, result)
 
     # total_cost_usd and modelUsage are cumulative on a resumed session: here they include the whole run.
     # The segment's own cost is model_usage_since_last_result (used when present); without it, the
@@ -237,9 +244,10 @@ def build_compaction(events, t, run_result, session=None):
         "cost_usd": round(cost, 4),
         # Model calls that show up as assistant events. The summarising call itself has none; its cost
         # is in cost_usd.
-        "calls": list(collect_calls(events, t, result).values()),
+        "calls": list(calls.values()),
     }
     if session is not None:
+        final_usage(calls, session, result, whole=False)
         comp["reattached"] = reattached(session, boundary["uuid"])
     return comp
 
@@ -424,44 +432,10 @@ def clean(obj, redact):
     return obj
 
 
-def strings(obj):
-    if isinstance(obj, str):
-        yield obj
-    elif isinstance(obj, list):
-        for x in obj:
-            yield from strings(x)
-    elif isinstance(obj, dict):
-        for k, v in obj.items():
-            yield k
-            yield from strings(v)
-
-
-PUBLIC_EMAILS = ("noreply@anthropic.com",)
-REDACTED_HOME = re.compile(r"(?:[A-Za-z]:)?[\\/]Users[\\/]you(?=[\\/]|$)", re.I)
-
-
 def find_leaks(trace, variants, user):
-    """Return a short excerpt around each leak. Checks the strings themselves, not their JSON escapes."""
-    patterns = [(re.escape(v), re.I) for v in variants | {project_folder(v) for v in variants}] + [
-        (rf"\b{re.escape(user)}\b", re.I),
-        (r":\\Users", re.I),
-        (r"/Users/", 0),
-        (r"(?<![A-Za-z])[A-Za-z]:[\\/]", 0),  # a drive path such as D:\ or C:/
-        # An email address. Claude Code sends the account's email to the model (RECORDING-05); it must never
-        # reach a trace, even though the stream recordings so far don't contain it.
-        (r"[\w.+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b", 0),
-    ]
-    hits = []
-    for s in strings(trace):
-        # A home folder already redacted to "you" (e.g. Python's own path in an error) is fine.
-        s = REDACTED_HOME.sub("~", s)
-        # Public, non-personal addresses that Claude Code itself writes (e.g. in a commit trailer it suggests).
-        for public in PUBLIC_EMAILS:
-            s = s.replace(public, "")
-        for pat, flags in patterns:
-            for m in re.finditer(pat, s, flags):
-                hits.append(s[max(0, m.start() - 30):m.end() + 30].replace("\n", " "))
-    return hits
+    """Return a short excerpt around each leak (the rules are in leakcheck.py). variants: the recording
+    folder's spellings and the session ids; the folder as ~/.claude/projects names it is added here."""
+    return leakcheck.find_leaks(trace, variants | {project_folder(v) for v in variants}, user)
 
 
 # --- replaying file edits ----------------------------------------------------------------------
@@ -487,6 +461,12 @@ def rel_path(file_path, variants):
     if re.match(r"[A-Za-z]:/|/", p):
         sys.exit(f"A recorded edit writes outside the recording folder: {file_path}")
     return p
+
+
+def segment_calls(trace):
+    """Every model call in the order it happened: the run, the compaction segment, the prompt after it."""
+    return (trace["calls"] + trace.get("compaction", {}).get("calls", [])
+            + trace.get("after_compaction", {}).get("calls", []))
 
 
 def replay(calls, fixture, files_out, rec_dir, variants):
@@ -560,7 +540,7 @@ def main(argv=None):
     trace = build(events, prompt, times, (a.run, a.runs) if a.run is not None else None, session, then, after)
 
     if a.fixture:
-        problems = replay(trace["calls"], a.fixture, a.files_out, a.rec_dir, variants)
+        problems = replay(segment_calls(trace), a.fixture, a.files_out, a.rec_dir, variants)
         if problems:
             sys.exit("Replaying the recorded edits doesn't reproduce the recording folder:\n  " + "\n  ".join(problems))
         print("replay ok: after/ matches", a.rec_dir)

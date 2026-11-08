@@ -37,6 +37,7 @@
 <div class="og" id="og"></div>
 
 <script src="../../site/chapters.js"></script>
+<script src="../../site/lib/trace-ui.js"></script>
 <script>
   // Build the card before contents.js draws the picture into it.
   (() => {
@@ -44,7 +45,7 @@
     const C = window.CHAPTERS;
     const slug = q.get("slug") || "";
     const ch = C.list.find((c) => c.slug === slug);
-    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const esc = window.TraceUI.esc;
     // The contents card shows chapter 1's picture: the loop, one bar per call.
     const viz = ch ? ch.slug : "loop";
     const title = ch ? ch.title : C.name;
@@ -62,7 +63,6 @@
 <script src="../../site/data/trace-03.js"></script>
 <script>TRACES.context = TRACE;</script>
 <script src="../../site/data/tools-05.js"></script>
-<script src="../../site/lib/trace-ui.js"></script>
 <script src="../../site/contents.js"></script>
 </body>
 </html>

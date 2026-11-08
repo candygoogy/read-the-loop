@@ -38,6 +38,7 @@
 
   var uid = 0;
 
+  // Its own copy of TraceUI.esc (plus null to ""), so the widget keeps working without lib/trace-ui.js.
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];

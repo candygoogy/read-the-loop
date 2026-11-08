@@ -1,23 +1,29 @@
 """Captured request bodies -> the tool manual's shape and sizes (.json + .js), with no private text.
 
-Usage: python scripts/extract-tools.py <bodies-dir> <raw.jsonl> <rec_dir> <out.json>
+Usage: python scripts/extract-tools.py <bodies-dir> <raw.jsonl> <rec_dir> <out.json> [--recording NN]
 
 <bodies-dir> holds the /v1/messages request bodies saved by scripts/capture-proxy.py (001.json, ...),
 <raw.jsonl> the same session's stream-json recording (for the token counts), <rec_dir> the folder
-the session ran in. Writes <out.json> and site/data/<out stem>.js (window.TOOLS).
+the session ran in. Writes <out.json> and site/data/<out stem>.js (window.TOOLS). The output's
+"source" names the recording: NN from --recording, or else from the stream's file name (raw-NN.jsonl).
 
 What it publishes: per tool, its name, sizes, input property names, which are required, and the
 description's first sentence (at most 200 characters). For the rest of the request only sizes,
 counts, roles and block types: never the system prompt's text, the messages' text or the metadata.
 Sizes are characters of the JSON exactly as sent (the script checks that re-serialising each body
-gives back its bytes). Before writing, a leak check fails if the output holds the local user name,
-a drive path or home folder, the recording folder, or any value from the requests' metadata.
+gives back its bytes). Before writing, a leak check (scripts/leakcheck.py, shared with build-trace.py)
+fails if the output holds the local user name, a drive path or home folder, an email address, the
+recording folder, the word "scratch", or any value from the requests' metadata.
 """
+import argparse
 import getpass
 import json
 import pathlib
 import re
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import leakcheck  # noqa: E402
 
 EXCERPT_MAX = 200
 
@@ -117,7 +123,7 @@ def call_usage(raw_path):
     return calls, init_tools, version
 
 
-def build(bodies, raw_path):
+def build(bodies, raw_path, recording):
     first = bodies[0]
     calls, init_tools, version = call_usage(raw_path)
     if len(calls) != len(bodies):
@@ -132,7 +138,8 @@ def build(bodies, raw_path):
 
     same = lambda key: all(compact(b.get(key)) == compact(first.get(key)) for b in bodies)
     return {
-        "source": "Request bodies of recording 05, captured by scripts/capture-proxy.py; tokens from raw-05's stream.",
+        "source": f"Request bodies of recording {recording}, captured by scripts/capture-proxy.py; "
+                  f"tokens from raw-{recording}'s stream.",
         "claude_code_version": version,
         "model": first["model"],
         "requests": len(bodies),
@@ -182,43 +189,30 @@ def build(bodies, raw_path):
     }
 
 
-def strings(obj):
-    if isinstance(obj, str):
-        yield obj
-    elif isinstance(obj, list):
-        for x in obj:
-            yield from strings(x)
-    elif isinstance(obj, dict):
-        for k, v in obj.items():
-            yield k
-            yield from strings(v)
-
-
 def find_leaks(out, bodies, rec_dir, user):
     rec_dir = rec_dir.rstrip("/\\")
     secrets = {rec_dir, rec_dir.replace("\\", "/"), rec_dir.replace("/", "\\"), pathlib.PurePath(rec_dir).name}
     for b in bodies:  # metadata holds ids (device, account, session); none may turn up in the output
-        for s in strings(b.get("metadata", {})):
+        for s in leakcheck.strings(b.get("metadata", {})):
             secrets |= set(re.findall(r"[0-9a-f-]{16,}", s, re.I)) | {s}
-    patterns = [(re.escape(s), re.I) for s in secrets if s] + [
-        (rf"\b{re.escape(user)}\b", re.I), (r":\\Users", re.I), (r"/Users/", 0), (r"scratch", re.I),
-        (r"(?<![A-Za-z])[A-Za-z]:[\\/]", 0),  # a drive path such as D:\ or C:/
-        (r"[\w.+-]+@[\w-]+\.[\w.-]+", 0),  # an email address
-    ]
-    hits = []
-    for s in strings(out):
-        for p, flags in patterns:
-            for m in re.finditer(p, s, flags):
-                hits.append(s[max(0, m.start() - 30):m.end() + 30].replace("\n", " "))
-    return hits
+    return leakcheck.find_leaks(out, secrets, user, extra=[(r"scratch", re.I)])
 
 
 def main(argv):
-    if len(argv) != 4:
-        sys.exit(__doc__)
-    bodies_dir, raw, rec_dir, out_path = argv
-    bodies = load(bodies_dir)
-    out = build(bodies, raw)
+    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p.add_argument("bodies_dir")
+    p.add_argument("raw")
+    p.add_argument("rec_dir")
+    p.add_argument("out")
+    p.add_argument("--recording", help="the recording's number, e.g. 05 (default: from raw-NN.jsonl)")
+    a = p.parse_args(argv)
+    m = re.fullmatch(r"raw-(.+)", pathlib.Path(a.raw).stem)
+    recording = a.recording or (m and m[1])
+    if not recording:
+        p.error(f"can't tell the recording's number from {a.raw}; pass --recording NN")
+    rec_dir, out_path = a.rec_dir, a.out
+    bodies = load(a.bodies_dir)
+    out = build(bodies, a.raw, recording)
     leaks = find_leaks(out, bodies, rec_dir, getpass.getuser())
     if leaks:
         sys.exit("Leak check failed, nothing written. Still in the output:\n  " + "\n  ".join(leaks))

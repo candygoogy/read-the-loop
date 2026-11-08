@@ -16,12 +16,16 @@ SAMPLE = DATA / "sample-session.jsonl"
 # Temp folders go in out/ (gitignored), next to the repo rather than in the system temp folder.
 TMP_BASE = REPO / "out" / "test-tmp"
 
-RECORDINGS = pathlib.Path("D:/Workspace/Docs/inside-the-loop/recordings")
+# The raw recordings and the folders they ran in are on the recording machine only, named in local.json
+# (gitignored, see local.example.json). Without them the test of the committed traces is skipped.
+LOCAL = json.loads((REPO / "local.json").read_text(encoding="utf-8")) if (REPO / "local.json").exists() else {}
+RECORDINGS = pathlib.Path(LOCAL["recordings"]) if "recordings" in LOCAL else None
+SCRATCH = pathlib.Path(LOCAL.get("scratch", "."))
 PROMPT_02 = "In my game the ball sometimes goes straight through the paddle. Please find the bug and fix it."
 # (name, rec dir, alias, prompt, uses a .times.json, run) for each committed trace.
-COMMITTED = [("01", "D:/Workspace/Claude/scratch/itl-rec-01", "~/cart",
+COMMITTED = [("01", str(SCRATCH / "itl-rec-01"), "~/cart",
               "The tests are failing. Please find the bug and fix it.", False, None)] + [
-    (f"02-run{k}", f"D:/Workspace/Claude/scratch/itl-rec-02c-run{k}", "~/game", PROMPT_02, True, (k, 3))
+    (f"02-run{k}", str(SCRATCH / f"itl-rec-02c-run{k}"), "~/game", PROMPT_02, True, (k, 3))
     for k in (1, 2, 3)]
 
 BUGGY = b"def f():\n    return 1 - 2\n"
@@ -152,6 +156,47 @@ class BuildTraceTest(unittest.TestCase):
             self.assertIn("app.py: differs from the recording folder", r.stderr)
             self.assertIn("notes.txt: in the recording folder but not made by Edit/Write", r.stderr)
             self.assertFalse(out.exists())
+
+    def test_replay_includes_later_segments(self):
+        """Edits made after a compaction (--then/--after) are replayed too, after the run's own."""
+        bt = load_builder()
+        with tmpdir() as t:
+            tmp = pathlib.Path(t)
+            fixture, rec, files = tmp / "fixture", tmp / "rec", tmp / "files"
+            for d in (fixture, rec):
+                d.mkdir()
+            (fixture / "app.py").write_bytes(BUGGY)
+            (rec / "app.py").write_bytes(FIXED)
+            (rec / "notes.md").write_bytes(b"done\n")
+
+            def tool(name, **inp):
+                return {"kind": "tool", "tool": name, "id": name, "result": None, "input": inp}
+            edit = tool("Edit", file_path=str(rec / "app.py"), old_string="1 - 2", new_string="1 + 2")
+            write = tool("Write", file_path=str(rec / "notes.md"), content="done\n")
+            trace = {"calls": [{"output": [edit]}], "compaction": {"calls": []},
+                     "after_compaction": {"calls": [{"output": [write]}]}}
+            variants = bt.dir_variants(str(rec))
+            self.assertEqual(bt.replay(bt.segment_calls(trace), fixture, files, rec, variants), [])
+            # The run's calls alone miss the file written after the compaction.
+            self.assertEqual(bt.replay(trace["calls"], fixture, files, rec, variants),
+                             ["notes.md: in the recording folder but not made by Edit/Write"])
+
+    def test_compaction_calls_get_output_tokens(self):
+        """A compaction segment's visible calls get output_tokens from the session file; they may add
+        up to less than the result (the summarising call has no assistant event), never to more."""
+        bt = load_builder()
+        usage = {"input_tokens": 3, "cache_read_input_tokens": 10, "cache_creation_input_tokens": 0,
+                 "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0}}
+        call = {"input_tokens": 3, "cached_tokens": 10, "new_tokens": 3, "cache_write_5m": 0,
+                "cache_write_1h": 0, "output_tokens": None}
+        session = [{"type": "assistant", "message": {"id": "m1", "usage": usage | {"output_tokens": 40}}}]
+        by_id = {"m1": dict(call)}
+        bt.final_usage(by_id, session, {"usage": {"output_tokens": 300}}, whole=False)
+        self.assertEqual(by_id["m1"]["output_tokens"], 40)
+        with self.assertRaises(SystemExit):
+            bt.final_usage({"m1": dict(call)}, session, {"usage": {"output_tokens": 30}}, whole=False)
+        with self.assertRaises(SystemExit):  # the run itself must add up exactly
+            bt.final_usage({"m1": dict(call)}, session, {"usage": {"output_tokens": 300}})
 
     def test_leak_check_allows_only_redacted_homes(self):
         bt = load_builder()
@@ -308,6 +353,8 @@ class BuildTraceTest(unittest.TestCase):
         """Rebuilding 01 and 02-run1..3 keeps every field and value; only new fields may appear."""
         bt = load_builder()
         for name, rec_dir, alias, prompt, timed, run in COMMITTED:
+            if RECORDINGS is None:
+                self.skipTest("no recordings folder in local.json")
             raw = RECORDINGS / f"raw-{name}.jsonl"
             if not raw.exists():
                 self.skipTest(f"{raw.name} not on this machine")

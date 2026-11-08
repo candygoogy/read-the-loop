@@ -30,11 +30,10 @@
 
 <script src="../site/data/trace-01.js"></script>
 <script src="../site/harness-step.js"></script>
+<script src="../site/lib/trace-ui.js"></script>
 <script>
   (function () {
-    var esc = function (s) {
-      return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
-    };
+    var esc = window.TraceUI.esc;
     var t = window.TRACE.calls[0].output[0];
     var text = t.result.text.replace(/\s+$/, "");
     var lines = text.split("\n").length;

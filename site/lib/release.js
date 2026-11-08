@@ -73,7 +73,8 @@
   const lang = L[lang0] ? lang0 : "en";
   const T = L[lang];
 
-  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  // Every page that loads this script loads lib/trace-ui.js first. All attributes below are double-quoted.
+  const esc = window.TraceUI.esc;
   const chev = (d) => `<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
   const CHEV_NEXT = "m6 3 5 5-5 5", CHEV_PREV = "M10 3 5 8l5 5";
 
