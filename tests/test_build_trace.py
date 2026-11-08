@@ -160,6 +160,11 @@ class BuildTraceTest(unittest.TestCase):
         for bad in (r"D:\Workspace\Docs\notes", r"C:\Users\someone\x", "/Users/bob/x"):
             self.assertTrue(bt.find_leaks({"text": bad}, set(), "someone"), bad)
 
+    def test_leak_check_catches_email_addresses(self):
+        bt = load_builder()
+        self.assertTrue(bt.find_leaks({"t": "the account is someone@example.org"}, set(), "x"))
+        self.assertEqual(bt.find_leaks({"t": "Co-Authored-By: Claude <noreply@anthropic.com>"}, set(), "x"), [])
+
     def test_short_home_form_is_redacted(self):
         bt = load_builder()
         redact = bt.make_redact(set(), "~/x", "someone")
@@ -250,6 +255,54 @@ class BuildTraceTest(unittest.TestCase):
             r = run_builder(*args)
             self.assertNotEqual(r.returncode, 0)
             self.assertIn("add up to 301", r.stderr)
+
+    def test_prompt_after_compaction(self):
+        with tmpdir() as t:
+            tmp = pathlib.Path(t)
+            rec = tmp / "rec"
+            rec.mkdir()
+            raw, then, after, session = (write_sample(tmp, rec, DATA / n) for n in
+                                         ("compact-run.jsonl", "compact-segment.jsonl", "after-segment.jsonl",
+                                          "after-session.jsonl"))
+            after_times = tmp / "after.times.json"
+            # An hour after the run started (10:00:00, from its event timestamps).
+            after_times.write_text(json.dumps({"started_at": "2026-01-02T11:00:00.000Z",
+                                               "arrivals_ms": [0, 100, 200, 300, 400]}))
+            out = tmp / "data" / "trace-after.json"
+            out.parent.mkdir()
+            args = [raw, out, rec, "--prompt", "What does app.py print?", "--alias", "~/app",
+                    "--then", then, "--session", session, "--after", after, "--after-times", after_times]
+
+            r = run_builder(*args)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            text = out.read_text(encoding="utf-8")
+            trace = json.loads(text)
+            aft = trace["after_compaction"]
+            # The prompt isn't in the stream; it comes from the session file, redacted.
+            self.assertEqual(aft["prompt"], "What did you change in ~/app/app.py?")
+            keys = ("t_ms", "context_tokens", "cached_tokens", "new_tokens", "input_tokens", "cache_write_5m",
+                    "cache_write_1h", "output_tokens", "added_since_previous")
+            self.assertEqual(set(aft["calls"][0]), set(trace["calls"][0]))
+            self.assertEqual([tuple(c[k] for k in keys) for c in aft["calls"]],
+                             [(3600100, 1102, 600, 502, 2, 0, 500, 40, None),
+                              (3600300, 1131, 1100, 31, 1, 0, 30, 60, 29)])
+            self.assertEqual(aft["calls"][0]["output"][0]["input"]["file_path"], "~/app/app.py")
+            # Its own totals: 0.02, not the cumulative total_cost_usd 0.10.
+            self.assertEqual(aft["totals"], {"model_calls": 2, "output_tokens": 100, "cache_read_tokens": 1700,
+                                             "cache_write_tokens": 530, "cost_usd": 0.02, "duration_s": 0.4,
+                                             "ttft_ms": 100})
+            self.assertEqual(aft["final_answer"], "I changed nothing in ~/app/app.py; it prints 1.")
+            # The compaction part is unchanged by the later records in the session file.
+            self.assertEqual(trace["compaction"]["reattached"],
+                             [{"path": "~/app/notes.md", "kind": "stub", "chars": None},
+                              {"path": "~/app/app.py", "kind": "full", "chars": 9}])
+            for s in (getpass.getuser(), str(rec), "SECRET", "budget_usd"):
+                self.assertNotIn(s, text)
+
+            # --after needs the session file.
+            r = run_builder(*args[:args.index("--session")] + args[args.index("--after"):])
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("--after needs --session", r.stderr)
 
     def test_committed_traces_keep_existing_fields(self):
         """Rebuilding 01 and 02-run1..3 keeps every field and value; only new fields may appear."""

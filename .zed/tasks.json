@@ -34,7 +34,9 @@
       "--times", "D:/Workspace/Docs/inside-the-loop/recordings/raw-03.times.json",
       "--then", "D:/Workspace/Docs/inside-the-loop/recordings/raw-03-compact.jsonl",
       "--then-times", "D:/Workspace/Docs/inside-the-loop/recordings/raw-03-compact.times.json",
-      "--session", "D:/Workspace/Docs/inside-the-loop/recordings/session-03/14aed0d3-99b2-4729-8689-96de34931285.jsonl"
+      "--session", "D:/Workspace/Docs/inside-the-loop/recordings/session-03/14aed0d3-99b2-4729-8689-96de34931285.jsonl",
+      "--after", "D:/Workspace/Docs/inside-the-loop/recordings/raw-03-after.jsonl",
+      "--after-times", "D:/Workspace/Docs/inside-the-loop/recordings/raw-03-after.times.json"
     ],
     "cwd": "$ZED_WORKTREE_ROOT"
   },

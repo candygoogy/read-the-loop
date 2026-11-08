@@ -4,6 +4,7 @@ Usage: python scripts/build-trace.py <raw.jsonl> data/<name>.json <recording-dir
            [--alias ~/cart] [--times <raw>.times.json] [--run K --runs N]
            [--fixture fixtures/<name> --files-out <dir>]
            [--then <raw-compact.jsonl> [--then-times <raw-compact>.times.json]] [--session <session>.jsonl]
+           [--after <raw-after.jsonl> [--after-times <raw-after>.times.json]]  (--after needs --session)
 (also writes site/data/<name>.js)
 
 Redacts the recording folder (it becomes --alias) and the local user name. Everything else is kept
@@ -18,6 +19,13 @@ trace.compaction, with any model calls of that segment in trace.compaction.calls
 Claude Code's own session file: it gives each call's final output_tokens and, after the compaction
 boundary, the files Claude Code attached again (trace.compaction.reattached). Only those fields are
 copied from it; the session file holds much more (prompt snapshots, request blobs, account ids).
+
+--after adds a later prompt on the same session, recorded after the compaction (claude -p "<prompt>"
+--resume <id>), as trace.after_compaction: {prompt, calls, totals, final_answer}. Its calls have the
+same fields as trace.calls, with output_tokens from the session file and t_ms on the run's clock.
+Its totals are that run's own (the result's usage and model_usage_since_last_result), not the
+cumulative total_cost_usd. The stream doesn't hold the prompt, so it is read from the session file:
+the user record the run's first model call follows from.
 
 Timing: t_ms is ms since the start of the session. With --times (written by scripts/record.py) it is
 the moment each line arrived; without it, it comes from the events' own timestamps, and the start is
@@ -62,6 +70,8 @@ def parse_args(argv=None):
     p.add_argument("--then", help="a later recording on the same session holding a manual /compact")
     p.add_argument("--then-times", help="arrival times sidecar for --then")
     p.add_argument("--session", help="Claude Code's session file (.jsonl) for this session")
+    p.add_argument("--after", help="a later recording on the same session: one prompt after the compaction")
+    p.add_argument("--after-times", help="arrival times sidecar for --after")
     a = p.parse_args(argv)
     if (a.run is None) != (a.runs is None):
         p.error("--run and --runs go together")
@@ -69,6 +79,10 @@ def parse_args(argv=None):
         p.error("--fixture and --files-out go together")
     if a.then_times and not a.then:
         p.error("--then-times needs --then")
+    if a.after_times and not a.after:
+        p.error("--after-times needs --after")
+    if a.after and not a.session:
+        p.error("--after needs --session (its prompt and output tokens come from the session file)")
     return a
 
 
@@ -255,9 +269,63 @@ def reattached(session, boundary_uuid):
     return out
 
 
-def build(events, prompt, times=None, run=None, session=None, then=None):
+def run_totals(calls, result, cost):
+    return {
+        "model_calls": len(calls),
+        "output_tokens": result["usage"]["output_tokens"],
+        "cache_read_tokens": result["usage"]["cache_read_input_tokens"],
+        "cache_write_tokens": result["usage"]["cache_creation_input_tokens"],
+        "cost_usd": round(cost, 4),
+        "duration_s": round(result["duration_ms"] / 1000, 1),
+        "ttft_ms": result.get("ttft_ms"),
+    }
+
+
+def prompt_from_session(session, first_call_id):
+    """The prompt a resumed run was given: the user record that the run's first model call follows
+    from (walking parentUuid back past attachments and other records)."""
+    by_uuid = {r["uuid"]: r for r in session if r.get("uuid")}
+    r = next((r for r in session if r.get("type") == "assistant" and r["message"]["id"] == first_call_id), None)
+    if r is None:
+        sys.exit(f"The session file has no assistant record for model call {first_call_id}.")
+    while True:
+        r = by_uuid.get(r.get("parentUuid"))
+        if r is None:
+            sys.exit(f"Can't find the prompt of model call {first_call_id} in the session file.")
+        if r.get("type") == "user" and not (r.get("isMeta") or r.get("isCompactSummary")):
+            c = r["message"]["content"]
+            if isinstance(c, str):
+                return c
+            if not any(x.get("type") == "tool_result" for x in c):
+                return "\n".join(x.get("text", "") for x in c if x.get("type") == "text")
+
+
+def build_after(events, t, session, previous_result):
+    """trace.after_compaction from the recording of a prompt resumed after the compaction."""
+    result = next(e for _, e in events if e.get("type") == "result")
+    by_id = collect_calls(events, t, result)
+    if not by_id:
+        sys.exit("The --after recording has no model calls.")
+    final_usage(by_id, session, result)
+    calls = list(by_id.values())
+    # As for the compaction: total_cost_usd is cumulative on a resumed session.
+    since = result.get("model_usage_since_last_result")
+    if since:
+        cost = sum(m["costUSD"] for m in since.values())
+    else:
+        before = previous_result.get("modelUsage") or {}
+        cost = sum(m["costUSD"] - before.get(k, {}).get("costUSD", 0) for k, m in result["modelUsage"].items())
+    return {
+        "prompt": prompt_from_session(session, next(iter(by_id))),
+        "calls": calls,
+        "totals": run_totals(calls, result, cost),
+        "final_answer": result["result"],
+    }
+
+
+def build(events, prompt, times=None, run=None, session=None, then=None, after=None):
     """The trace before redaction. session: the session file's records. then: (events, times) of a
-    manual /compact recorded on the same session."""
+    manual /compact recorded on the same session. after: (events, times) of a prompt resumed after it."""
     init = next(e for _, e in events if e.get("type") == "system" and e.get("subtype") == "init")
     result = next(e for _, e in events if e.get("type") == "result")
     started_at, time_source, t = make_clock(events, result, times)
@@ -282,24 +350,25 @@ def build(events, prompt, times=None, run=None, session=None, then=None):
     trace |= {
         "tools_available": init["tools"],
         "calls": calls,
-        "totals": {
-            "model_calls": len(calls),
-            "output_tokens": result["usage"]["output_tokens"],
-            "cache_read_tokens": result["usage"]["cache_read_input_tokens"],
-            "cache_write_tokens": result["usage"]["cache_creation_input_tokens"],
-            # On a resumed session total_cost_usd adds up the whole conversation; this run's own cost is in
-            # model_usage_since_last_result. For a fresh run the two are the same.
-            "cost_usd": round(sum(m["costUSD"] for m in result["model_usage_since_last_result"].values())
-                              if result.get("model_usage_since_last_result") else result["total_cost_usd"], 4),
-            "duration_s": round(result["duration_ms"] / 1000, 1),
-            "ttft_ms": result.get("ttft_ms"),
-        },
+        # On a resumed session total_cost_usd adds up the whole conversation; this run's own cost is in
+        # model_usage_since_last_result. For a fresh run the two are the same.
+        "totals": run_totals(calls, result,
+                             sum(m["costUSD"] for m in result["model_usage_since_last_result"].values())
+                             if result.get("model_usage_since_last_result") else result["total_cost_usd"]),
         "final_answer": result["result"],
     }
+    previous = result
     if then:
         then_events, then_times = then
         trace["compaction"] = build_compaction(then_events, segment_clock(then_events, then_times, started_at),
                                                result, session)
+        previous = next(e for _, e in then_events if e.get("type") == "result")
+    if after:
+        if session is None:
+            sys.exit("--after needs --session.")
+        after_events, after_times = after
+        trace["after_compaction"] = build_after(after_events, segment_clock(after_events, after_times, started_at),
+                                                session, previous)
     return trace
 
 
@@ -366,6 +435,7 @@ def strings(obj):
             yield from strings(v)
 
 
+PUBLIC_EMAILS = ("noreply@anthropic.com",)
 REDACTED_HOME = re.compile(r"(?:[A-Za-z]:)?[\\/]Users[\\/]you(?=[\\/]|$)", re.I)
 
 
@@ -376,11 +446,17 @@ def find_leaks(trace, variants, user):
         (r":\\Users", re.I),
         (r"/Users/", 0),
         (r"(?<![A-Za-z])[A-Za-z]:[\\/]", 0),  # a drive path such as D:\ or C:/
+        # An email address. Claude Code sends the account's email to the model (RECORDING-05); it must never
+        # reach a trace, even though the stream recordings so far don't contain it.
+        (r"[\w.+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b", 0),
     ]
     hits = []
     for s in strings(trace):
         # A home folder already redacted to "you" (e.g. Python's own path in an error) is fine.
         s = REDACTED_HOME.sub("~", s)
+        # Public, non-personal addresses that Claude Code itself writes (e.g. in a commit trailer it suggests).
+        for public in PUBLIC_EMAILS:
+            s = s.replace(public, "")
         for pat, flags in patterns:
             for m in re.finditer(pat, s, flags):
                 hits.append(s[max(0, m.start() - 30):m.end() + 30].replace("\n", " "))
@@ -475,8 +551,12 @@ def main(argv=None):
     if a.then:
         then_events, then_lines = read_events(a.then)
         then = (then_events, read_times(a.then_times, a.then, then_lines))
+    after = None
+    if a.after:
+        after_events, after_lines = read_events(a.after)
+        after = (after_events, read_times(a.after_times, a.after, after_lines))
     session = [e for _, e in read_events(a.session)[0]] if a.session else None
-    trace = build(events, prompt, times, (a.run, a.runs) if a.run is not None else None, session, then)
+    trace = build(events, prompt, times, (a.run, a.runs) if a.run is not None else None, session, then, after)
 
     if a.fixture:
         problems = replay(trace["calls"], a.fixture, a.files_out, a.rec_dir, variants)
@@ -484,7 +564,8 @@ def main(argv=None):
             sys.exit("Replaying the recorded edits doesn't reproduce the recording folder:\n  " + "\n  ".join(problems))
         print("replay ok: after/ matches", a.rec_dir)
 
-    session_ids = {e["session_id"] for _, e in events + (then[0] if then else []) if e.get("session_id")}
+    session_ids = {e["session_id"] for _, e in events + (then[0] if then else []) + (after[0] if after else [])
+                   if e.get("session_id")}
     trace = clean(trace, make_redact(variants, a.alias, user, session_ids))
     leaks = find_leaks(trace, variants | session_ids, user)
     if leaks:
@@ -504,6 +585,10 @@ def main(argv=None):
         comp = trace["compaction"]
         print("compaction", comp["pre_tokens"], "->", comp["post_tokens"], "cost", comp["cost_usd"],
               "calls", len(comp["calls"]), "reattached", len(comp.get("reattached", [])))
+    if "after_compaction" in trace:
+        aft = trace["after_compaction"]
+        print("after compaction: calls", [(c["context_tokens"], c["cached_tokens"]) for c in aft["calls"]],
+              "cost", aft["totals"]["cost_usd"])
     print(js_path, js_path.stat().st_size, "bytes")
 
 
