@@ -3,21 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Inside the Loop</title>
-<meta name="description" content="How an AI coding agent actually works, shown on a real recorded session. Chapter 1: the loop.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>An agent is a loop · Read the Loop</title>
+<meta name="description" content="A model can only read text and write more. Follow a real Claude Code session as it fixes a bug in a small game, one round of the loop at a time.">
+<link rel="canonical" href="https://loop.candygoogy.dev/loop/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:title" content="An agent is a loop · Read the Loop">
+<meta property="og:description" content="A model can only read text and write more. Follow a real Claude Code session as it fixes a bug in a small game, one round of the loop at a time.">
+<meta property="og:url" content="https://loop.candygoogy.dev/loop/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/loop.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop, chapter 1: An agent is a loop, with a chart drawn from the recording">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="stylesheet" href="../style.css">
 <link rel="stylesheet" href="../harness-step.css">
 </head>
-<body>
+<body data-page="loop">
 
 <a class="skip-link" href="#setup">Skip the game</a>
 <a class="skip-link" href="#player">Skip to the step player</a>
 
 <header class="masthead band">
-  <p class="kicker"><a href="../index.html">Inside the Loop</a> · Chapter 1 of 8</p>
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · Chapter 1 of 8</p>
   <h1>An agent is a loop</h1>
   <p class="dek">A language model can do one thing: read text and write more text. It can't open a file, run a test or play a game. Below, one fixes a bug in a small game it never sees. Try the game first. The bug shows up within seconds.</p>
 </header>
@@ -188,7 +200,6 @@
 
 <nav class="chapter-nav band" aria-label="Chapters">
   <div class="cn">
-    <a class="cn-link cn-next" href="../context/index.html" rel="next"><span class="cn-dir">Next<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span><span class="cn-title">Chapter 2: The context window</span></a>
     <a class="cn-toc" href="../index.html">All chapters</a>
   </div>
 </nav>
@@ -205,5 +216,7 @@
 <script src="../lib/trace-ui.js"></script>
 <script src="../lib/motion.js"></script>
 <script src="app.js"></script>
+<script src="../chapters.js"></script>
+<script src="../lib/release.js"></script>
 </body>
 </html>

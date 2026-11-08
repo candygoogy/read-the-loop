@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Preview card</title>
+<!-- The template scripts/og.js renders into site/og/<slug>.png, 1200 × 630, light theme.
+     card.html?slug=<chapter slug>&dek=<one line>; no slug is the contents page's card.
+     The picture is the chapter's own picture from the contents page, drawn by site/contents.js from the
+     same recordings, so every number on a card is read from a trace when the card is rendered. -->
+<link rel="stylesheet" href="../../site/style.css">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  body { background-size: 26px 26px; }
+  .og {
+    box-sizing: border-box;
+    width: 1200px;
+    height: 630px;
+    padding: 60px 68px 52px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr auto;
+    column-gap: 56px;
+  }
+  .og-top { grid-column: 1 / -1; display: flex; align-items: center; gap: 18px; font: 600 22px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--model-text); }
+  .og-top img { width: 46px; height: 46px; flex: none; }
+  .og-top .of { margin-left: auto; color: var(--ink-2); }
+  .og-text { align-self: center; }
+  .og h1 { margin: 0 0 24px; font: 700 100px/0.95 var(--display); font-variation-settings: "opsz" 144; letter-spacing: -0.03em; word-spacing: 0.06em; text-wrap: balance; }
+  .og h1.long { font-size: 84px; }
+  .og .dek { margin: 0; font: 400 28px/1.32 var(--display); font-variation-settings: "opsz" 30; color: var(--ink-2); text-wrap: pretty; }
+  .og .toc-viz { align-self: center; width: 21rem; zoom: 1.35; margin: 0; }
+  .og-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; padding-top: 22px; border-top: 2px solid var(--rule); font: 500 21px/1.2 var(--mono); color: var(--ink-2); }
+  .og-foot b { font-weight: 600; color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="og" id="og"></div>
+
+<script src="../../site/chapters.js"></script>
+<script>
+  // Build the card before contents.js draws the picture into it.
+  (() => {
+    const q = new URLSearchParams(location.search);
+    const C = window.CHAPTERS;
+    const slug = q.get("slug") || "";
+    const ch = C.list.find((c) => c.slug === slug);
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    // The contents card shows chapter 1's picture: the loop, one bar per call.
+    const viz = ch ? ch.slug : "loop";
+    const title = ch ? ch.title : C.name;
+    document.getElementById("og").innerHTML = `
+      <div class="og-top"><img src="../../site/favicon.svg" alt=""><span>${esc(C.name)}</span><span class="of">${ch ? `Chapter ${ch.n} of ${C.list.length}` : `${C.list.length} chapters`}</span></div>
+      <div class="og-text"><h1${title.length > 16 ? ' class="long"' : ""}>${esc(title)}</h1><p class="dek">${esc(q.get("dek") || "")}</p></div>
+      <figure class="toc-viz" id="viz-${esc(viz)}"></figure>
+      <div class="og-foot"><b>${esc(C.site.replace(/^https?:\/\//, ""))}</b><span>From real recorded Claude Code sessions</span></div>`;
+    window.__card = { slug, viz };
+  })();
+</script>
+<script>window.TRACES = {};</script>
+<script src="../../site/data/trace-02-run2.js"></script>
+<script>TRACES.loop = TRACE;</script>
+<script src="../../site/data/trace-03.js"></script>
+<script>TRACES.context = TRACE;</script>
+<script src="../../site/data/tools-05.js"></script>
+<script src="../../site/lib/trace-ui.js"></script>
+<script src="../../site/contents.js"></script>
+</body>
+</html>

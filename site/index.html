@@ -3,25 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Inside the Loop</title>
-<meta name="description" content="How an AI coding agent actually works, shown on real recorded sessions, in eight chapters.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Read the Loop · How an AI coding agent works</title>
+<meta name="description" content="An illustrated explainer of how an AI coding agent works, built on real Claude Code sessions we recorded and you can step through, in eight chapters.">
+<link rel="canonical" href="https://loop.candygoogy.dev/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:title" content="Read the Loop · How an AI coding agent works">
+<meta property="og:description" content="An illustrated explainer of how an AI coding agent works, built on real Claude Code sessions we recorded and you can step through, in eight chapters.">
+<meta property="og:url" content="https://loop.candygoogy.dev/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/contents.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop: an illustrated explainer of how an AI coding agent works, with a chart drawn from a recorded session">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-page="contents">
 
 <header class="masthead band">
   <p class="kicker">An illustrated explainer</p>
-  <h1>Inside the Loop</h1>
+  <h1>Read the Loop</h1>
   <p class="dek">How an AI coding agent actually works, shown on real sessions we recorded and you can step through.</p>
 </header>
 
 <main class="band toc-main">
   <h2 class="sr-only">Chapters</h2>
+  <!-- Every chapter is here; site/lib/release.js sorts them into the two lists from site/chapters.js.
+       The markup below is the launch state, for a reader without JavaScript. -->
   <ol class="toc">
-    <li class="toc-item">
+    <li class="toc-item" data-ch="1" data-go="Start here">
       <div class="toc-text">
         <span class="toc-n">Chapter 1</span>
         <h3><a href="loop/index.html">An agent is a loop</a></h3>
@@ -30,7 +44,7 @@
       </div>
       <figure class="toc-viz" id="viz-loop"></figure>
     </li>
-    <li class="toc-item">
+    <li class="toc-item" data-ch="2">
       <div class="toc-text">
         <span class="toc-n">Chapter 2</span>
         <h3><a href="context/index.html">The context window</a></h3>
@@ -39,7 +53,7 @@
       </div>
       <figure class="toc-viz" id="viz-context"></figure>
     </li>
-    <li class="toc-item">
+    <li class="toc-item" data-ch="3">
       <div class="toc-text">
         <span class="toc-n">Chapter 3</span>
         <h3><a href="cache/index.html">Caching</a></h3>
@@ -48,45 +62,55 @@
       </div>
       <figure class="toc-viz" id="viz-cache"></figure>
     </li>
-    <li class="toc-item">
-      <div class="toc-text">
-        <span class="toc-n">Chapter 4</span>
-        <h3><a href="compaction/index.html">Compaction</a></h3>
-        <p>What happens when the conversation is squeezed into a summary, and what the agent still knows afterwards.</p>
-        <span class="toc-go" aria-hidden="true">Read<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span>
-      </div>
-      <figure class="toc-viz" id="viz-compaction"></figure>
-    </li>
-    <li class="toc-item">
-      <div class="toc-text">
-        <span class="toc-n">Chapter 5</span>
-        <h3><a href="tools/index.html">Tools and permissions</a></h3>
-        <p>What the model is told about each tool, and who decides what may run.</p>
-        <span class="toc-go" aria-hidden="true">Read<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span>
-      </div>
-      <figure class="toc-viz" id="viz-tools"></figure>
-    </li>
   </ol>
 
   <h2 class="toc-later-head" id="later-title">Coming next</h2>
-  <ol class="toc-later" start="6" aria-labelledby="later-title">
-    <li>
-      <span class="toc-n">Chapter 6</span>
-      <h3>Subagents</h3>
-      <p>A fresh conversation for a side task, and what comes back from it.</p>
+  <ol class="toc-later" start="4" aria-labelledby="later-title">
+    <li class="toc-soon has-viz" data-ch="4">
+      <div class="toc-text">
+        <span class="toc-n">Chapter 4<span class="toc-when"> · Coming soon</span></span>
+        <h3>Compaction</h3>
+        <p>What happens when the conversation is squeezed into a summary, and what the agent still knows afterwards.</p>
+      </div>
+      <figure class="toc-viz" id="viz-compaction"></figure>
     </li>
-    <li>
-      <span class="toc-n">Chapter 7</span>
-      <h3>Failure modes</h3>
-      <p>Loops, made-up functions, a false “done”, and the guard rails against each.</p>
+    <li class="toc-soon has-viz" data-ch="5">
+      <div class="toc-text">
+        <span class="toc-n">Chapter 5<span class="toc-when"> · Coming soon</span></span>
+        <h3>Tools and permissions</h3>
+        <p>What the model is told about each tool, and who decides what may run.</p>
+      </div>
+      <figure class="toc-viz" id="viz-tools"></figure>
     </li>
-    <li>
-      <span class="toc-n">Chapter 8</span>
-      <h3>Build your own agent</h3>
-      <p>A small agent you can run in your browser, on a model replayed from a recording.</p>
+    <li class="toc-soon" data-ch="6">
+      <div class="toc-text">
+        <span class="toc-n">Chapter 6<span class="toc-when"> · Coming soon</span></span>
+        <h3>Subagents</h3>
+        <p>A fresh conversation for a side task, and what comes back from it.</p>
+      </div>
+    </li>
+    <li class="toc-soon" data-ch="7">
+      <div class="toc-text">
+        <span class="toc-n">Chapter 7<span class="toc-when"> · Coming soon</span></span>
+        <h3>Failure modes</h3>
+        <p>Loops, made-up functions, a false “done”, and the guard rails against each.</p>
+      </div>
+    </li>
+    <li class="toc-soon" data-ch="8">
+      <div class="toc-text">
+        <span class="toc-n">Chapter 8<span class="toc-when"> · Coming soon</span></span>
+        <h3>Build your own agent</h3>
+        <p>A small agent you can run in your browser, on a model replayed from a recording.</p>
+      </div>
     </li>
   </ol>
 </main>
+
+<footer class="colophon band" aria-labelledby="about-title">
+  <h2 id="about-title">About this site</h2>
+  <p>Read the Loop was made with Claude Code, and it shows recordings of Claude Code at work: the commands it ran, what came back, the model's own words and every number are read from those recordings. Only the explanations are written by hand.</p>
+  <p>The code is under the MIT licence. The text, figures and recordings are under CC BY 4.0. The source, the licences and the credits are <a data-repo>on GitHub</a>.</p>
+</footer>
 
 <script>window.TRACES = {};</script>
 <script src="data/trace-02-run2.js"></script>
@@ -97,5 +121,7 @@
 <script src="lib/trace-ui.js"></script>
 <script src="contents.js"></script>
 
+<script src="chapters.js"></script>
+<script src="lib/release.js"></script>
 </body>
 </html>

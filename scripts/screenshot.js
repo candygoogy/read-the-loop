@@ -1,5 +1,6 @@
 // Screenshots of every page in PAGES (at the bottom) at desktop, phone and dark mode, plus checks on
-// each: console errors, horizontal overflow, and that every local link resolves to a file. Chapter 1
+// each: console errors, horizontal overflow, that every local link resolves to a file, and that the page
+// requests nothing outside the site (every request must be file:, data: or blob:). Chapter 1
 // also checks (desktop) that both game iframes load from file:// and take keyboard input.
 // Usage: node scripts/screenshot.js [out-dir] [page] [--browser chromium|firefox|webkit].
 // Writes <out-dir>/<page>/<size>-<state>.png (chromium, the default) or <out-dir>/<browser>/<page>/... .
@@ -50,6 +51,7 @@ const SIZES = {
 };
 
 const wait = (p, ms) => p.waitForTimeout(ms);
+const LOCAL = /^(file|data|blob):/;
 const settle = (p) => p.evaluate(() => window.Motion && window.Motion.settle());
 
 // Count every animation and transition that starts, from before the page's own scripts run.
@@ -253,6 +255,7 @@ async function loopMotion(p, capture) {
 const PAGES = [
   { name: "contents", file: "index.html", sizes: ["desk", "phone", "dark"], states: contentsStates, exercise: contentsExercise },
   { name: "loop", file: "loop/index.html", sizes: ["desk", "phone", "dark"], states: loopStates, exercise: loopExercise, motion: loopMotion },
+  { name: "404", file: "404.html", sizes: ["desk", "phone", "dark"], states: async (p, { shot }) => shot("top") },
 ];
 const shotsDir = path.join(__dirname, "shots");
 if (fs.existsSync(shotsDir)) {
@@ -278,6 +281,8 @@ if (only) PAGES.splice(0, PAGES.length, ...PAGES.filter((p) => p.name === only))
       const problems = [];
       p.on("pageerror", (e) => errors.push(e.message));
       p.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+      const external = new Set();
+      p.on("request", (r) => { if (!LOCAL.test(r.url())) external.add(r.url()); });
       await p.goto(urlOf(page.file));
       await p.evaluate(() => document.fonts.ready);
       await wait(p, 600);
@@ -290,6 +295,7 @@ if (only) PAGES.splice(0, PAGES.length, ...PAGES.filter((p) => p.name === only))
 
       await page.states(p, { name, shot, problems, dir });
       await checkLinks(p, problems);
+      external.forEach((u) => problems.push(`request outside the site: ${u}`));
 
       const overflow = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
       console.log(`${page.name} ${name}`, "overflow", overflow, "errors", errors, problems.length ? "problems " + JSON.stringify(problems) : "");

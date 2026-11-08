@@ -3,20 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The context window · Inside the Loop</title>
-<meta name="description" content="How much an AI coding agent reads on every call, measured on a real recorded session. Chapter 2: the context window.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>The context window · Read the Loop</title>
+<meta name="description" content="How much an AI coding agent reads on every call, measured on a real recorded Claude Code session and drawn to scale.">
+<link rel="canonical" href="https://loop.candygoogy.dev/context/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:title" content="The context window · Read the Loop">
+<meta property="og:description" content="How much an AI coding agent reads on every call, measured on a real recorded Claude Code session and drawn to scale.">
+<meta property="og:url" content="https://loop.candygoogy.dev/context/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/context.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop, chapter 2: The context window, with a chart drawn from the recording">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="stylesheet" href="../style.css">
 <link rel="stylesheet" href="chapter.css">
 </head>
-<body>
+<body data-page="context">
 
 <a class="skip-link" href="#explore">Skip to the session explorer</a>
 
 <header class="masthead band">
-  <p class="kicker"><a href="../index.html">Inside the Loop</a> · Chapter 2 of 8</p>
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · Chapter 2 of 8</p>
   <h1>The context window</h1>
   <p class="dek">A model keeps nothing between calls, so the agent sends it the whole conversation every time. On a real project that conversation grows quickly. Here is one real session, measured call by call.</p>
 </header>
@@ -173,8 +185,6 @@
 
 <nav class="chapter-nav band" aria-label="Chapters">
   <div class="cn">
-    <a class="cn-link cn-prev" href="../loop/index.html" rel="prev"><span class="cn-dir"><svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3 5 8l5 5"/></svg>Previous</span><span class="cn-title">Chapter 1: An agent is a loop</span></a>
-    <a class="cn-link cn-next" href="../cache/index.html" rel="next"><span class="cn-dir">Next<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span><span class="cn-title">Chapter 3: Caching</span></a>
     <a class="cn-toc" href="../index.html">All chapters</a>
   </div>
 </nav>
@@ -187,5 +197,7 @@
 <script src="../lib/trace-ui.js"></script>
 <script src="../lib/motion.js"></script>
 <script src="app.js"></script>
+<script src="../chapters.js"></script>
+<script src="../lib/release.js"></script>
 </body>
 </html>

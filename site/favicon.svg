@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<!-- Read the Loop: the loop as four arcs, clockwise from the top in the order of a conversation:
+     set-up, you, the model, what comes back (the role colours in style.css). -->
+<style>circle{fill:none;stroke-width:6}.sys{stroke:#617083}.you{stroke:#c4841a}.model{stroke:#c8432b}.result{stroke:#2c7a6f}@media (prefers-color-scheme:dark){.sys{stroke:#93a3b6}.you{stroke:#e3a640}.model{stroke:#ef6a4f}.result{stroke:#4fb3a4}}</style>
+<g transform="rotate(-90 16 16)">
+<circle class="sys" cx="16" cy="16" r="10.5" stroke-dasharray="13.693 52.280" stroke-dashoffset="-1.400"/>
+<circle class="you" cx="16" cy="16" r="10.5" stroke-dasharray="13.693 52.280" stroke-dashoffset="-17.893"/>
+<circle class="model" cx="16" cy="16" r="10.5" stroke-dasharray="13.693 52.280" stroke-dashoffset="-34.387"/>
+<circle class="result" cx="16" cy="16" r="10.5" stroke-dasharray="13.693 52.280" stroke-dashoffset="-50.880"/>
+</g>
+</svg>

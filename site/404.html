@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The server shows this page at any address that doesn't exist, so on the server its links start from
+     the site's root. Opened from disk, they stay relative to this file. -->
+<script>if (/^https?:$/.test(location.protocol)) document.head.appendChild(Object.assign(document.createElement("base"), { href: "/" }));</script>
+<title>Page not found · Read the Loop</title>
+<meta name="description" content="There's no page at this address on Read the Loop. The chapters are on the contents page.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="404">
+
+<header class="masthead band">
+  <p class="kicker"><a href="index.html">Read the Loop</a> · Page not found</p>
+  <h1>Nothing here</h1>
+  <p class="dek">There's no page at this address. It may be a chapter that isn't out yet, or a typo in the link.</p>
+</header>
+
+<nav class="chapter-nav band" aria-label="Where to go">
+  <div class="cn">
+    <a class="cn-link cn-prev" href="index.html"><span class="cn-dir">Contents</span><span class="cn-title">All chapters</span></a>
+    <a class="cn-link cn-next" href="loop/index.html"><span class="cn-dir">Start here<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span><span class="cn-title">Chapter 1: An agent is a loop</span></a>
+  </div>
+</nav>
+
+</body>
+</html>
