@@ -7,9 +7,14 @@ Runs the command in the current folder, directly (list form, no shell), and writ
 - <out stem>.times.json: {"started_at": ISO time of the spawn (UTC),
                           "arrivals_ms": [ms since the spawn, one per line]}.
 stderr goes straight to the terminal, and the command's exit code is passed on.
+
+The command gets a copy of this environment without the CLAUDE* variables (CLAUDECODE, CLAUDE_EFFORT,
+CLAUDE_CODE_*...). When this runs inside a Claude Code session, those would otherwise leak into the recorded
+session and change it. Only the child process is affected: nothing outside it changes.
 """
 import datetime
 import json
+import os
 import pathlib
 import shutil
 import subprocess
@@ -25,12 +30,16 @@ def main(argv):
     # On Windows, CreateProcess only adds ".exe"; which() also finds .cmd/.bat shims on PATH.
     cmd[0] = shutil.which(cmd[0]) or cmd[0]
     times_path = out.with_name(out.stem + ".times.json")
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("CLAUDE")}
+    dropped = sorted(k for k in os.environ if k.upper().startswith("CLAUDE"))
+    if dropped:
+        print("record.py: not passing to the child:", ", ".join(dropped), file=sys.stderr)
 
     arrivals = []
     started_at = datetime.datetime.now(datetime.timezone.utc)
     t0 = time.perf_counter()
     # No stdin, so `claude -p` never waits for piped input; stderr is inherited.
-    proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE)
+    proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, env=env)
     try:
         with open(out, "wb") as f:
             assert proc.stdout is not None

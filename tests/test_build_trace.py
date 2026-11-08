@@ -2,6 +2,7 @@
 import getpass
 import importlib.util
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -151,6 +152,18 @@ class BuildTraceTest(unittest.TestCase):
         self.assertEqual(bt.find_leaks(ok, set(), "someone"), [])
         for bad in (r"D:\Workspace\Docs\notes", r"C:\Users\someone\x", "/Users/bob/x"):
             self.assertTrue(bt.find_leaks({"text": bad}, set(), "someone"), bad)
+
+    def test_record_drops_claude_env_for_the_child_only(self):
+        TMP_BASE.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TMP_BASE) as d:
+            out = pathlib.Path(d) / "rec.jsonl"
+            env = dict(os.environ, CLAUDE_EFFORT="high", CLAUDECODE="1", KEEP_ME="yes")
+            code = "import os, json; print(json.dumps(sorted(k for k in os.environ if k.startswith(('CLAUDE', 'KEEP')))))"
+            r = subprocess.run([sys.executable, str(REPO / "scripts" / "record.py"), str(out), "--", sys.executable, "-c", code],
+                               env=env, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertEqual(json.loads(out.read_text()), ["KEEP_ME"])
+            self.assertIn("CLAUDE_EFFORT", r.stderr)
 
     @unittest.skipUnless(RAW_01.exists(), "raw-01 recording not on this machine")
     def test_trace_01_keeps_existing_fields(self):
