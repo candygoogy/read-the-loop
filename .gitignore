@@ -6,3 +6,7 @@ node_modules/
 out/
 CLAUDE.local.md
 .claude/settings.local.json
+
+# This machine's folders (see local.example.json) and its editor tasks
+local.json
+.zed/

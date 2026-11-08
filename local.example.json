@@ -1,0 +1,6 @@
+{
+  "playwrightBrowsers": "/path/to/ms-playwright",
+  "shots": "/path/to/screenshots",
+  "recordings": "/path/to/recordings",
+  "scratch": "/path/to/recording-folders"
+}

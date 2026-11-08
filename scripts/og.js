@@ -3,12 +3,12 @@
 // site/apple-touch-icon.png (180 × 180) from site/favicon.svg.
 // The template is scripts/og/card.html. Each card's one line is the chapter's line from the contents page,
 // read from site/index.html; its picture and every number in it are drawn from the traces at render time.
-// Usage: node scripts/og.js            (PLAYWRIGHT_BROWSERS_PATH defaults to D:/Workspace/Cache/ms-playwright)
+// Usage: node scripts/og.js            (Playwright's browser folder can be set in local.json, see scripts/local.js)
 const path = require("path");
 const fs = require("fs");
 const { execSync } = require("child_process");
 
-process.env.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH || "D:/Workspace/Cache/ms-playwright";
+require("./local.js"); // Playwright's browser folder, from local.json
 
 function loadPlaywright() {
   try { return require("playwright"); } catch {}

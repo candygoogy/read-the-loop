@@ -17,7 +17,7 @@ const fs = require("fs");
 const { execSync } = require("child_process");
 const { chapters, sitemap } = require("./sitemap.js");
 
-process.env.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH || "D:/Workspace/Cache/ms-playwright";
+const local = require("./local.js"); // this machine's folders, from local.json
 
 function loadPlaywright() {
   try { return require("playwright"); } catch {}
@@ -27,7 +27,7 @@ function loadPlaywright() {
 
 const repo = path.resolve(__dirname, "..");
 const site = path.join(repo, "site");
-const out = path.resolve(process.argv[2] || "D:/Workspace/Docs/inside-the-loop/screenshots");
+const out = path.resolve(process.argv[2] || local.shots);
 const toUrl = (file) => "file:///" + file.split(path.sep).join("/");
 const C = chapters();
 const LOCAL = /^(file|data|blob):/;

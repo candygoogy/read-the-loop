@@ -7,7 +7,7 @@ const path = require("path");
 const fs = require("fs");
 const { execSync } = require("child_process");
 
-process.env.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH || "D:/Workspace/Cache/ms-playwright";
+const local = require("../scripts/local.js"); // this machine's folders, from local.json
 
 function loadPlaywright() {
   try { return require("playwright"); } catch {}
@@ -24,7 +24,7 @@ for (let i = 0; i < args.length; i++) {
   else positional.push(args[i]);
 }
 if (!["chromium", "firefox", "webkit"].includes(engine)) { console.error(`unknown --browser ${engine}`); process.exit(2); }
-const out = path.join(path.resolve(positional[0] || "D:/Workspace/Docs/inside-the-loop/screenshots/harness-step"), engine === "chromium" ? "" : engine);
+const out = path.join(path.resolve(positional[0] || path.join(local.shots, "harness-step")), engine === "chromium" ? "" : engine);
 fs.mkdirSync(out, { recursive: true });
 const url = "file:///" + path.resolve(__dirname, "harness-step-demo.html").split(path.sep).join("/");
 const browserType = loadPlaywright()[engine];

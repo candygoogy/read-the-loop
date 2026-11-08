@@ -18,7 +18,7 @@ const fs = require("fs");
 const { fileURLToPath } = require("url");
 const { execSync } = require("child_process");
 
-process.env.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH || "D:/Workspace/Cache/ms-playwright";
+const local = require("./local.js"); // this machine's folders, from local.json
 
 function loadPlaywright() {
   try { return require("playwright"); } catch {}
@@ -39,7 +39,7 @@ if (!["chromium", "firefox", "webkit"].includes(engine)) {
   console.error(`unknown --browser ${engine}: use chromium, firefox or webkit`);
   process.exit(2);
 }
-const out = path.join(path.resolve(positional[0] || "shots"), engine === "chromium" ? "" : engine);
+const out = path.join(path.resolve(positional[0] || local.shots), engine === "chromium" ? "" : engine);
 const site = path.resolve(__dirname, "..", "site");
 const urlOf = (file) => "file:///" + path.join(site, file).split(path.sep).join("/");
 const browserType = loadPlaywright()[engine];

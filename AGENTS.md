@@ -48,9 +48,11 @@ Live at https://loop.candygoogy.dev, repo https://github.com/candygoogy/read-the
 | `fixtures/cart/` | The buggy project of recording 01 |
 | `scripts/record.py` | Records a command's output byte for byte, with arrival times |
 | `scripts/build-trace.py` | Turns a raw recording into the trace files |
+| `scripts/leakcheck.py` | The leak check both builders run before writing: recording folder, user name, home folders, drive paths, emails |
+| `scripts/local.js`, `local.example.json` | This machine's folders (Playwright's browsers, screenshot output, recordings) from a gitignored `local.json`; without it, output goes to `out/` |
 | `scripts/capture-proxy.py` | A local logging proxy that saves the request bodies Claude Code sends the model, never the headers |
 | `scripts/extract-tools.py` | Turns the captured request bodies into the tool manual files (`tools-05`), sizes and excerpts only |
-| `tests/` | Tests for the build script (`python -m unittest discover tests`) and the widget check (`node tests/harness-step-check.js`) |
+| `tests/` | Tests for the build script and the capture proxy (`python -m unittest discover tests`) and the widget check (`node tests/harness-step-check.js`) |
 | `scripts/og.js`, `scripts/og/card.html` | Renders the preview cards from a template; the picture and numbers on each come from the chapter's trace |
 | `scripts/check-site.js` | Opens every page and fails on any request outside the site, wrong meta tags, links to unpublished chapters, or a stale sitemap; also tries a release date, a release and a second language |
 | `scripts/sitemap.js` | Writes `site/sitemap.xml` from `chapters.js` (published pages only) |
@@ -70,7 +72,7 @@ Live at https://loop.candygoogy.dev, repo https://github.com/candygoogy/read-the
 - Release a chapter: set `published: true` (or a `release` date first) in `site/chapters.js`, run
   `node scripts/sitemap.js`, then `node scripts/check-site.js`. Rerun `node scripts/og.js` if a title or a
   contents-page line changed.
-- After any UI change, run the "screenshot check" task and look at the images. It must report `errors []` and
+- After any UI change, run `node scripts/screenshot.js` and look at the images. It must report `errors []` and
   `overflow 0` at all three sizes.
 - Skills to use: Remotion (launch and trailer videos, rendered from the same trace JSON), impeccable or
   design-taste-frontend (design pass), emil-design-eng or animate (player motion), accessibility (before launch).
