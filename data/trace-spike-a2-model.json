@@ -1,0 +1,46 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-08",
+  "started_at": "2026-11-08T11:41:05.235Z",
+  "time_source": "arrival",
+  "model": "claude-sonnet-5-5",
+  "claude_code_version": "2.1.319",
+  "prompt": "Without using any tools: which file defines a class named TextWrapper? One line.",
+  "tools_available": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 2544,
+      "context_tokens": 18198,
+      "cached_tokens": 5049,
+      "new_tokens": 13149,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 13147,
+      "output_tokens": null,
+      "output": [
+        {
+          "kind": "text",
+          "text": "textwrap.py defines `TextWrapper`.",
+          "t_ms": 2544
+        }
+      ],
+      "added_since_previous": null
+    }
+  ],
+  "totals": {
+    "model_calls": 1,
+    "output_tokens": 19,
+    "cache_read_tokens": 5049,
+    "cache_write_tokens": 13147,
+    "cost_usd": 0.0533,
+    "duration_s": 2.2,
+    "ttft_ms": 2186
+  },
+  "final_answer": "textwrap.py defines `TextWrapper`."
+}

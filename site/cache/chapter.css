@@ -1,0 +1,192 @@
+/* Chapter 3: the column charts, the cost toggle, the table and the experiment cards. Shared tokens
+   (paper, ink, fonts, the grid) come from ../style.css.
+   Chart colours, all mixed from the site's tokens. Cache reads: the result teal (the same text again,
+   and cheap). New tokens: the "you" ochre, the loud one. What the model wrote: an ink neutral, since
+   it costs the same with or without the cache. In each theme "new" takes the far lightness, because
+   it is the part that touches both others in a stack. Contrast (WCAG), light: cache 11.2 / new 3.45 /
+   output 16.2 on --card, new 3.14 on --paper, cache-new 3.24, new-output 4.68. Dark: cache 3.29 /
+   new 10.4 / output 3.06 on --card, cache-new 3.15, new-output 3.39. Cache and output never touch;
+   their hues tell them apart. */
+:root {
+  --c-cached: color-mix(in srgb, var(--result) 35%, var(--ink));   /* #243c35 */
+  --c-fresh: color-mix(in srgb, var(--you) 90%, var(--ink));       /* #b47a1a */
+  --c-out: var(--ink);                                              /* #1f1b16 */
+  --viz-surface: var(--card);
+  /* The band behind the picked call: opaque, so the gap between parts can wear it too. */
+  --sel: color-mix(in srgb, var(--ink) 8%, var(--card));
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-cached: color-mix(in srgb, var(--result) 60%, var(--card)); /* #3b766a */
+    --c-fresh: color-mix(in srgb, var(--you) 55%, var(--ink));      /* #e8c384 */
+    --c-out: color-mix(in srgb, var(--ink-3) 65%, var(--card));     /* #6e6658 */
+  }
+}
+
+/* ---------- a chart panel ---------- */
+.viz {
+  margin: 1.75rem 0 2rem;
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+  background: var(--viz-surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+}
+.viz-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem 1.5rem; margin-bottom: 1.1rem; }
+.viz-title { font: 600 1.15rem/1.3 var(--display); color: var(--ink); }
+.viz-legend { display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; font: 500 0.78rem/1.4 var(--mono); color: var(--ink-2); }
+.viz-legend span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.sw { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 3px; flex: none; }
+
+.s-cached { background: var(--c-cached); }
+.s-fresh { background: var(--c-fresh); }
+.s-out { background: var(--c-out); }
+
+/* The plot: a gutter for the y labels, then one column per call. */
+.viz-body { --axis-w: 3.4rem; }
+.viz-plot { position: relative; height: clamp(11rem, 32vw, 17rem); margin-top: 0.4rem; }
+.viz-grid { position: absolute; inset: 0; pointer-events: none; }
+.tick { position: absolute; left: var(--axis-w); right: 0; border-top: 1px solid var(--rule); }
+.tick span {
+  position: absolute; right: calc(100% + 0.5rem); top: 0; transform: translateY(-50%);
+  font: 500 0.7rem/1 var(--mono); color: var(--ink-3); white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.viz-cols {
+  position: absolute; left: var(--axis-w); right: 0; top: 0; bottom: 0;
+  display: flex; gap: 2px;
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+.col { position: relative; flex: 1 1 0; min-width: 0; }
+/* The picked call: a band behind its column. */
+.col::before {
+  content: ""; position: absolute; inset: -0.35rem -1px -0.35rem; border-radius: 4px;
+  background: var(--sel); opacity: 0; transition: opacity 150ms ease;
+}
+.col.sel::before { opacity: 1; }
+.seg {
+  position: absolute; left: 50%; width: min(100%, 24px); transform: translateX(-50%);
+  transition: height 520ms var(--ease-out), bottom 520ms var(--ease-out);
+}
+/* The surface gap between stacked parts: each part above the bottom one casts 2px of surface downwards. */
+.seg + .seg { box-shadow: 0 2px 0 var(--viz-surface); }
+.col.sel .seg + .seg { box-shadow: 0 2px 0 var(--sel); }
+.seg.top { border-radius: 4px 4px 0 0; }
+.seg.zero { box-shadow: none; }
+/* A part too thin to see still shows as a sliver. */
+.seg:not(.zero) { min-height: 2px; }
+
+.viz-x { position: relative; height: 1.4rem; margin-left: var(--axis-w); }
+.viz-x span {
+  position: absolute; left: calc(var(--x) * 100%); top: 0.5rem; transform: translateX(-50%);
+  font: 500 0.7rem/1 var(--mono); color: var(--ink-3); font-variant-numeric: tabular-nums;
+}
+
+/* The call picker: the keyboard and screen-reader way into the chart (pointer and touch work on the bars too). */
+.viz-pick {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.4rem 0.9rem;
+  margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--rule);
+}
+.viz-pick label { font: 600 0.78rem/1 var(--mono); color: var(--ink-2); }
+.viz-readout { grid-column: 1 / -1; margin: 0; font-size: 1rem; line-height: 1.5; color: var(--ink-2); min-height: 3em; }
+.viz-readout b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.pick {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 2.75rem; margin: 0; background: transparent; cursor: pointer;
+}
+.pick::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--rule); }
+.pick::-moz-range-track { height: 4px; border-radius: 2px; background: var(--rule); }
+.pick::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px; margin-top: -9px; border-radius: 50%;
+  background: var(--ink); border: 3px solid var(--viz-surface); box-shadow: 0 0 0 1px var(--ink);
+}
+.pick::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--ink); border: 3px solid var(--viz-surface); box-shadow: 0 0 0 1px var(--ink); }
+.pick:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+
+/* ---------- the with / without toggle ---------- */
+.viz-controls { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; margin-bottom: 0.75rem; }
+.seg-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+fieldset.mode {
+  display: inline-flex; margin: 0; padding: 3px; border: 1px solid var(--rule); border-radius: 10px;
+  background: var(--paper);
+}
+.seg-opt { position: relative; display: block; }
+.seg-opt span {
+  display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1rem;
+  font: 600 0.82rem/1.2 var(--mono); color: var(--ink-2); border-radius: 7px; cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+.seg-opt input:checked + span { background: var(--ink); color: var(--card); }
+.seg-opt input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .seg-opt input:not(:checked) + span:hover { color: var(--ink); background: var(--paper-2); }
+}
+
+.hero { margin: 0; text-align: right; }
+.hero-n {
+  display: block; font: 700 clamp(2.4rem, 6vw, 3.4rem)/1 var(--display); letter-spacing: -0.02em;
+  font-variation-settings: "opsz" 144; color: var(--ink);
+}
+.hero-l { display: block; margin-top: 0.35rem; font: 500 0.74rem/1.35 var(--mono); color: var(--ink-2); max-width: 22rem; margin-left: auto; }
+/* The cost legend changes with the view; its own row, of fixed height on narrow screens, keeps the chart still. */
+#costs .viz-head { display: block; }
+#costs .viz-legend { margin-top: 0.5rem; }
+@media (max-width: 34rem) {
+  #costs .viz-legend { flex-direction: column; min-height: 4.9rem; }
+  .viz-controls { flex-direction: column; align-items: stretch; }
+  .hero { text-align: left; }
+  .hero-l { margin-left: 0; }
+  fieldset.mode { align-self: flex-start; }
+}
+
+/* ---------- the table ---------- */
+.viz-table { margin: 0 0 1.5rem; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.viz-table summary {
+  display: flex; align-items: center; min-height: 2.75rem; cursor: pointer;
+  font: 600 0.85rem/1.2 var(--mono); color: var(--ink);
+}
+.table-wrap { overflow-x: auto; padding-bottom: 1rem; }
+.viz-table table { width: 100%; border-collapse: collapse; font: 400 0.82rem/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+.table-note { color: var(--ink-2); margin: 0 0 0.6rem; font-size: 0.9rem; }
+.viz-table th, .viz-table td { padding: 0.35rem 0.75rem; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.viz-table thead th { font-weight: 600; color: var(--ink-2); vertical-align: bottom; white-space: normal; min-width: 6rem; }
+.viz-table th:first-child { text-align: left; min-width: 0; }
+
+/* ---------- the experiments ---------- */
+.trials {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 1rem;
+  margin: 1.5rem 0 2rem;
+}
+.trial {
+  display: flex; flex-direction: column; gap: 0.55rem;
+  padding: 1.1rem 1.15rem 1.2rem; background: var(--card); border: 1px solid var(--rule); border-radius: 12px;
+}
+.trial h3 { font: 600 1.15rem/1.25 var(--display); margin: 0; }
+.trial p { margin: 0; }
+.trial-meta { font: 500 0.72rem/1.4 var(--mono); color: var(--ink-3); }
+.trial-changed { font-size: 0.98rem; line-height: 1.5; color: var(--ink-2); }
+.trial-changed code { font-size: 0.8rem; white-space: nowrap; }
+.trial[data-k="sysprompt"] .trial-changed code { white-space: normal; }
+.split { display: flex; gap: 2px; height: 10px; margin-top: 0.3rem; }
+.split i { display: block; height: 100%; min-width: 2px; }
+.split i:first-child { border-radius: 5px 0 0 5px; }
+.split i:last-child { border-radius: 0 5px 5px 0; }
+.trial-numbers { font: 500 0.8rem/1.45 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.trial-numbers b { color: var(--ink); font-weight: 600; }
+.trial-outcome { font-size: 1rem; line-height: 1.5; }
+.trial-answer {
+  margin-top: auto; padding-top: 0.7rem; border-top: 1px solid var(--rule);
+  font-size: 0.95rem; line-height: 1.5;
+}
+.trial-answer > span { display: block; font: 600 0.7rem/1.4 var(--mono); color: var(--model-text); margin-bottom: 0.2rem; }
+.trial-answer .say { margin: 0; color: var(--say, var(--ink)); }
+.trial-answer code { font-size: 0.85em; background: var(--paper-2); padding: 0.05em 0.3em; border-radius: 4px; }
+
+/* Forced colours: the parts keep their order and the gaps, and the legend names them. */
+@media (forced-colors: active) {
+  .s-cached { background: CanvasText; }
+  .s-fresh { background: Highlight; }
+  .s-out { background: GrayText; }
+}

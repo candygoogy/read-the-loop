@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caching · Inside the Loop</title>
+<meta name="description" content="How an AI coding agent actually works, shown on real recorded sessions. Chapter 3: why reading the whole conversation again is cheap, and what breaks the cache.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="chapter.css">
+</head>
+<body>
+
+<a class="skip-link" href="#reads">Skip to the first chart</a>
+
+<header class="masthead band">
+  <p class="kicker">Inside the Loop · Chapter 3 of 8</p>
+  <h1>Caching</h1>
+  <p class="dek">An agent sends the model the whole conversation on every call, and most of it is text the model read a moment ago. A cache makes that second reading cheap. This chapter shows how cheap, on a real session, and what made the cache miss in a few small experiments.</p>
+</header>
+
+<main class="band">
+
+<section class="prose" aria-labelledby="s-reads">
+  <h2 id="s-reads">Reading it all again</h2>
+  <p>Chapter 1 showed the loop: the model keeps nothing between calls, so the harness sends it the whole conversation every time. On a toy game that was a handful of calls. This chapter follows a longer session. We gave Claude Code a real bug report from the issue tracker of Black, a tool that formats Python code, along with Black's source code. The report's title:</p>
+  <blockquote class="prompt" data-v="issueTitle"></blockquote>
+  <p>The session made <span data-v="calls"></span> model calls in <span data-v="duration"></span> seconds. It was recorded on <span data-v="date"></span> with <span data-v="model"></span>. The conversation grew from <span data-v="first"></span> tokens on the first call to <span data-v="last"></span> on the last (a token is a word or a piece of one). Added up over all the calls, the model read <strong data-v="sumRead"></strong> tokens.</p>
+  <p>Most of that reading came from the <strong>cache</strong>: a stored copy of text the model's provider saw recently. The usage the API reports for each call splits what the model read into two parts: tokens read from that stored copy, and tokens that were new. The chart shows both, call by call.</p>
+
+  <figure class="viz wide" id="reads">
+    <figcaption class="viz-head">
+      <span class="viz-title" id="reads-title"></span>
+      <span class="viz-legend" id="reads-legend"></span>
+    </figcaption>
+    <div class="viz-body" id="reads-body"></div>
+  </figure>
+
+  <p>From the second call on, each call found almost everything the previous call had read in the cache. <span data-v="prevNote"></span> Only what had been added since was new: between <span data-v="minNew"></span> and <span data-v="maxNew"></span> tokens a call. Over the session, <strong data-v="pctCached"></strong> of everything the model read came from the cache.</p>
+  <p>Even the first call read <span data-v="c1cached"></span> of its <span data-v="first"></span> tokens from the cache. This recording can't say where they came from. Probably from other sessions we recorded with Claude Code earlier that day.</p>
+</section>
+
+<section class="prose" aria-labelledby="s-cost" data-needs="prices">
+  <h2 id="s-cost">What the cache does to the price</h2>
+  <p>A token read from the cache isn't free, but it's cheap. Anthropic's pricing page lists these prices for <span data-v="model"></span>, per million tokens: <span data-v="pInput"></span> for normal input, <span data-v="pRead"></span> for input read from the cache, and <span data-v="pOutput"></span> for what the model writes. A token read from the cache costs <strong data-v="readPct"></strong> of a normal one.</p>
+  <p>The recording holds only the session's total cost, <span data-v="recorded"></span>. From the prices and each call's token counts we get <span data-v="computed"></span>, the same to within a cent. So the per-call costs below are our arithmetic on the published prices, checked against that total. They aren't recorded.</p>
+
+  <figure class="viz wide" id="costs">
+    <figcaption class="viz-head">
+      <span class="viz-title" id="costs-title"></span>
+      <span class="viz-legend" id="costs-legend"></span>
+    </figcaption>
+    <div class="viz-controls">
+      <fieldset class="mode" id="cost-mode">
+        <legend class="sr-only" id="cost-mode-label"></legend>
+      </fieldset>
+      <p class="hero" aria-live="polite"><span class="hero-n" id="hero-n"></span><span class="hero-l" id="hero-l"></span></p>
+    </div>
+    <div class="viz-body" id="costs-body"></div>
+  </figure>
+
+  <p>Without a cache, the same calls would have cost <strong data-v="nocache"></strong>, <span data-v="times"></span> times as much. The gap widens as the session goes on, because every call reads the whole conversation and the conversation only grows. With the cache, the <span data-v="outTok"></span> tokens the model wrote cost more than all its reading: <span data-v="outPct"></span> of the total.</p>
+
+  <details class="viz-table wide">
+    <summary id="table-summary"></summary>
+    <p class="table-note" id="table-note"></p>
+    <div class="table-wrap"><table id="table"></table></div>
+  </details>
+</section>
+
+<section class="prose" aria-labelledby="s-writes">
+  <h2 id="s-writes">First it has to be written</h2>
+  <p>The cache only holds what was put in it. In the chart above, the new tokens on each call are the ones written into the cache, so the next call can read them. <span data-v="writeNote"></span></p>
+  <p>Writes come in two kinds, and the pricing page lists them separately: a copy kept for <span data-v="ttlShort"></span> minutes, at <span data-v="pW5"></span> per million tokens, and one kept for an hour, at <span data-v="pW1"></span>. Every write in this session was the hour-long kind: <span data-v="w1total"></span> tokens, against <span data-v="w5total"></span> of the shorter kind.</p>
+  <p>Chapter 1's recordings show a write being read back. In its run <span data-v="r1"></span>, the first call read <span data-v="r1cached"></span> tokens from the cache: all <span data-v="r1new"></span> were new. Run <span data-v="r2"></span> started <span data-v="gapMin"></span> minutes after run <span data-v="r1"></span> ended. Its first call read <span data-v="r2cached"></span> of its <span data-v="r2ctx"></span> tokens from the cache, most likely the copy run <span data-v="r1"></span> had written. <span data-v="gapNote"></span></p>
+</section>
+
+<section class="prose" aria-labelledby="s-breaks">
+  <h2 id="s-breaks">What breaks it</h2>
+  <p>To see what makes the cache miss, we ran a few small experiments of our own on <span data-v="spikeDate"></span>. In a toy folder holding four files from Python's standard library, Claude Code (with <span data-v="spikeModel"></span>) read the files and described each one. Then we asked short questions, each one a new run of Claude Code that resumed the same conversation, and changed one thing at a time. The model was told to answer without using any tools, so each question is a single call.</p>
+
+  <div class="trials wide" id="trials"></div>
+
+  <p>The extra instruction didn't cost a cache miss, and the recording can't tell us whether it reached the model at all. A different model is a different matter: <span data-v="otherModel"></span> found little of the conversation in the cache and had to write most of it again. Back on <span data-v="spikeModel"></span>, the cache still held its earlier copy. These are four questions on one small conversation, on one day. They show what happened, not why.</p>
+</section>
+
+<section class="stats" aria-label="Session totals">
+  <div><span class="n" data-v="calls"></span><span class="l">model calls</span></div>
+  <div><span class="n" data-v="cacheTotal"></span><span class="l">tokens read from the cache</span></div>
+  <div><span class="n" data-v="writeTotal"></span><span class="l">tokens written to it</span></div>
+  <div><span class="n" data-v="recorded"></span><span class="l">recorded cost</span></div>
+</section>
+
+<section class="prose next">
+  <p class="kicker">Coming next</p>
+  <h2>Chapter 4: Compaction</h2>
+  <p>This session ended before its conversation got too long for the model. When one does, Claude Code can compact it: replace the conversation with a shorter summary. After the session we asked for one, and <span data-v="pre"></span> tokens of conversation became a summary of <span data-v="post"></span>. That summary is new text. In our experiment, the first call after a compaction read nothing from the cache and wrote the whole conversation again. What does the summary keep, and what does the agent forget?</p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2>About the recordings</h2>
+  <p><span data-v="source"></span> The session: model <code data-v="model"></code>, Claude Code <code data-v="ccv"></code>, effort left at its default. Tools allowed: <span data-v="tools"></span>. The prompt was the issue's title and text, as filed. The folder held Black's source code at the commit just before the fix; this page calls it <code data-v="alias"></code>.</p>
+  <p>Token counts are the usage the API reported on each call: tokens read from the cache, tokens written to it (the shorter and the hour-long kind separately), the few input tokens that were neither, and the tokens the model wrote. A call's reading is the first three added up.</p>
+  <p id="price-note"></p>
+  <p>The experiments: <span data-v="spikeList"></span>. Each resumed the same conversation with <code>claude -p --resume</code>. One changed the set-up with <code data-v="sysFlag"></code>, one switched the model with <code data-v="modelFlag"></code>. Claude Code reports a resumed session's cost added up over the whole conversation so far, so this page shows no cost for them.</p>
+  <p>One experiment isn't published: the question asked right after a compaction, the one that read nothing from the cache. Earlier in that conversation, a command of ours went wrong and put a local folder path into it. The model's answer repeats that path, and our redaction check refuses to publish any trace that holds one.</p>
+  <p>The traces: <span id="trace-links"></span>. The same data as JSON is in the repo's <code>data/</code> folder. <a href="../index.html">All chapters</a>.</p>
+</footer>
+
+<script>window.TRACES = {};</script>
+<script src="../data/trace-03.js"></script>
+<script>TRACES.run = TRACE;</script>
+<script src="../data/trace-02-run1.js"></script>
+<script>TRACES.ch1a = TRACE;</script>
+<script src="../data/trace-02-run2.js"></script>
+<script>TRACES.ch1b = TRACE;</script>
+<script src="../data/trace-spike-a2-same.js"></script>
+<script>TRACES.same = TRACE;</script>
+<script src="../data/trace-spike-a2-sysprompt.js"></script>
+<script>TRACES.sysprompt = TRACE;</script>
+<script src="../data/trace-spike-a2-model.js"></script>
+<script>TRACES.model = TRACE;</script>
+<script src="../data/trace-spike-a2-back.js"></script>
+<script>TRACES.back = TRACE;</script>
+<script src="copy.en.js"></script>
+<script src="../lib/trace-ui.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

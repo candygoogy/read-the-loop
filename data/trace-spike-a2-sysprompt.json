@@ -1,0 +1,46 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-08",
+  "started_at": "2026-11-08T11:40:53.641Z",
+  "time_source": "arrival",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.319",
+  "prompt": "Without using any tools: which file imports re? One line.",
+  "tools_available": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 3513,
+      "context_tokens": 17988,
+      "cached_tokens": 17922,
+      "new_tokens": 66,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 64,
+      "output_tokens": null,
+      "output": [
+        {
+          "kind": "text",
+          "text": "fnmatch.py imports `re`; shlex.py doesn't; glob.py and textwrap.py almost certainly do too, but that's from memory of the stdlib versions, not from my notes.",
+          "t_ms": 4254
+        }
+      ],
+      "added_since_previous": null
+    }
+  ],
+  "totals": {
+    "model_calls": 1,
+    "output_tokens": 184,
+    "cache_read_tokens": 17922,
+    "cache_write_tokens": 64,
+    "cost_usd": 0.0078,
+    "duration_s": 3.9,
+    "ttft_ms": 3114
+  },
+  "final_answer": "fnmatch.py imports `re`; shlex.py doesn't; glob.py and textwrap.py almost certainly do too, but that's from memory of the stdlib versions, not from my notes."
+}
