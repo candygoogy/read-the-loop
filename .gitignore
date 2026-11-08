@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 raw*.jsonl
+raw*.times.json
 node_modules/
 out/
 CLAUDE.local.md

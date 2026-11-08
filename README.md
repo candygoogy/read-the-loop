@@ -17,7 +17,9 @@ Open `site/index.html` in a browser. There's no build step and no server.
 | `site/data/trace-01.js` | The chapter 1 trace, loaded by the page (generated) |
 | `data/trace-01.json` | The same trace as JSON (generated) |
 | `fixtures/cart/` | The buggy project the agent was given |
+| `scripts/record.py` | Records a command's output byte for byte, with arrival times |
 | `scripts/build-trace.py` | Turns a raw recording into the trace files |
+| `tests/` | Tests for the build script (`python -m unittest discover tests`) |
 | `scripts/screenshot.js` | Screenshots at desktop, phone and dark sizes, plus an error and overflow check |
 | `AGENTS.md` | Rules for coding agents working on this repo |
 
@@ -25,16 +27,29 @@ Open `site/index.html` in a browser. There's no build step and no server.
 
 ```sh
 cp fixtures/cart/*.py <empty-folder>/ && cd <empty-folder>
-claude -p "The tests are failing. Please find the bug and fix it." \
+python <repo>/scripts/record.py <recordings>/raw-NN.jsonl -- claude -p "The tests are failing. Please find the bug and fix it." \
   --output-format stream-json --verbose \
   --restricted --tools "Bash,Read,Edit,Glob,Grep" --allowedTools "Bash(python *)" Read Edit Glob Grep \
-  --strict-mcp-config --setting-sources "" --permission-mode acceptEdits --no-session-persistence \
-  > raw.jsonl
-python scripts/build-trace.py raw.jsonl data/trace-01.json <empty-folder>
+  --strict-mcp-config --setting-sources "" --permission-mode acceptEdits --no-session-persistence
+cd <repo>
+python scripts/build-trace.py <recordings>/raw-NN.jsonl data/trace-NN.json <empty-folder> \
+  --prompt "The tests are failing. Please find the bug and fix it." --alias "~/cart" \
+  --times <recordings>/raw-NN.times.json \
+  --fixture fixtures/cart --files-out out/files-NN
 ```
 
+Keep `<recordings>` outside the recording folder, so the agent never sees its own recording.
+`record.py` writes claude's output to `raw-NN.jsonl` byte for byte and notes when each line arrived in
+`raw-NN.times.json`. With `--times` the trace's `t_ms` values are those arrival times; without it they come from the
+events' own timestamps (`time_source` says which). For several runs of one task, add `--run K --runs N`.
+`--fixture` replays the recorded Edit and Write calls onto a copy of the fixture (`out/files-NN/before/` and
+`after/`) and stops if the result doesn't match the recording folder, for example because Bash changed a file.
+
 The raw recording isn't committed, because it holds session IDs and local details. The build script redacts the
-recording folder and the local user name and changes nothing else.
+recording folder (it becomes `--alias`) and the local user name, and changes nothing else. Before writing, it fails
+if the trace still holds the recording folder, the user name, a home folder or a drive path.
+
+Tests: `python -m unittest discover tests`.
 
 ## Rules
 

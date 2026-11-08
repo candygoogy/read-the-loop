@@ -13,7 +13,11 @@
       "scripts/build-trace.py",
       "D:/Workspace/Docs/inside-the-loop/recordings/raw-01.jsonl",
       "data/trace-01.json",
-      "D:/Workspace/Claude/scratch/itl-rec-01"
+      "D:/Workspace/Claude/scratch/itl-rec-01",
+      "--prompt", "The tests are failing. Please find the bug and fix it.",
+      "--alias", "~/cart",
+      "--fixture", "fixtures/cart",
+      "--files-out", "out/files-01"
     ],
     "cwd": "$ZED_WORKTREE_ROOT"
   },
