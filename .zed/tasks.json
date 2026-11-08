@@ -27,5 +27,11 @@
     "args": ["scripts/screenshot.js", "D:/Workspace/Docs/inside-the-loop/screenshots"],
     "cwd": "$ZED_WORKTREE_ROOT",
     "env": { "PLAYWRIGHT_BROWSERS_PATH": "D:/Workspace/Cache/ms-playwright" }
+  },
+  {
+    "label": "render video",
+    "command": "node",
+    "args": ["scripts/render-all.mjs", "D:/Workspace/Docs/inside-the-loop/video"],
+    "cwd": "$ZED_WORKTREE_ROOT/video"
   }
 ]

@@ -1,5 +1,9 @@
 # Inside the Loop
 
+[![Chapter 1 in short: a ball falls through the paddle, a real Claude Code session finds and fixes the bug, the ball bounces, and the session's totals](media/hero.gif)](media/hero.mp4)
+
+Chapter 1 in short, made from recording 02 and the game's own code; every number in it comes from the trace.
+
 How an AI coding agent actually works, explained on real recorded sessions.
 
 Chapter 1, "An agent is a loop", opens with a small brick-breaker game whose ball falls through the right half of

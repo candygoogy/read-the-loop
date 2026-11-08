@@ -1,0 +1,25 @@
+{
+  "name": "inside-the-loop-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "README hero video for Inside the Loop, rendered from the recorded trace",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio",
+    "check": "node scripts/check.ts",
+    "srt": "node scripts/write-srt.ts",
+    "render": "node scripts/render-all.mjs"
+  },
+  "dependencies": {
+    "@remotion/captions": "4.0.541",
+    "@remotion/cli": "4.0.541",
+    "@remotion/google-fonts": "4.0.541",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
+    "remotion": "4.0.541"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "typescript": "5.9.3"
+  }
+}
