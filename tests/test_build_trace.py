@@ -153,6 +153,13 @@ class BuildTraceTest(unittest.TestCase):
         for bad in (r"D:\Workspace\Docs\notes", r"C:\Users\someone\x", "/Users/bob/x"):
             self.assertTrue(bt.find_leaks({"text": bad}, set(), "someone"), bad)
 
+    def test_short_home_form_is_redacted(self):
+        bt = load_builder()
+        redact = bt.make_redact(set(), "~/x", "someone")
+        out = redact(r"see C:\Users\SOMEON~1\AppData\Local\Temp\blk_1.log")
+        self.assertEqual(out, r"see C:\Users\you\AppData\Local\Temp\blk_1.log")
+        self.assertEqual(bt.find_leaks({"t": out}, set(), "someone"), [])
+
     def test_record_drops_claude_env_for_the_child_only(self):
         TMP_BASE.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=TMP_BASE) as d:

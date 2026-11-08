@@ -180,8 +180,13 @@ def make_redact(variants, alias, user):
             s = s.replace(v, alias)
         s = s.replace(alias + "\\", alias + "/")
         s = re.sub(rf"\b{re.escape(user)}\b", "you", s)
+        # Windows also writes home folders in 8.3 short form (C:\Users\JOHNDO~1); that's the user name too.
+        s = SHORT_HOME.sub(r"\1you", s)
         return s
     return redact
+
+
+SHORT_HOME = re.compile(r"((?:[A-Za-z]:)?[\\/]+Users[\\/]+)[^\\/\s~]{1,6}~\d+", re.I)
 
 
 def clean(obj, redact):
