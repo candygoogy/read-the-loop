@@ -22,6 +22,23 @@
     "cwd": "$ZED_WORKTREE_ROOT"
   },
   {
+    "label": "rebuild trace 03",
+    "command": "python",
+    "args": [
+      "scripts/build-trace.py",
+      "D:/Workspace/Docs/inside-the-loop/recordings/raw-03.jsonl",
+      "data/trace-03.json",
+      "D:/Workspace/Claude/scratch/itl-rec-03",
+      "--prompt-file", "D:/Workspace/Docs/inside-the-loop/recordings/prompt-03.txt",
+      "--alias", "~/black",
+      "--times", "D:/Workspace/Docs/inside-the-loop/recordings/raw-03.times.json",
+      "--then", "D:/Workspace/Docs/inside-the-loop/recordings/raw-03-compact.jsonl",
+      "--then-times", "D:/Workspace/Docs/inside-the-loop/recordings/raw-03-compact.times.json",
+      "--session", "D:/Workspace/Docs/inside-the-loop/recordings/session-03/14aed0d3-99b2-4729-8689-96de34931285.jsonl"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
     "label": "screenshot check",
     "command": "node",
     "args": ["scripts/screenshot.js", "D:/Workspace/Docs/inside-the-loop/screenshots"],

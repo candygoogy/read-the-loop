@@ -4,197 +4,65 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Inside the Loop</title>
-<meta name="description" content="How an AI coding agent actually works, shown on a real recorded session. Chapter 1: the loop.">
+<meta name="description" content="How an AI coding agent actually works, shown on real recorded sessions, in eight chapters.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="harness-step.css">
 </head>
 <body>
 
-<a class="skip-link" href="#setup">Skip the game</a>
-<a class="skip-link" href="#player">Skip to the step player</a>
-
 <header class="masthead band">
-  <p class="kicker">Inside the Loop · Chapter 1 of 8</p>
-  <h1>An agent is a loop</h1>
-  <p class="dek">A language model can do one thing: read text and write more text. It can't open a file, run a test or play a game. Below, one fixes a bug in a small game it never sees. Try the game first. The bug shows up within seconds.</p>
+  <p class="kicker">An illustrated explainer</p>
+  <h1>Inside the Loop</h1>
+  <p class="dek">How an AI coding agent actually works, shown on real sessions we recorded and you can step through.</p>
 </header>
 
 <main class="band">
-
-<section class="game-open" aria-labelledby="game-before-title">
-  <h2 class="sr-only" id="game-before-title">The game, before the fix</h2>
-  <figure class="game wide" data-game="before" data-title="The game before the fix: the files exactly as the agent was given them">
-    <div class="game-frame"></div>
-    <figcaption>
-      <span class="game-label">Before the fix</span>
-      Keep the ball in play with the paddle. It follows your finger or the mouse; with a keyboard, click or Tab into the game and use the arrow keys or A and D. Watch the first ball: it lands on the right half of the paddle and falls straight through.
-    </figcaption>
-  </figure>
-</section>
-
-<section class="prose" id="setup" tabindex="-1">
-  <h2>The setup</h2>
-  <p>You've seen this game before: a paddle at the bottom, bricks at the top, a ball bouncing between them. Here the ball falls through the right half of the paddle as if it weren't there. On the left half it bounces as it should.</p>
-  <p>We gave the game's folder to Claude Code, an AI coding agent, and typed one sentence:</p>
-  <blockquote class="prompt" data-v="prompt"></blockquote>
-  <p>The agent can't see the game, let alone play it. It can ask for <span data-v="toolCount"></span> kinds of thing: <span data-v="toolPlain"></span>. So it has to work from the code and from the game's tests, a file of <span data-v="testCount"></span> small checks that Node (a program that runs JavaScript) can run with nothing to install.</p>
-  <p>The session took <span data-v="duration"></span> seconds, and in that time the model was called <span data-v="calls"></span> times. It was recorded on <span data-v="date"></span> with <span data-v="model"></span>. We recorded <span data-v="runOf"></span> runs of this task and show run <span data-v="runIndex"></span>, picked by a rule we fixed before recording: the first run that runs the tests both before and after its fix. All <span data-v="runOf"></span> are in the repo. One success on a toy game doesn't prove that agents fix bugs; chapter 7 is about when they don't.</p>
-  <p>Step through the calls below with the buttons, the slider or your arrow keys. Or press <em>Watch it live</em> to see them at the speed they happened.</p>
-</section>
-
-<section class="player" id="player" tabindex="-1" aria-labelledby="player-title">
-  <h2 class="sr-only" id="player-title">Step through the recorded session</h2>
-  <div class="player-head">
-    <div class="step-meta">
-      <span class="step-num" id="step-num"></span>
-      <span class="step-who" id="step-who"></span>
-    </div>
-    <div class="controls">
-      <div class="transport" role="group" aria-label="Step controls">
-        <button type="button" id="prev"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3 5 8l5 5"/></svg></button>
-        <button type="button" id="play"></button>
-        <button type="button" id="next"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></button>
-      </div>
-      <button type="button" id="live" class="live-btn"></button>
-    </div>
-  </div>
-  <div class="timebar">
-    <input type="range" id="scrub" min="0" value="0" step="1">
-    <span class="clock" id="clock"></span>
-  </div>
-  <p class="live-status" id="live-status" aria-live="polite"></p>
-  <p class="sr-only" id="step-status" aria-live="polite"></p>
-
-  <div class="stage">
-    <div class="col-left">
-      <svg class="loop" id="loop" viewBox="0 0 360 300" role="img" aria-labelledby="loop-title">
-        <title id="loop-title">The loop: the model sends requests to the harness, the harness runs them on your computer and sends the results back to the model.</title>
-        <defs>
-          <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
-          </marker>
-        </defs>
-        <path class="edge" id="e-to-model" d="M 128 214 C 70 200, 64 140, 92 104" marker-end="url(#ah)"/>
-        <path class="edge" id="e-to-harness" d="M 150 86 C 196 104, 196 168, 168 196" marker-end="url(#ah)"/>
-        <path class="edge" id="e-to-pc" d="M 226 252 C 248 258, 266 248, 268 232" marker-end="url(#ah)"/>
-        <path class="edge" id="e-from-pc" d="M 252 168 C 230 164, 212 178, 206 200" marker-end="url(#ah)"/>
-        <g class="node" id="n-model" transform="translate(120 70)">
-          <circle r="48"/>
-          <text y="-8">Model</text>
-          <text class="sub" y="10">text in,</text>
-          <text class="sub" y="23">text out</text>
-        </g>
-        <g class="node" id="n-harness" transform="translate(170 236)">
-          <rect x="-54" y="-30" width="108" height="60" rx="10"/>
-          <text y="-4">Harness</text>
-          <text class="sub" y="14">Claude Code</text>
-        </g>
-        <g class="node" id="n-pc" transform="translate(300 190)">
-          <rect x="-46" y="-36" width="92" height="72" rx="6" class="pc"/>
-          <text y="-6">Your</text>
-          <text y="12">computer</text>
-        </g>
-        <text class="edge-label" id="l-to-model" x="36" y="168">everything so far</text>
-        <text class="edge-label" id="l-to-harness" x="200" y="128">a request</text>
-        <text class="edge-label" id="l-pc" x="296" y="250">runs it</text>
-      </svg>
-
-      <figure class="code-fig">
-        <figcaption>The whole idea, in 10 lines</figcaption>
-<pre class="loopcode" id="loopcode"><code><span data-l="1">messages = [instructions, your_message]</span>
-<span data-l="2">while True:</span>
-<span data-l="3">    reply = model(messages)  <i># reads all of it, every time</i></span>
-<span data-l="4">    messages.append(reply)</span>
-<span data-l="5">    if not reply.requests:   <i># no request: finished</i></span>
-<span data-l="6">        break</span>
-<span data-l="7">    for request in reply.requests:</span>
-<span data-l="8">        result = run(request)  <i># harness runs it</i></span>
-<span data-l="9">        messages.append(result)</span>
-<span data-l="10">show(reply.text)</span></code></pre>
-      </figure>
-    </div>
-
-    <div class="col-right">
-      <h3 class="step-title" id="step-title" tabindex="-1"></h3>
-      <p class="step-text" id="step-text"></p>
-      <div class="step-actions" id="step-actions"></div>
-      <div class="cards" id="cards"></div>
-    </div>
-  </div>
-
-  <div class="context">
-    <div class="context-head">
-      <span class="context-label" id="context-label"></span>
-      <span class="context-count" id="context-count"></span>
-    </div>
-    <div class="stack" id="stack"></div>
-    <div class="legend" id="legend"></div>
-  </div>
-</section>
-
-<section class="game-close prose" aria-labelledby="game-after-title">
-  <h2 id="game-after-title">The fixed game</h2>
-  <p>This is the game with <code data-v="mainFile"></code> exactly as the agent's edit left it. Nothing else changed. Watch the first ball again.</p>
-  <figure class="game wide" data-game="after" data-title="The game after the fix: the agent's edited file, loaded as it is">
-    <div class="game-frame"></div>
-    <figcaption>
-      <span class="game-label">After the fix</span>
-      Same controls as before: your finger, the mouse, or the arrow keys once you've clicked into the game.
-    </figcaption>
-  </figure>
-</section>
-
-<section class="prose">
-  <h2>Three things worth noticing</h2>
-
-  <h3>It checked before and after</h3>
-  <p>The model never saw the game. Before it changed anything, it ran the tests, and a failing test came back: <q data-v="failName"></q>. The edit came on the next call, along with a second test run in which all <span data-v="tests"></span> passed. Each of those was a round of the loop, and each result was text the harness pasted in. That's also why the rule picked this run: <span data-v="otherRuns"></span></p>
-
-  <h3>It reads everything, every time</h3>
-  <p>The model keeps nothing between calls. The conversation is its memory, so the harness sends all of it every time. To change <span data-v="newLines"></span> lines, <span data-v="calls"></span> calls read <strong data-v="sumRead"></strong> tokens between them, <span data-v="cacheTotal"></span> of them from the cache. Chapter 3 is about the cache.</p>
-
-  <h3>"Done" is the model's own call</h3>
-  <p>Nobody tells the agent to stop. Its last reply had no request in it, so the harness stopped. The same reply says the agent checked that a fast ball can't skip past the paddle, and that check exists only as sentences in the reply. Here the tests and the fixed game back up the main claim. Chapter 7 is about the times when nothing does.</p>
-</section>
-
-<section class="stats" aria-label="Session totals">
-  <div><span class="n" data-v="calls"></span><span class="l">model calls</span></div>
-  <div><span class="n" data-v="duration"></span><span class="l">seconds</span></div>
-  <div><span class="n" data-v="cost"></span><span class="l">at list price</span></div>
-  <div><span class="n" data-v="linesChanged"></span><span class="l">lines changed, before → after</span></div>
-</section>
-
-<section class="prose next">
-  <p class="kicker">Coming next</p>
-  <h2>Chapter 2: The context window</h2>
-  <p>On a <span data-v="fileCount"></span>-file toy, in <span data-v="calls"></span> calls, the conversation grew from <span data-v="first"></span> to <span data-v="lastTokens"></span> tokens, <span data-v="ratio"></span> times its size at the start. Most of the growth, <span data-v="readAdded"></span> tokens, was the code it read. A real project has thousands of files, and sessions that run for hours. What happens when the conversation gets bigger than the model can read at once?</p>
-</section>
-
+  <h2 class="sr-only">Chapters</h2>
+  <ol class="toc">
+    <li>
+      <span class="toc-n">Chapter 1</span>
+      <h3><a href="loop/index.html">An agent is a loop</a></h3>
+      <p>A model can only read text and write more. Watch a real session fix a bug in a small game it never sees, one round at a time.</p>
+    </li>
+    <li class="coming">
+      <span class="toc-n">Chapter 2 · coming</span>
+      <h3>The context window</h3>
+      <p>How much the model can read at once, and why agents slow down and get expensive as a session grows.</p>
+    </li>
+    <li class="coming">
+      <span class="toc-n">Chapter 3 · coming</span>
+      <h3>Caching</h3>
+      <p>Why reading the whole conversation again is cheap, and what breaks the cache.</p>
+    </li>
+    <li class="coming">
+      <span class="toc-n">Chapter 4 · coming</span>
+      <h3>Compaction</h3>
+      <p>Why agents forget, shown on a real long session.</p>
+    </li>
+    <li class="coming">
+      <span class="toc-n">Chapter 5 · coming</span>
+      <h3>Tools and permissions</h3>
+      <p>What the model is told about each tool, and who decides what may run.</p>
+    </li>
+    <li class="coming">
+      <span class="toc-n">Chapter 6 · coming</span>
+      <h3>Subagents</h3>
+      <p>A fresh conversation for a side task, and what comes back from it.</p>
+    </li>
+    <li class="coming">
+      <span class="toc-n">Chapter 7 · coming</span>
+      <h3>Failure modes</h3>
+      <p>Loops, made-up functions, a false “done”, and the guard rails against each.</p>
+    </li>
+    <li class="coming">
+      <span class="toc-n">Chapter 8 · coming</span>
+      <h3>Build your own agent</h3>
+      <p>A small agent you can run in your browser, on a model replayed from a recording.</p>
+    </li>
+  </ol>
 </main>
 
-<footer class="colophon band">
-  <h2>About the recording</h2>
-  <p><span data-v="source"></span> Model <code data-v="model"></code>, Claude Code <code data-v="ccv"></code>, effort left at its default. Tools allowed: <span data-v="tools"></span>.</p>
-  <p>The model saw the real folder path. This page replaces it with <code data-v="alias"></code>, which is why the commands read <code data-v="cdPart"></code>: a real shell wouldn't expand <code>~</code> inside quotes.</p>
-  <p>Token counts are the usage the API reported on each call. Times are when each line of output arrived, counted from the moment the recorder started Claude Code. Claude Code's own timer puts the session at <span data-v="duration"></span> seconds; the live clock ends at <span data-v="clockEnd"></span>.</p>
-  <p>We recorded <span data-v="runOf"></span> runs. The rule, fixed before recording: the first run that runs the tests before and after its fix; if none does, run 1.</p>
-  <ul class="runs" id="runs"></ul>
-  <p>An earlier batch of three runs was thrown out because of how it was recorded, not how it went: the recorded sessions inherited settings from the session that launched them, including a higher effort level. All three made the same fix. Their raw recordings are kept outside the repo, and their traces were deleted.</p>
-  <p>The traces: <span id="trace-links"></span>. The same data as JSON is in the repo's <code>data/</code> folder.</p>
-</footer>
-
-<script>window.TRACES = {};</script>
-<script src="data/trace-02-run1.js"></script>
-<script>TRACES[TRACE.run.index] = TRACE;</script>
-<script src="data/trace-02-run3.js"></script>
-<script>TRACES[TRACE.run.index] = TRACE;</script>
-<script src="data/trace-02-run2.js"></script>
-<script>TRACES[TRACE.run.index] = TRACE;</script>
-<script src="copy.en.js"></script>
-<script src="harness-step.js"></script>
-<script src="app.js"></script>
 </body>
 </html>

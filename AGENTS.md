@@ -20,12 +20,15 @@ An interactive, illustrated explainer of how AI coding agents work, built on **r
 
 | Path | What it is |
 |---|---|
-| `site/index.html`, `style.css`, `app.js` | Chapter 1 page, styles, step player |
+| `site/index.html` | Contents page (the 8 chapters) |
+| `site/style.css` | Styles shared by every page |
+| `site/lib/trace-ui.js` | Shared helpers (`window.TraceUI`): escaping, formatting, markdown, excerpts, card HTML |
+| `site/loop/index.html`, `app.js`, `copy.en.js` | Chapter 1 page, step player, narration |
 | `site/data/trace-01.js` | Generated trace the page loads (`window.TRACE`) |
 | `data/trace-01.json` | The same trace as JSON (generated) |
 | `fixtures/cart/` | The buggy project given to the agent in recording 01 |
 | `scripts/build-trace.py` | Raw `stream-json` recording → redacted trace (`.json` + `.js`) |
-| `scripts/screenshot.js` | Playwright screenshots (desktop, phone, dark), and reports console errors and horizontal overflow |
+| `scripts/screenshot.js` | Playwright screenshots of every page (desktop, phone, dark), and reports console errors, horizontal overflow and broken local links |
 | `.zed/tasks.json` | Zed tasks: open the page, rebuild the trace, take screenshots |
 
 ## Design system (chapter 1)

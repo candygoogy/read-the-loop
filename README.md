@@ -14,14 +14,18 @@ game, made of the agent's edited file as it is.
 
 ## Run it
 
-Open `site/index.html` in a browser. There's no build step and no server.
+Open `site/index.html` (the contents) or `site/loop/index.html` (chapter 1) in a browser. There's no build step
+and no server.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
-| `site/index.html`, `style.css`, `app.js` | Chapter 1 page, styles, and the step player and live replay |
-| `site/copy.en.js` | Chapter 1 narration and UI labels (`window.COPY`); a translated page loads its own copy file |
+| `site/index.html` | Contents page: the 8 chapters, chapter 1 linked |
+| `site/style.css` | Styles shared by every page |
+| `site/lib/trace-ui.js` | Helpers any chapter can use (`window.TraceUI`): escaping, number formatting, the model's markdown, line excerpts, request/result/text cards |
+| `site/loop/index.html`, `app.js` | Chapter 1 page, and its step player and live replay |
+| `site/loop/copy.en.js` | Chapter 1 narration and UI labels (`window.COPY`); a translated page loads its own copy file |
 | `site/harness-step.js`, `.css` | The "you are the harness" widget for round 1 (demo and check in `tests/`) |
 | `site/data/trace-02-runK.js` | Recording 02, runs 1 to 3 (generated); the page shows run 2 and lists all three |
 | `site/game/run2/before/`, `after/` | The game as given to the agent, and with the agent's recorded edits replayed (generated) |
@@ -32,7 +36,7 @@ Open `site/index.html` in a browser. There's no build step and no server.
 | `scripts/record.py` | Records a command's output byte for byte, with arrival times |
 | `scripts/build-trace.py` | Turns a raw recording into the trace files |
 | `tests/` | Tests for the build script (`python -m unittest discover tests`) and the widget check (`node tests/harness-step-check.js`) |
-| `scripts/screenshot.js` | Screenshots of the page's states at desktop, phone and dark sizes; fails on console errors, horizontal overflow, or a game frame that doesn't load or take keys |
+| `scripts/screenshot.js` | Screenshots of each page's states at desktop, phone and dark sizes (one entry per page); fails on console errors, horizontal overflow, a local link that doesn't resolve, or a game frame that doesn't load or take keys |
 | `AGENTS.md` | Rules for coding agents working on this repo |
 
 ## Record a session

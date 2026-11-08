@@ -1,29 +1,20 @@
 // Chapter 1 page. Every number and every piece of text the agent wrote or saw comes from window.TRACE
 // (site/data/trace-02-run2.js), the recorded session; the other runs come from window.TRACES.
-// The narration and all labels come from window.COPY (copy.en.js).
+// The narration and all labels come from window.COPY (copy.en.js). Escaping, formatting, excerpts
+// and the card HTML come from window.TraceUI (../lib/trace-ui.js).
 (() => {
   "use strict";
   const T = window.TRACE;
   const RUNS = window.TRACES || {};
   const C = window.COPY;
+  const U = window.TraceUI;
   const calls = T.calls;
   const $ = (id) => document.getElementById(id);
-  const nf = new Intl.NumberFormat(C.locale);
-  const fmt = (n) => nf.format(n);
-  const plural = new Intl.PluralRules(C.locale);
-  const pl = (forms, n) => (forms[plural.select(n)] || forms.other)(fmt(n));
-  const list = (items) => new Intl.ListFormat(C.locale, { style: "long", type: "conjunction" }).format(items);
+  const { fmt, pl, list } = U.numbers(C.locale);
+  const { esc, base, secs, clock, toolsOf, textsOf, lineCount, readLines, range } = U;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const base = (p) => p.split("/").pop();
-  const secs = (ms) => (ms / 1000).toFixed(1);
 
-  const toolsOf = (c) => c.output.filter((o) => o.kind === "tool");
-  const textsOf = (c) => c.output.filter((o) => o.kind === "text");
   const allTools = calls.flatMap(toolsOf);
-  const lineCount = (s) => s.replace(/\s+$/, "").split("\n").length;
-  // Read results prefix each line with its number and a tab.
-  const readLines = (s) => s.replace(/\n$/, "").split("\n").map((l) => l.replace(/^\d+\t/, ""));
 
   // ---------- values read from the recording ----------
   const glob = allTools.find((t) => t.tool === "Glob");
@@ -105,53 +96,17 @@
   const others = runInfo.filter((r) => r.index !== T.run.index && !r.before);
   d.otherRuns = others.length ? C.prose.otherRuns(others.length === 1 ? C.prose.runOne(others[0].k) : C.prose.runsList(list(others.map((r) => r.k)))) : "";
 
-  // ---------- formatting ----------
-  function clock(ms) {
-    const s = Math.max(0, ms) / 1000;
-    const m = Math.floor(s / 60);
-    const rest = (s - m * 60).toFixed(1).padStart(4, "0");
-    return `${m}:${rest}`;
-  }
   d.clockEnd = clock(END);
-
-  // Light markdown for what the model wrote: code blocks, inline code, bold, paragraphs.
-  function md(s) {
-    const blocks = [];
-    s = s.replace(/```[a-z]*\n([\s\S]*?)```/g, (_, code) => {
-      blocks.push(code.replace(/\n$/, ""));
-      return `\n\n\u0000${blocks.length - 1}\u0000\n\n`;
-    });
-    return s.split(/\n{2,}/).filter((p) => p.trim()).map((p) => {
-      const m = p.trim().match(/^\u0000(\d+)\u0000$/);
-      if (m) return `<pre>${esc(blocks[+m[1]])}</pre>`;
-      let h = esc(p.trim());
-      h = h.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>");
-      return `<p class="say">${h}</p>`;
-    }).join("");
-  }
 
   // Lines worth marking in the outputs. These only highlight; the text is as recorded.
   const MARKS = [/^✖ .+$/m, /^[ \t]*assert\.\w+\(.*\)$/m, /^ℹ (pass|fail) \d+$/gm, /has been updated successfully\./];
-  const markAll = (h) => MARKS.reduce((acc, re) => acc.replace(new RegExp(re.source, re.flags), (m) => `<mark>${m}</mark>`), h);
-
-  // Show only the lines in `keep` (indexes), with a note where lines are left out.
-  function excerpt(lines, keep, markIdx) {
-    const out = [];
-    let gap = 0;
-    lines.forEach((l, i) => {
-      if (!keep.has(i)) { gap++; return; }
-      if (gap) out.push(`<span class="more">${esc(pl(C.cards.skipped, gap))}</span>`);
-      gap = 0;
-      const n = `<span class="ln">${i + 1}</span>`;
-      out.push(markIdx.has(i) ? `${n}<mark>${esc(l)}</mark>` : n + esc(l));
-    });
-    if (gap) out.push(`<span class="more">${esc(pl(C.cards.skipped, gap))}</span>`);
-    return out.join("\n");
-  }
-  const range = (a, b) => Array.from({ length: Math.max(0, b - a) }, (_, i) => a + i);
+  const skipped = (n) => pl(C.cards.skipped, n);
 
   // ---------- cards ----------
-  const head = (left, meta) => `<div class="card-head"><span>${left}</span><span class="meta">${meta}</span></div>`;
+  const head = U.cardHead;
+  const requestBody = (t) => U.requestBody(t, C.cards);
+  const requestMeta = (t) => U.requestMeta(t, C.cards);
+  const requestCard = (t) => U.requestCard(t, C.cards);
 
   function youCard() {
     return `<div class="card you">${head(esc(C.cards.you), esc(C.cards.youMeta))}<p class="say">${esc(T.prompt)}</p></div>`;
@@ -159,19 +114,7 @@
   function setupCard() {
     return `<div class="card sys">${head(esc(C.cards.setup), esc(C.cards.setupMeta(d)))}<p class="note">${esc(C.cards.setupBody)}</p></div>`;
   }
-  function requestBody(t) {
-    if (t.tool === "Edit") {
-      const del = t.input.old_string.split("\n").map((l) => `<span class="del">- ${esc(l)}</span>`).join("\n");
-      const add = t.input.new_string.split("\n").map((l) => `<span class="add">+ ${esc(l)}</span>`).join("\n");
-      return `${esc(C.cards.file)}: ${esc(t.input.file_path)}\n${del}\n${add}`;
-    }
-    if (t.tool === "Bash") return esc(t.input.command.split(" && ").join(" &&\n  "));
-    return esc(JSON.stringify(t.input, null, 2));
-  }
-  const requestMeta = (t) => (t.input.description ? `“${esc(t.input.description)}”` : esc(C.cards.toolMeta[t.tool] || ""));
-  function requestCard(t) {
-    return `<div class="card model">${head(`${esc(C.cards.request)} · ${esc(t.tool)}`, requestMeta(t))}<pre>${requestBody(t)}</pre></div>`;
-  }
+  // How much of each result to show: a Read shows its first lines and the lines that matter here.
   function resultBody(t) {
     const text = t.result.text.replace(/\s+$/, "");
     if (t.tool === "Read") {
@@ -185,15 +128,12 @@
         range(failIdx, Math.min(lines.length, failIdx + 7)).forEach((i) => keep.add(i));
         markIdx.add(failIdx);
       }
-      return { html: excerpt(lines, keep, markIdx), meta: C.cards.excerpt(fmt(keep.size), fmt(lines.length)) };
+      return { html: U.excerpt(lines, keep, markIdx, skipped), meta: C.cards.excerpt(fmt(keep.size), fmt(lines.length)) };
     }
-    return { html: markAll(esc(text)), meta: pl(C.cards.linesBack, lineCount(text)) };
+    return { html: U.mark(esc(text), MARKS), meta: pl(C.cards.linesBack, lineCount(text)) };
   }
-  function resultCard(t) {
-    const b = resultBody(t);
-    return `<div class="card result${t.result.is_error ? " err" : ""}">${head(`${esc(C.cards.result)} · ${esc(t.tool)}`, esc(b.meta))}<pre>${b.html}</pre></div>`;
-  }
-  const textCard = (o, final) => `<div class="card model text">${head(esc(final ? C.cards.finalAnswer : C.cards.modelWrites), esc(C.cards.plain))}${md(o.text)}</div>`;
+  const resultCard = (t) => U.resultCard(t, resultBody(t), C.cards);
+  const textCard = (o, final) => U.textCard(o.text, final ? C.cards.finalAnswer : C.cards.modelWrites, C.cards);
 
   // ---------- steps ----------
   // Each call gives a model step (its requests) and, if it made requests, a harness step (their results).
@@ -524,13 +464,13 @@
   // until the reader presses play, on any device.
   document.querySelectorAll(".game").forEach((fig) => {
     const box = fig.querySelector(".game-frame");
-    const src = `game/run${T.run.index}/${fig.dataset.game}/index.html`;
+    const src = `../game/run${T.run.index}/${fig.dataset.game}/index.html`;
     // The still is the first frame the game draws (both games draw the same one), light or dark.
     function poster() {
       box.innerHTML =
         `<button type="button" class="game-poster">` +
-          `<picture><source srcset="img/game-start-dark.webp" media="(prefers-color-scheme: dark)">` +
-          `<img class="game-still" src="img/game-start-light.webp" width="720" height="480" alt="" loading="lazy" decoding="async"></picture>` +
+          `<picture><source srcset="../img/game-start-dark.webp" media="(prefers-color-scheme: dark)">` +
+          `<img class="game-still" src="../img/game-start-light.webp" width="720" height="480" alt="" loading="lazy" decoding="async"></picture>` +
           `<span class="game-play">${ICON.play}<span>${esc(C.game.play)}</span></span>` +
         `</button>`;
       box.querySelector(".game-poster").addEventListener("click", start);
@@ -557,7 +497,7 @@
     else el.innerHTML = v;
   });
   $("runs").innerHTML = runInfo.map((r) => `<li>${esc(C.prose.runLine(r))}${r.index === T.run.index ? esc(C.prose.runShown) : ""}</li>`).join("");
-  $("trace-links").innerHTML = list(runInfo.map((r) => `<a href="data/trace-02-run${r.index}.js">${esc(C.prose.traceLink(r.k))}</a>`));
+  $("trace-links").innerHTML = list(runInfo.map((r) => `<a href="../data/trace-02-run${r.index}.js">${esc(C.prose.traceLink(r.k))}</a>`));
 
   setPlayLabel();
   setLiveLabel();
