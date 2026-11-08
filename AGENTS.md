@@ -26,7 +26,7 @@ Live at https://loop.candygoogy.dev, repo https://github.com/candygoogy/read-the
 | `site/chapters.js` | Which chapters are out (`window.CHAPTERS`): number, slug, title, `published`, `release` date, `langs`; also the site's name, address and GitHub repo, each in one place |
 | `site/lib/release.js` | Draws what `chapters.js` says on every page: the contents lists, each chapter's foot (previous/next, the "coming next" notice), the preview note on unpublished chapters, the language switch; removes links to unpublished chapters |
 | `site/index.html`, `contents.js` | Contents page: the 8 chapters, sorted by `release.js`; `contents.js` draws each chapter's small picture from its recording |
-| `site/404.html`, `robots.txt`, `sitemap.xml`, `CNAME`, `.nojekyll` | Hosting files for GitHub Pages; `sitemap.xml` is written by `scripts/sitemap.js` |
+| `site/404.html`, `robots.txt`, `sitemap.xml` | Hosting files (Cloudflare Pages serves `404.html` for unknown paths); `sitemap.xml` is written by `scripts/sitemap.js` |
 | `site/fonts/` | Self-hosted woff2 files (Fraunces, Source Serif 4, IBM Plex Mono; latin and latin-ext) and their OFL licences; `@font-face` rules are at the top of `style.css` |
 | `site/og/`, `favicon.svg`, `apple-touch-icon.png` | Preview cards (1200 × 630) and icons; the cards and the PNG icon are rendered by `scripts/og.js` |
 | `site/style.css` | Styles shared by every page, and the fonts |
@@ -54,7 +54,6 @@ Live at https://loop.candygoogy.dev, repo https://github.com/candygoogy/read-the
 | `scripts/og.js`, `scripts/og/card.html` | Renders the preview cards from a template; the picture and numbers on each come from the chapter's trace |
 | `scripts/check-site.js` | Opens every page and fails on any request outside the site, wrong meta tags, links to unpublished chapters, or a stale sitemap; also tries a release date, a release and a second language |
 | `scripts/sitemap.js` | Writes `site/sitemap.xml` from `chapters.js` (published pages only) |
-| `.github/workflows/pages.yml` | Deploys `site/` to GitHub Pages on every push to `master` |
 | `scripts/screenshot.js` | Screenshots of each page's states at desktop, phone and dark sizes (one entry per page); fails on console errors, horizontal overflow, a local link that doesn't resolve, a request outside the site, or a game frame that doesn't load or take keys |
 
 ## Design system (chapter 1)
@@ -104,3 +103,8 @@ recording folder (it becomes `--alias`) and the local user name, and changes not
 if the trace still holds the recording folder, the user name, a home folder or a drive path.
 
 Tests: `python -m unittest discover tests`.
+
+## Hosting
+
+Cloudflare Pages project linked to the GitHub repo: every push to `master` deploys `site/` as it is (no build
+command, output directory `site`). The custom domain `loop.candygoogy.dev` is set in the Pages project.

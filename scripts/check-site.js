@@ -10,7 +10,7 @@
 //    sorted right, the language switch on every page that exists in two languages (and only there),
 //    linking each of them. Then the same with chapters.js changed in the browser: a release date,
 //    chapter 4 published, and a chapter losing its translation.
-// 4. Hosting files: sitemap.xml up to date, robots.txt, CNAME, .nojekyll.
+// 4. Hosting files: sitemap.xml up to date, robots.txt.
 // Usage: node scripts/check-site.js [out-dir]
 const path = require("path");
 const fs = require("fs");
@@ -271,10 +271,8 @@ const tweak = (fn) => `(() => {
   console.log(`  sitemap.xml: ${(have.match(/<loc>/g) || []).length} urls, ${have === want ? "matches" : "DOESN'T match"} chapters.js`);
   const robots = fs.readFileSync(path.join(site, "robots.txt"), "utf8");
   if (!robots.includes(`Sitemap: ${C.site}/sitemap.xml`)) fail("robots.txt has no Sitemap line");
-  const cname = fs.readFileSync(path.join(site, "CNAME"), "utf8").trim();
-  if (`https://${cname}` !== C.site) fail(`CNAME ${cname} doesn't match ${C.site}`);
-  if (!fs.existsSync(path.join(site, ".nojekyll"))) fail(".nojekyll missing");
-  console.log(`  robots.txt ok, CNAME ${cname}, .nojekyll ${fs.existsSync(path.join(site, ".nojekyll"))}`);
+  // Hosted on Cloudflare Pages (linked to the GitHub repo): the custom domain is set in the Pages project, not a file.
+  console.log(`  robots.txt ok, site ${C.site}`);
 
   await browser.close();
   console.log(problems.length ? `\nFAIL\n${problems.map((x) => "  " + x).join("\n")}` : "\nall checks pass");
