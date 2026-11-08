@@ -72,7 +72,7 @@
         '<div class="hs" data-state="idle">' +
           '<div class="hs-grid">' +
             '<section class="hs-convo" aria-labelledby="' + id + '-ct">' +
-              '<h3 class="hs-title" id="' + id + '-ct">' + esc(L.conversationTitle) + "</h3>" +
+              '<h4 class="hs-title" id="' + id + '-ct">' + esc(L.conversationTitle) + "</h4>" +
               '<ol class="hs-list">' +
                 '<li class="hs-item"><article class="card model hs-card" aria-labelledby="' + id + '-rq">' +
                   '<div class="card-head"><span id="' + id + '-rq">' + esc(L.requestTitle) + " · " + esc(req.tool) + "</span>" +
@@ -83,7 +83,7 @@
               "</ol>" +
             "</section>" +
             '<section class="hs-pc" aria-labelledby="' + id + '-pt">' +
-              '<h3 class="hs-title" id="' + id + '-pt">' + esc(L.computerTitle) + "</h3>" +
+              '<h4 class="hs-title" id="' + id + '-pt">' + esc(L.computerTitle) + "</h4>" +
               '<div class="hs-idle">' +
                 '<p class="hs-note">' + esc(L.idleNote) + "</p>" +
                 '<button type="button" class="hs-btn hs-btn-primary hs-run">' + esc(L.run) + "</button>" +

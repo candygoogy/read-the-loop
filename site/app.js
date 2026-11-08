@@ -193,7 +193,7 @@
     const b = resultBody(t);
     return `<div class="card result${t.result.is_error ? " err" : ""}">${head(`${esc(C.cards.result)} · ${esc(t.tool)}`, esc(b.meta))}<pre>${b.html}</pre></div>`;
   }
-  const textCard = (o, final) => `<div class="card model">${head(esc(final ? C.cards.finalAnswer : C.cards.modelWrites), esc(C.cards.plain))}${md(o.text)}</div>`;
+  const textCard = (o, final) => `<div class="card model text">${head(esc(final ? C.cards.finalAnswer : C.cards.modelWrites), esc(C.cards.plain))}${md(o.text)}</div>`;
 
   // ---------- steps ----------
   // Each call gives a model step (its requests) and, if it made requests, a harness step (their results).
@@ -248,8 +248,15 @@
     `<span><i class="sw sys"></i>${esc(C.ui.legendSys)}</span>` +
     `<span><i class="sw round"></i>${esc(C.ui.legendRound(rounds.map((x) => "+" + fmt(x)).join(", ")))}</span>`;
 
+  // ---------- icons (decorative; every button has a text label or aria-label) ----------
+  const ICON = {
+    play: '<svg class="solid" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2.8v10.4a.6.6 0 0 0 .9.5l8.2-5.2a.6.6 0 0 0 0-1L5.4 2.3a.6.6 0 0 0-.9.5z"/></svg>',
+    pause: '<svg class="solid" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.5" y="2.5" width="3" height="11" rx=".8"/><rect x="9.5" y="2.5" width="3" height="11" rx=".8"/></svg>',
+  };
+
   // ---------- player state ----------
   let cur = 0;
+  let booted = false;       // the first render doesn't announce itself
   let round1Done = false;
   let hs = null;            // the HarnessStep widget, while mounted
   let playTimer = null;     // reading-pace play
@@ -357,7 +364,13 @@
     paintStack(s);
 
     if (!opts.fromScrub) scrub.value = String(cur);
-    scrub.setAttribute("aria-valuetext", `${C.ui.stepOf(fmt(cur + 1), fmt(steps.length))}: ${$("step-title").textContent}`);
+    scrub.style.setProperty("--p", String(cur / (steps.length - 1)));
+    const where = `${C.ui.stepOf(fmt(cur + 1), fmt(steps.length))}: ${$("step-title").textContent}`;
+    scrub.setAttribute("aria-valuetext", where);
+    // Buttons and reading-pace play keep focus where it is, so say where the player went. The
+    // slider announces its own value, a focused title reads itself, and live mode has its status line.
+    if (booted && !isLive && !opts.fromScrub && !opts.focus) $("step-status").textContent = where;
+    booted = true;
     $("prev").disabled = cur === 0;
     $("next").disabled = cur === steps.length - 1;
     if (!isLive) setClock(s.t);
@@ -380,7 +393,7 @@
   }
   function setPlayLabel() {
     const on = !!playTimer;
-    $("play").textContent = on ? C.ui.pause : C.ui.play;
+    $("play").innerHTML = (on ? ICON.pause : ICON.play) + `<span>${esc(on ? C.ui.pause : C.ui.play)}</span>`;
     $("play").setAttribute("aria-pressed", String(on));
   }
   function stopPlay() {
@@ -438,13 +451,13 @@
     const none = ![...slots].some((el) => !el.hidden);
     if (none && !wait) $("cards").insertAdjacentHTML("afterbegin", `<p class="card-wait">${esc(liveStatus(t))}</p>`);
     else if (!none && wait) wait.remove();
-    else if (wait) wait.textContent = liveStatus(t);
+    else if (wait && wait.textContent !== liveStatus(t)) wait.textContent = liveStatus(t);
     setClock(t);
-    $("live-status").textContent = liveStatus(t);
+    if ($("live-status").textContent !== liveStatus(t)) $("live-status").textContent = liveStatus(t);
   }
 
   function setLiveLabel() {
-    $("live").textContent = live ? C.ui.livePause : C.ui.live;
+    $("live").innerHTML = `<span class="dot" aria-hidden="true"></span><span>${esc(live ? C.ui.livePause : C.ui.live)}</span>`;
     $("live").setAttribute("aria-pressed", String(!!live));
     $("player").classList.toggle("is-live", !!live);
   }
@@ -512,9 +525,15 @@
   document.querySelectorAll(".game").forEach((fig) => {
     const box = fig.querySelector(".game-frame");
     const src = `game/run${T.run.index}/${fig.dataset.game}/index.html`;
+    // The still is the first frame the game draws (both games draw the same one), light or dark.
     function poster() {
-      box.innerHTML = `<div class="game-poster"><button type="button" class="game-play">${esc(C.game.play)}</button></div>`;
-      box.querySelector(".game-play").addEventListener("click", start);
+      box.innerHTML =
+        `<button type="button" class="game-poster">` +
+          `<picture><source srcset="img/game-start-dark.webp" media="(prefers-color-scheme: dark)">` +
+          `<img class="game-still" src="img/game-start-light.webp" width="720" height="480" alt="" loading="lazy" decoding="async"></picture>` +
+          `<span class="game-play">${ICON.play}<span>${esc(C.game.play)}</span></span>` +
+        `</button>`;
+      box.querySelector(".game-poster").addEventListener("click", start);
       fig.classList.remove("is-playing");
     }
     function start() {
@@ -524,7 +543,7 @@
         `<button type="button" class="ghost game-stop">${esc(C.game.stop)}</button></div>`;
       fig.classList.add("is-playing");
       box.querySelector(".game-restart").addEventListener("click", () => { box.querySelector("iframe").src = src; });
-      box.querySelector(".game-stop").addEventListener("click", () => { poster(); box.querySelector(".game-play").focus(); });
+      box.querySelector(".game-stop").addEventListener("click", () => { poster(); box.querySelector(".game-poster").focus(); });
       box.querySelector("iframe").focus();
     }
     poster();

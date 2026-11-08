@@ -13,16 +13,20 @@
 </head>
 <body>
 
-<header class="masthead">
+<a class="skip-link" href="#setup">Skip the game</a>
+<a class="skip-link" href="#player">Skip to the step player</a>
+
+<header class="masthead band">
   <p class="kicker">Inside the Loop · Chapter 1 of 8</p>
   <h1>An agent is a loop</h1>
   <p class="dek">A language model can do one thing: read text and write more text. It can't open a file, run a test or play a game. Below, one fixes a bug in a small game it never sees. Try the game first. The bug shows up within seconds.</p>
 </header>
 
+<main class="band">
+
 <section class="game-open" aria-labelledby="game-before-title">
   <h2 class="sr-only" id="game-before-title">The game, before the fix</h2>
-  <p class="skip"><a href="#setup">Skip the game</a></p>
-  <figure class="game" data-game="before" data-title="The game before the fix: the files exactly as the agent was given them">
+  <figure class="game wide" data-game="before" data-title="The game before the fix: the files exactly as the agent was given them">
     <div class="game-frame"></div>
     <figcaption>
       <span class="game-label">Before the fix</span>
@@ -30,8 +34,6 @@
     </figcaption>
   </figure>
 </section>
-
-<main>
 
 <section class="prose" id="setup" tabindex="-1">
   <h2>The setup</h2>
@@ -43,16 +45,19 @@
   <p>Step through the calls below with the buttons, the slider or your arrow keys. Or press <em>Watch it live</em> to see them at the speed they happened.</p>
 </section>
 
-<section class="player" id="player" aria-label="Step through the recorded session">
+<section class="player" id="player" tabindex="-1" aria-labelledby="player-title">
+  <h2 class="sr-only" id="player-title">Step through the recorded session</h2>
   <div class="player-head">
     <div class="step-meta">
       <span class="step-num" id="step-num"></span>
       <span class="step-who" id="step-who"></span>
     </div>
     <div class="controls">
-      <button type="button" id="prev">←</button>
-      <button type="button" id="play"></button>
-      <button type="button" id="next">→</button>
+      <div class="transport" role="group" aria-label="Step controls">
+        <button type="button" id="prev"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3 5 8l5 5"/></svg></button>
+        <button type="button" id="play"></button>
+        <button type="button" id="next"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></button>
+      </div>
       <button type="button" id="live" class="live-btn"></button>
     </div>
   </div>
@@ -61,6 +66,7 @@
     <span class="clock" id="clock"></span>
   </div>
   <p class="live-status" id="live-status" aria-live="polite"></p>
+  <p class="sr-only" id="step-status" aria-live="polite"></p>
 
   <div class="stage">
     <div class="col-left">
@@ -77,8 +83,9 @@
         <path class="edge" id="e-from-pc" d="M 252 168 C 230 164, 212 178, 206 200" marker-end="url(#ah)"/>
         <g class="node" id="n-model" transform="translate(120 70)">
           <circle r="48"/>
-          <text y="-4">Model</text>
-          <text class="sub" y="14">text in, text out</text>
+          <text y="-8">Model</text>
+          <text class="sub" y="10">text in,</text>
+          <text class="sub" y="23">text out</text>
         </g>
         <g class="node" id="n-harness" transform="translate(170 236)">
           <rect x="-54" y="-30" width="108" height="60" rx="10"/>
@@ -131,7 +138,7 @@
 <section class="game-close prose" aria-labelledby="game-after-title">
   <h2 id="game-after-title">The fixed game</h2>
   <p>This is the game with <code data-v="mainFile"></code> exactly as the agent's edit left it. Nothing else changed. Watch the first ball again.</p>
-  <figure class="game" data-game="after" data-title="The game after the fix: the agent's edited file, loaded as it is">
+  <figure class="game wide" data-game="after" data-title="The game after the fix: the agent's edited file, loaded as it is">
     <div class="game-frame"></div>
     <figcaption>
       <span class="game-label">After the fix</span>
@@ -168,7 +175,7 @@
 
 </main>
 
-<footer class="colophon">
+<footer class="colophon band">
   <h2>About the recording</h2>
   <p><span data-v="source"></span> Model <code data-v="model"></code>, Claude Code <code data-v="ccv"></code>, effort left at its default. Tools allowed: <span data-v="tools"></span>.</p>
   <p>The model saw the real folder path. This page replaces it with <code data-v="alias"></code>, which is why the commands read <code data-v="cdPart"></code>: a real shell wouldn't expand <code>~</code> inside quotes.</p>

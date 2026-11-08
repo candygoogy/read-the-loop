@@ -23,7 +23,7 @@
 }
 
 .hs .hs-title {
-  font: 500 0.75rem/1.2 var(--mono);
+  font: 500 0.75rem/1.3 var(--mono);
   letter-spacing: 0.03em;
   color: var(--ink-2);
   margin: 0 0 0.6rem;
@@ -67,7 +67,7 @@
 }
 
 .hs-result:focus { outline: none; }
-.hs-result:focus-visible { outline: 2px solid var(--model); outline-offset: 3px; }
+.hs-result:focus-visible { outline: 2px solid var(--focus, var(--ink)); outline-offset: 3px; }
 
 /* ---------- your computer ---------- */
 .hs-pc {
@@ -154,10 +154,10 @@
   transition: transform 160ms var(--hs-ease-out), background-color 150ms ease, border-color 150ms ease;
 }
 .hs-btn:active { transform: scale(0.97); }
-.hs-btn:focus-visible { outline: 2px solid var(--model); outline-offset: 2px; }
+.hs-btn:focus-visible { outline: 2px solid var(--focus, var(--ink)); outline-offset: 3px; }
 
 .hs-btn-primary {
-  color: var(--card);
+  color: var(--on-fill, var(--card));
   background: var(--result);
   border-color: var(--result);
 }
@@ -180,7 +180,7 @@
 .hs-is-dragging * { cursor: grabbing !important; user-select: none; -webkit-user-select: none; }
 .hs-is-dragging .hs-handle { background: color-mix(in srgb, var(--result) 12%, var(--card)); }
 .hs-out.hs-on-slot { box-shadow: 0 0 0 2px var(--result), 0 24px 48px -24px color-mix(in srgb, var(--ink) 65%, transparent); }
-.hs-on-slot .hs-handle { color: var(--card); background: var(--result); }
+.hs-on-slot .hs-handle { color: var(--on-fill, var(--card)); background: var(--result); }
 .hs-on-slot .hs-grip { fill: currentColor; }
 
 /* ---------- screen-reader-only live region ---------- */
