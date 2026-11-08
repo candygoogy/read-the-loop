@@ -1,0 +1,27 @@
+[
+  {
+    "label": "open chapter in browser",
+    "command": "pwsh",
+    "args": ["-NoProfile", "-Command", "Start-Process (Join-Path $env:ZED_WORKTREE_ROOT 'site/index.html')"],
+    "use_new_terminal": false,
+    "reveal": "never"
+  },
+  {
+    "label": "rebuild trace 01",
+    "command": "python",
+    "args": [
+      "scripts/build-trace.py",
+      "D:/Workspace/Docs/inside-the-loop/recordings/raw-01.jsonl",
+      "data/trace-01.json",
+      "D:/Workspace/Claude/scratch/itl-rec-01"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "screenshot check",
+    "command": "node",
+    "args": ["scripts/screenshot.js", "D:/Workspace/Docs/inside-the-loop/screenshots"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "env": { "PLAYWRIGHT_BROWSERS_PATH": "D:/Workspace/Cache/ms-playwright" }
+  }
+]

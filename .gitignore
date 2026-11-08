@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+raw*.jsonl
+node_modules/
+out/
+CLAUDE.local.md

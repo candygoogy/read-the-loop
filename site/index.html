@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inside the Loop</title>
+<meta name="description" content="How an AI coding agent actually works, shown on a real recorded session. Chapter 1: the loop.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <p class="kicker">Inside the Loop · Chapter 1 of 8</p>
+  <h1>An agent is a loop</h1>
+  <p class="dek">A language model can do exactly one thing: read text and write more text. It can't open a file, run a test or touch your computer. So how does it fix a bug in your code? Let's watch one do it.</p>
+  <p class="byline">Everything below is a <strong>real session</strong>, recorded on 8 November 2026 with Claude Code. No step is staged or edited.</p>
+</header>
+
+<main>
+
+<section class="prose">
+  <h2>The setup</h2>
+  <p>Here's a tiny shopping cart with a bug. Twenty percent off a $50 item should cost $40. The code says it costs $10.</p>
+
+  <figure class="file">
+    <figcaption>cart.py</figcaption>
+<pre><code><span class="ln">1</span><span class="c">"""A tiny shopping cart."""</span>
+<span class="ln">2</span>
+<span class="ln">3</span>
+<span class="ln">4</span><span class="k">def</span> <span class="f">apply_discount</span>(price, percent):
+<span class="ln">5</span>    <span class="c">"""Return the price after taking `percent` off. 20 means 20% off."""</span>
+<span class="ln bug">6</span><span class="bug">    <span class="k">return</span> price * percent / 100</span>
+<span class="ln">7</span>
+<span class="ln">8</span>
+<span class="ln">9</span><span class="k">def</span> <span class="f">cart_total</span>(prices, discount_percent=0):
+<span class="ln">…</span><span class="c">    # adds up the prices, then calls apply_discount</span></code></pre>
+  </figure>
+
+  <p>There's also a file of three tests, and two of them fail. We type one sentence and step back:</p>
+  <blockquote class="prompt" id="prompt-quote"></blockquote>
+  <p>Twenty-five seconds later the bug is fixed and all three tests pass. In between, the model was called four times. Step through those calls one at a time below. You can use the buttons, the slider, or your arrow keys.</p>
+</section>
+
+<section class="player" id="player" aria-label="Step through the recorded session">
+  <div class="player-head">
+    <div class="step-meta">
+      <span class="step-num" id="step-num">Step 1 / 8</span>
+      <span class="step-who" id="step-who"></span>
+    </div>
+    <div class="controls">
+      <button type="button" id="prev" aria-label="Previous step">←</button>
+      <button type="button" id="play" aria-label="Play">Play</button>
+      <button type="button" id="next" aria-label="Next step">→</button>
+    </div>
+  </div>
+  <input type="range" id="scrub" min="0" max="7" value="0" step="1" aria-label="Step">
+
+  <div class="stage">
+    <div class="col-left">
+      <svg class="loop" id="loop" viewBox="0 0 360 300" role="img" aria-labelledby="loop-title">
+        <title id="loop-title">The loop: the model sends requests to the harness, the harness runs them on your computer and sends the results back to the model.</title>
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <path class="edge" id="e-to-model" d="M 128 214 C 70 200, 64 140, 92 104" marker-end="url(#ah)"/>
+        <path class="edge" id="e-to-harness" d="M 150 86 C 196 104, 196 168, 168 196" marker-end="url(#ah)"/>
+        <path class="edge" id="e-to-pc" d="M 226 252 C 248 258, 266 248, 268 232" marker-end="url(#ah)"/>
+        <path class="edge" id="e-from-pc" d="M 252 168 C 230 164, 212 178, 206 200" marker-end="url(#ah)"/>
+        <g class="node" id="n-model" transform="translate(120 70)">
+          <circle r="48"/>
+          <text y="-4">Model</text>
+          <text class="sub" y="14">text in, text out</text>
+        </g>
+        <g class="node" id="n-harness" transform="translate(170 236)">
+          <rect x="-54" y="-30" width="108" height="60" rx="10"/>
+          <text y="-4">Harness</text>
+          <text class="sub" y="14">Claude Code</text>
+        </g>
+        <g class="node" id="n-pc" transform="translate(300 190)">
+          <rect x="-46" y="-36" width="92" height="72" rx="6" class="pc"/>
+          <text y="-6">Your</text>
+          <text y="12">computer</text>
+        </g>
+        <text class="edge-label" id="l-to-model" x="36" y="168">everything so far</text>
+        <text class="edge-label" id="l-to-harness" x="200" y="128">a request</text>
+        <text class="edge-label" id="l-pc" x="296" y="250">runs it</text>
+      </svg>
+
+      <figure class="code-fig">
+        <figcaption>The whole idea, in 10 lines</figcaption>
+<pre class="loopcode" id="loopcode"><code><span data-l="1">messages = [instructions, your_message]</span>
+<span data-l="2">while True:</span>
+<span data-l="3">    reply = model(messages)  <i># reads all of it, every time</i></span>
+<span data-l="4">    messages.append(reply)</span>
+<span data-l="5">    if not reply.requests:   <i># no request: finished</i></span>
+<span data-l="6">        break</span>
+<span data-l="7">    for request in reply.requests:</span>
+<span data-l="8">        result = run(request)  <i># harness runs it</i></span>
+<span data-l="9">        messages.append(result)</span>
+<span data-l="10">show(reply.text)</span></code></pre>
+      </figure>
+    </div>
+
+    <div class="col-right">
+      <h3 class="step-title" id="step-title"></h3>
+      <p class="step-text" id="step-text"></p>
+      <div class="cards" id="cards"></div>
+    </div>
+  </div>
+
+  <div class="context">
+    <div class="context-head">
+      <span class="context-label">What the model reads, drawn to scale</span>
+      <span class="context-count" id="context-count"></span>
+    </div>
+    <div class="stack" id="stack"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+</section>
+
+<section class="prose">
+  <h2>Three things worth noticing</h2>
+
+  <h3>1. The model starts from zero every time</h3>
+  <p>The model doesn't remember the last call. The conversation <em>is</em> its memory, so on each call the harness sends the whole thing again from the top. Fixing one line took four calls that read <strong id="sum-read"></strong> tokens in total. Most of that was the same instructions, read over and over. Reading something a second time is much cheaper, because the provider keeps a copy of text it has just seen: <strong id="sum-cache"></strong> of those tokens came from that cache. That trick, and what happens when the conversation outgrows the model, is chapter 2.</p>
+
+  <h3>2. It finds out about your computer by being wrong</h3>
+  <p>On its second call the model tried to run the tests with <code>pytest</code>, a popular tool that isn't installed on this computer. It couldn't have known. It only found out because the harness pasted the error back into the conversation, and on the next call it used Python's built-in test runner instead. The loop is how the model learns anything about the world outside its text.</p>
+
+  <h3>3. "Done" is just a reply without a request</h3>
+  <p>Nobody tells the agent to stop. The harness keeps looping while the model's replies contain requests. When a reply comes back that's plain text, like the summary at step 8, the loop ends. That makes "done" the model's own call, and it's why agents sometimes stop too early or say they've finished when they haven't. Chapter 7 is about those failures and the guard rails against them.</p>
+</section>
+
+<section class="stats" aria-label="Session totals">
+  <div><span class="n" id="t-calls"></span><span class="l">model calls</span></div>
+  <div><span class="n" id="t-time"></span><span class="l">seconds</span></div>
+  <div><span class="n" id="t-cost"></span><span class="l">at list price</span></div>
+  <div><span class="n">1</span><span class="l">line changed</span></div>
+</section>
+
+<section class="prose next">
+  <p class="kicker">Coming next</p>
+  <h2>Chapter 2: The context window</h2>
+  <p>Every call reads the whole stack. So what happens when the stack is a hundred times bigger than this one: a real project, hours of work, thousands of files? Why do agents slow down, get expensive and finally forget things?</p>
+</section>
+
+</main>
+
+<footer class="colophon">
+  <p><strong>About the recording.</strong> <span id="src"></span> Model: <code id="model"></code>, Claude Code <code id="ccv"></code>. Tools allowed: <span id="tools"></span>. The token counts come from the usage the API reported on each call. The full trace is in <a href="data/trace-01.js">data/trace-01.js</a>.</p>
+</footer>
+
+<script src="data/trace-01.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
