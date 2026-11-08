@@ -36,12 +36,14 @@ def main(argv):
         print("record.py: not passing to the child:", ", ".join(dropped), file=sys.stderr)
 
     arrivals = []
+    # Open the output first: if that fails, no session has been started (and nothing hangs on a full pipe).
+    f = open(out, "wb")
     started_at = datetime.datetime.now(datetime.timezone.utc)
     t0 = time.perf_counter()
     # No stdin, so `claude -p` never waits for piped input; stderr is inherited.
     proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, env=env)
     try:
-        with open(out, "wb") as f:
+        with f:
             assert proc.stdout is not None
             for line in iter(proc.stdout.readline, b""):
                 arrivals.append(round((time.perf_counter() - t0) * 1000))

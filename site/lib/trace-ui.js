@@ -12,7 +12,8 @@
 
   // m:ss.s, for times in the recording.
   function clock(ms) {
-    const s = Math.max(0, ms) / 1000;
+    // Round to tenths first, so 59.96 s shows as 1:00.0, not 0:60.0.
+    const s = Math.round(Math.max(0, ms) / 100) / 10;
     const m = Math.floor(s / 60);
     const rest = (s - m * 60).toFixed(1).padStart(4, "0");
     return `${m}:${rest}`;

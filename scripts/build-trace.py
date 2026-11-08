@@ -395,12 +395,13 @@ def make_redact(variants, alias, user, session_ids=()):
     projects = {project_folder(v) for v in variants}
 
     def redact(s):
+        # Case-insensitive, like the leak check: tools often print d:\... or a lower-cased folder.
         for v in sorted(variants, key=len, reverse=True):
-            s = s.replace(v, alias)
+            s = re.sub(re.escape(v), lambda _m: alias, s, flags=re.I)
         for v in projects:
             s = re.sub(re.escape(v), project_folder(alias), s, flags=re.I)
         s = s.replace(alias + "\\", alias + "/")
-        s = re.sub(rf"\b{re.escape(user)}\b", "you", s)
+        s = re.sub(rf"\b{re.escape(user)}\b", "you", s, flags=re.I)
         # Windows also writes home folders in 8.3 short form (C:\Users\JOHNDO~1); that's the user name too.
         s = SHORT_HOME.sub(r"\1you", s)
         # Session ids are local details (README); one can turn up inside a compaction summary.
