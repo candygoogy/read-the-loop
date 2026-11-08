@@ -171,11 +171,19 @@ async function loopStates(p, { name, shot, problems, dir }) {
 }
 
 // ---------- the pages ----------
-// To add a chapter: one entry, with its file under site/ and a states function.
+// To add a chapter: a file scripts/shots/<name>.js that exports
+// { name, file, sizes, states(p, { name, shot, problems, dir }) } with its file under site/. It's picked up here, so chapters
+// built in parallel never edit this file. `node scripts/screenshot.js <out> <name>` checks one page only.
 const PAGES = [
   { name: "contents", file: "index.html", sizes: ["desk", "phone", "dark"], states: contentsStates },
   { name: "loop", file: "loop/index.html", sizes: ["desk", "phone", "dark"], states: loopStates },
 ];
+const shotsDir = path.join(__dirname, "shots");
+if (fs.existsSync(shotsDir)) {
+  for (const f of fs.readdirSync(shotsDir).filter((x) => x.endsWith(".js")).sort()) PAGES.push(require(path.join(shotsDir, f)));
+}
+const only = process.argv[3];
+if (only) PAGES.splice(0, PAGES.length, ...PAGES.filter((p) => p.name === only));
 
 (async () => {
   const browser = await chromium.launch();
