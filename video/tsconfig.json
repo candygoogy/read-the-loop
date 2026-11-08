@@ -13,5 +13,5 @@
     "forceConsistentCasingInFileNames": true,
     "lib": ["DOM", "ES2023"]
   },
-  "include": ["src", "remotion.config.ts"]
+  "include": ["src", "remotion.config.ts", "webpack-override.ts"]
 }

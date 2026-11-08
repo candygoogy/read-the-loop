@@ -17,8 +17,6 @@ type Trace = Omit<typeof traceJson, "calls"> & {
 
 export const trace = traceJson as unknown as Trace;
 
-const nf = new Intl.NumberFormat("en-US");
-export const fmt = (n: number) => nf.format(n);
 export const secs = (ms: number) => (ms / 1000).toFixed(1);
 const base = (p: string) => p.split("/").pop() ?? p;
 const lines = (s: string) => s.replace(/\n$/, "").split("\n");
@@ -57,8 +55,11 @@ export const meta = {
 
 // ---------- what each call's cards show ----------
 
-export type Line = { text: string; tone?: "del" | "add" | "dim" | "fail" | "pass" };
-export type Card = { label: string; lines: Line[] };
+// A line is recorded text, except `pasted`: our own summary of a Read result (file name and line count from the
+// trace, the words around them from i18n.ts).
+export type Line = { text: string; tone?: "del" | "add" | "dim" | "fail" | "pass"; pasted?: { file: string; lines: number } };
+// Card labels are our words, so a card only says which label it gets; the scene looks the words up per language.
+export type Card = { label: { kind: "typed" | "asks" | "pastes" | "noRequest"; count?: number }; lines: Line[] };
 export type CallView = {
   n: number;
   tMs: number; // when the model's reply arrived
@@ -89,7 +90,7 @@ const resultLines = (t: ToolOutput): Line[] => {
   if (t.tool === "Glob") return [{ text: ls.join("   ") }];
   if (t.tool === "Read") {
     const i = t.input as Record<string, string>;
-    return [{ text: `${base(i.file_path)}: ${fmt(ls.length)} lines pasted back`, tone: "dim" }];
+    return [{ text: "", tone: "dim", pasted: { file: base(i.file_path), lines: ls.length } }];
   }
   if (t.tool === "Bash") {
     const fails = ls.filter((l) => l.startsWith("✖")).map((l) => ({ text: l, tone: "fail" as const }));
@@ -115,7 +116,7 @@ export const callViews: CallView[] = calls.map((c, idx) => {
       n,
       tMs: c.t_ms,
       resultMs: null,
-      request: { label: "The model writes · no request", lines: [{ text: opening(text?.text ?? "") }] },
+      request: { label: { kind: "noRequest" }, lines: [{ text: opening(text?.text ?? "") }] },
       result: null,
       final: true,
     };
@@ -125,10 +126,10 @@ export const callViews: CallView[] = calls.map((c, idx) => {
     tMs: c.t_ms,
     resultMs: Math.max(...ts.map((t) => t.result.t_ms)),
     request: {
-      label: ts.length > 1 ? `The model asks for ${ts.length} things` : "The model asks",
+      label: { kind: "asks", count: ts.length },
       lines: ts.flatMap(requestLines),
     },
-    result: { label: "The harness pastes back", lines: ts.flatMap(resultLines) },
+    result: { label: { kind: "pastes" }, lines: ts.flatMap(resultLines) },
     final: false,
   };
 });

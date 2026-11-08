@@ -3,8 +3,10 @@
 import React from "react";
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { SIDE } from "../Chrome";
-import { callViews, ctx, fmt, lastCtx, meta, secs, type Card, type Line } from "../data";
-import { C, F } from "../theme";
+import { callViews, ctx, lastCtx, meta, secs, type Card, type Line } from "../data";
+import type { UI } from "../i18n";
+import { useLocale } from "../locale";
+import { C } from "../theme";
 import type { Slot } from "../timeline";
 
 // Moments inside a call's slot, in frames from its start.
@@ -35,9 +37,14 @@ const Pill: React.FC<{ x: number; w: number; label: string; colour: string; on: 
   colour,
   on,
   sub,
-}) => (
+}) => {
+  const { f } = useLocale();
+  return (
   <div style={{ position: "absolute", left: x, top: ROW_Y, width: w }}>
     <div
+      data-obstacle
+      data-fit
+      data-maxlines={1}
       style={{
         height: PILL_H,
         borderRadius: PILL_H / 2,
@@ -48,7 +55,8 @@ const Pill: React.FC<{ x: number; w: number; label: string; colour: string; on: 
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: F.mono,
+        fontFamily: f.mono,
+        wordSpacing: f.ws,
         fontWeight: 600,
         fontSize: 32,
       }}
@@ -56,12 +64,13 @@ const Pill: React.FC<{ x: number; w: number; label: string; colour: string; on: 
       {label}
     </div>
     {sub ? (
-      <div style={{ marginTop: 6, marginLeft: -100, marginRight: -100, textAlign: "center", whiteSpace: "nowrap", fontFamily: F.mono, fontSize: 24, color: C.ink2 }}>
+      <div data-fit data-maxlines={1} style={{ marginTop: 6, marginLeft: -100, marginRight: -100, textAlign: "center", whiteSpace: "nowrap", fontFamily: f.mono, wordSpacing: f.ws, fontSize: 24, color: C.ink2 }}>
         {sub}
       </div>
     ) : null}
   </div>
-);
+  );
+};
 
 const Arrow: React.FC<{ x1: number; x2: number; y: number; colour: string; on: boolean; label: string; above?: boolean }> = ({
   x1,
@@ -73,6 +82,7 @@ const Arrow: React.FC<{ x1: number; x2: number; y: number; colour: string; on: b
   above = true,
 }) => {
   const dir = Math.sign(x2 - x1);
+  const { f } = useLocale();
   return (
     <>
       <svg style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }} width={1} height={1}>
@@ -84,13 +94,16 @@ const Arrow: React.FC<{ x1: number; x2: number; y: number; colour: string; on: b
         />
       </svg>
       <div
+        data-fit
+        data-maxlines={1}
         style={{
           position: "absolute",
           left: Math.min(x1, x2),
           width: Math.abs(x2 - x1),
           top: above ? y - 40 : y + 8,
           textAlign: "center",
-          fontFamily: F.mono,
+          fontFamily: f.mono,
+          wordSpacing: f.ws,
           fontWeight: on ? 600 : 400,
           fontSize: 24,
           color: colour,
@@ -114,8 +127,11 @@ const CardBox: React.FC<{ colour: string; label: string; opacity: number; lift: 
   opacity,
   lift,
   children,
-}) => (
+}) => {
+  const { f } = useLocale();
+  return (
   <div
+    data-obstacle
     style={{
       opacity,
       translate: `0px ${lift}px`,
@@ -127,8 +143,11 @@ const CardBox: React.FC<{ colour: string; label: string; opacity: number; lift: 
     }}
   >
     <div
+      data-fit
+      data-maxlines={1}
       style={{
-        fontFamily: F.mono,
+        fontFamily: f.mono,
+        wordSpacing: f.ws,
         fontWeight: 600,
         fontSize: 22,
         letterSpacing: "0.06em",
@@ -141,27 +160,41 @@ const CardBox: React.FC<{ colour: string; label: string; opacity: number; lift: 
     </div>
     {children}
   </div>
-);
+  );
+};
 
-const CodeLines: React.FC<{ lines: Line[] }> = ({ lines }) => (
-  <div style={{ fontFamily: F.mono, fontSize: 27, lineHeight: 1.34 }}>
-    {lines.map((l, i) => (
-      <div
-        key={i}
-        style={{ whiteSpace: "pre", overflow: "hidden", textOverflow: "ellipsis", color: toneColour(l.tone) }}
-      >
-        {l.text}
-      </div>
-    ))}
-  </div>
-);
+// Recorded lines are shown as recorded (cut with an ellipsis if too long); a `pasted` line is our summary.
+const CodeLines: React.FC<{ lines: Line[] }> = ({ lines }) => {
+  const { ui, f } = useLocale();
+  return (
+    <div style={{ fontFamily: f.mono, fontSize: 27, lineHeight: 1.34 }}>
+      {lines.map((l, i) =>
+        l.pasted ? (
+          <div key={i} data-fit data-maxlines={1} style={{ whiteSpace: "pre", wordSpacing: f.ws, color: toneColour(l.tone) }}>
+            {ui.pastedBack(l.pasted.file, l.pasted.lines)}
+          </div>
+        ) : (
+          <div
+            key={i}
+            data-recorded
+            style={{ whiteSpace: "pre", overflow: "hidden", textOverflow: "ellipsis", color: toneColour(l.tone) }}
+          >
+            {l.text}
+          </div>
+        ),
+      )}
+    </div>
+  );
+};
 
 // The model's own words, with `code` spans set in mono.
-const Prose: React.FC<{ text: string; size?: number }> = ({ text, size = 36 }) => (
-  <div style={{ fontFamily: F.body, fontSize: size, lineHeight: 1.38, color: C.ink }}>
+const Prose: React.FC<{ text: string; size?: number }> = ({ text, size = 36 }) => {
+  const { f } = useLocale();
+  return (
+  <div data-recorded style={{ fontFamily: f.body, fontSize: size, lineHeight: 1.38, color: C.ink }}>
     {text.split(/(`[^`]+`)/).map((part, i) =>
       part.startsWith("`") ? (
-        <code key={i} style={{ fontFamily: F.mono, fontSize: size * 0.86, background: C.paper2, padding: "0 6px", borderRadius: 5 }}>
+        <code key={i} style={{ fontFamily: f.mono, fontSize: size * 0.86, background: C.paper2, padding: "0 6px", borderRadius: 5 }}>
           {part.slice(1, -1)}
         </code>
       ) : (
@@ -169,7 +202,8 @@ const Prose: React.FC<{ text: string; size?: number }> = ({ text, size = 36 }) =
       ),
     )}
   </div>
-);
+  );
+};
 
 const appear = (f: number, at: number) => ({
   opacity: interpolate(f, [at, at + 8], [0, 1], clamp),
@@ -184,21 +218,22 @@ const BAR_W = 1920 - 2 * SIDE;
 const px = (tokens: number) => (tokens / lastCtx) * BAR_W;
 
 const ContextBar: React.FC<{ w: Where }> = ({ w }) => {
+  const { ui, f } = useLocale();
   // How many tokens the conversation holds right now, and whether the model is reading it.
   let size = ctx[0];
   let grow = 0; // 0..1 of the newest round, while it comes in
   let reading = -1; // 0..1 sweep while a call reads
   let readingFade = 0;
-  let label = `The first call will read ${fmt(ctx[0])} tokens`;
+  let label = ui.firstWillRead(ctx[0]);
   if (w.kind === "call") {
     const v = callViews[w.i];
     size = ctx[w.i];
     reading = interpolate(w.f, [0, 16], [0, 1], { ...clamp, easing: Easing.inOut(Easing.quad) });
     readingFade = interpolate(w.f, [16, 26], [1, 0], clamp);
-    label = `Call ${v.n} reads ${fmt(ctx[w.i])} tokens`;
+    label = ui.callReads(v.n, ctx[w.i]);
     if (v.result && w.i + 1 < ctx.length && w.f >= RESULT_IN) {
       grow = interpolate(w.f, [RESULT_IN, RESULT_IN + 12], [0, 1], { ...clamp, easing: ease });
-      label = `The conversation is now ${fmt(ctx[w.i + 1])} tokens (+${fmt(ctx[w.i + 1] - ctx[w.i])})`;
+      label = ui.conversationNow(ctx[w.i + 1], ctx[w.i + 1] - ctx[w.i]);
     }
   }
   const nextSize = w.kind === "call" && w.i + 1 < ctx.length ? ctx[w.i + 1] : size;
@@ -219,14 +254,16 @@ const ContextBar: React.FC<{ w: Where }> = ({ w }) => {
           right: SIDE,
           display: "flex",
           justifyContent: "space-between",
-          fontFamily: F.mono,
+          fontFamily: f.mono,
+          wordSpacing: f.ws,
           fontSize: 26,
         }}
       >
-        <span style={{ color: C.ink2 }}>What the model reads on each call, drawn to scale</span>
-        <span style={{ color: C.ink, fontWeight: 600 }}>{label}</span>
+        <span data-fit style={{ color: C.ink2 }}>{ui.barCaption}</span>
+        <span data-fit style={{ color: C.ink, fontWeight: 600 }}>{label}</span>
       </div>
       <div
+        data-obstacle
         style={{
           position: "absolute",
           top: BAR_Y,
@@ -240,6 +277,8 @@ const ContextBar: React.FC<{ w: Where }> = ({ w }) => {
         }}
       >
         <div
+          data-fit
+          data-maxlines={1}
           style={{
             position: "absolute",
             left: 0,
@@ -248,7 +287,8 @@ const ContextBar: React.FC<{ w: Where }> = ({ w }) => {
             width: px(ctx[0]),
             background: C.sys,
             color: C.paper,
-            fontFamily: F.mono,
+            fontFamily: f.mono,
+            wordSpacing: f.ws,
             fontWeight: 500,
             fontSize: 22,
             display: "flex",
@@ -256,7 +296,7 @@ const ContextBar: React.FC<{ w: Where }> = ({ w }) => {
             paddingLeft: 16,
           }}
         >
-          set-up, tool descriptions and your message
+          {ui.barSetup}
         </div>
         {segments.map((s) => (
           <div
@@ -297,6 +337,7 @@ const ContextBar: React.FC<{ w: Where }> = ({ w }) => {
 
 export const LoopScene: React.FC<{ promptDur: number; slots: Slot[] }> = ({ promptDur, slots }) => {
   const frame = useCurrentFrame();
+  const { ui, f: fonts } = useLocale();
   const w = where(frame, promptDur, slots);
   const v = w.kind === "call" ? callViews[w.i] : null;
   const f = w.f;
@@ -309,8 +350,8 @@ export const LoopScene: React.FC<{ promptDur: number; slots: Slot[] }> = ({ prom
 
   const clock =
     w.kind === "prompt"
-      ? "the start of the recording"
-      : `${v!.result && f >= RESULT_IN && v!.resultMs !== null ? secs(v!.resultMs) : secs(v!.tMs)} s into the recording`;
+      ? ui.startOfRecording
+      : ui.secondsIn(v!.result && f >= RESULT_IN && v!.resultMs !== null ? secs(v!.resultMs) : secs(v!.tMs));
 
   const youX = SIDE;
   const modelX = 520;
@@ -319,34 +360,37 @@ export const LoopScene: React.FC<{ promptDur: number; slots: Slot[] }> = ({ prom
 
   return (
     <AbsoluteFill>
-      <Pill x={youX} w={200} label="You" colour={C.you} on={youOn} />
-      <Arrow x1={youX + 200} x2={modelX} y={ROW_Y + PILL_H / 2} colour={C.you} on={youOn} label="your message" />
-      <Pill x={modelX} w={pillW} label="Model" colour={C.model} on={modelOn} sub={w.kind === "call" && f < HARNESS_ON ? "reads it all, writes a reply" : undefined} />
-      <Arrow x1={modelX + pillW} x2={harnessX} y={ROW_Y + 20} colour={C.model} on={reqOn} label="request" />
-      <Arrow x1={harnessX} x2={modelX + pillW} y={ROW_Y + PILL_H - 20} colour={C.result} on={resOn} label="result" above={false} />
+      <Pill x={youX} w={200} label={ui.you} colour={C.you} on={youOn} />
+      <Arrow x1={youX + 200} x2={modelX} y={ROW_Y + PILL_H / 2} colour={C.you} on={youOn} label={ui.yourMessage} />
+      <Pill x={modelX} w={pillW} label={ui.model} colour={C.model} on={modelOn} sub={w.kind === "call" && f < HARNESS_ON ? ui.modelSub : undefined} />
+      <Arrow x1={modelX + pillW} x2={harnessX} y={ROW_Y + 20} colour={C.model} on={reqOn} label={ui.request} />
+      <Arrow x1={harnessX} x2={modelX + pillW} y={ROW_Y + PILL_H - 20} colour={C.result} on={resOn} label={ui.result} above={false} />
       <Pill
         x={harnessX}
         w={pillW + 40}
-        label="Harness"
+        label={ui.harness}
         colour={C.result}
         on={harnessOn}
-        sub={harnessOn ? "runs it" : v?.final && f >= HARNESS_ON ? "nothing to run: stops" : undefined}
+        sub={harnessOn ? ui.harnessRuns : v?.final && f >= HARNESS_ON ? ui.harnessStops : undefined}
       />
 
-      <div style={{ position: "absolute", top: ROW_Y - 6, right: SIDE, textAlign: "right", fontFamily: F.mono }}>
-        <div style={{ fontSize: 40, fontWeight: 600, color: C.ink }}>
-          {v ? `call ${v.n} of ${callViews.length}` : "before call 1"}
+      <div style={{ position: "absolute", top: ROW_Y - 6, right: SIDE, textAlign: "right", fontFamily: fonts.mono, wordSpacing: fonts.ws }}>
+        <div data-fit data-maxlines={1} style={{ fontSize: 40, fontWeight: 600, color: C.ink }}>
+          {v ? ui.callOf(v.n, callViews.length)[0] : ui.beforeCall1}
+          {v && ui.callOf(v.n, callViews.length)[1] ? (
+            <span style={{ fontSize: 28, fontWeight: 500, color: C.ink2 }}>{ui.callOf(v.n, callViews.length)[1]}</span>
+          ) : null}
         </div>
-        <div style={{ fontSize: 26, color: C.ink2, marginTop: 4 }}>{clock}</div>
+        <div data-fit data-maxlines={1} style={{ fontSize: 26, color: C.ink2, marginTop: 4 }}>{clock}</div>
       </div>
 
       <div style={{ position: "absolute", top: 420, left: SIDE, right: SIDE, display: "flex", flexDirection: "column", gap: 14 }}>
         {w.kind === "prompt" ? (
-          <CardBox colour={C.you} label="You · typed into Claude Code" {...appear(f, 2)}>
+          <CardBox colour={C.you} label={ui.typedInto} {...appear(f, 2)}>
             <Prose text={meta.prompt} size={38} />
           </CardBox>
         ) : v!.final ? (
-          <CardBox colour={C.model} label={v!.request.label} {...appear(f, REQ_IN)}>
+          <CardBox colour={C.model} label={cardLabel(ui, v!.request)} {...appear(f, REQ_IN)}>
             <Prose text={v!.request.lines[0].text} size={36} />
           </CardBox>
         ) : (
@@ -362,14 +406,23 @@ export const LoopScene: React.FC<{ promptDur: number; slots: Slot[] }> = ({ prom
   );
 };
 
+const cardLabel = (ui: UI, card: Card) =>
+  card.label.kind === "asks"
+    ? ui.asks(card.label.count ?? 1)
+    : card.label.kind === "pastes"
+      ? ui.pastes
+      : card.label.kind === "noRequest"
+        ? ui.noRequest
+        : ui.typedInto;
+
 const RequestCard: React.FC<{ card: Card; f: number }> = ({ card, f }) => (
-  <CardBox colour={C.model} label={card.label} {...appear(f, REQ_IN)}>
+  <CardBox colour={C.model} label={cardLabel(useLocale().ui, card)} {...appear(f, REQ_IN)}>
     <CodeLines lines={card.lines} />
   </CardBox>
 );
 
 const ResultCard: React.FC<{ card: Card; f: number }> = ({ card, f }) => (
-  <CardBox colour={C.result} label={card.label} {...appear(f, RESULT_IN)}>
+  <CardBox colour={C.result} label={cardLabel(useLocale().ui, card)} {...appear(f, RESULT_IN)}>
     <CodeLines lines={card.lines} />
   </CardBox>
 );

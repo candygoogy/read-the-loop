@@ -1,26 +1,11 @@
 // Burned-in Chinese subtitles. The captions use @remotion/captions' Caption type and come from timeline.ts,
 // the same source as hero-zh.srt.
 import type { Caption } from "@remotion/captions";
-import { getInfo, loadFont } from "@remotion/google-fonts/NotoSansSC";
+import { loadFont } from "@remotion/google-fonts/NotoSansSC";
 import React, { useState } from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { C } from "./theme";
-
-// Google ships Noto Sans SC in ~100 slices by unicode range. Load only the slices the subtitles use.
-const slicesFor = (text: string) => {
-  const cps = [...new Set([...text].map((ch) => ch.codePointAt(0) ?? 0))];
-  const ranges = Object.entries(getInfo().unicodeRanges).filter(([k]) => /^\[\d+\]$/.test(k));
-  return ranges
-    .filter(([, r]) =>
-      r.split(",").some((part) => {
-        const [a, b] = part.trim().replace(/^U\+/i, "").split("-");
-        const lo = parseInt(a, 16);
-        const hi = parseInt(b ?? a, 16);
-        return cps.some((cp) => cp >= lo && cp <= hi);
-      }),
-    )
-    .map(([k]) => k);
-};
+import { slicesFor } from "./zhFonts";
 
 const useZhFont = (captions: Caption[]) =>
   useState(

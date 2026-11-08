@@ -23,5 +23,15 @@ export const RemotionRoot: React.FC = () => (
       height={1080}
       defaultProps={{ subtitles: "zh" as const }}
     />
+    {/* Our own on-screen text in Simplified Chinese; what the agent wrote or saw stays in English, as recorded. */}
+    <Composition
+      id="HeroZhUI"
+      component={Hero}
+      durationInFrames={timeline.total}
+      fps={FPS}
+      width={1920}
+      height={1080}
+      defaultProps={{ subtitles: "none" as const, lang: "zh" as const }}
+    />
   </>
 );

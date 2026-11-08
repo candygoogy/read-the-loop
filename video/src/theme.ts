@@ -26,8 +26,12 @@ export const C = {
 };
 
 const latin = { subsets: ["latin", "latin-ext"] as ("latin" | "latin-ext")[] };
-export const F = {
-  display: loadFraunces("normal", { weights: ["600", "700"], ...latin }).fontFamily,
-  body: loadSerif("normal", { weights: ["400", "600"], ...latin }).fontFamily,
-  mono: loadMono("normal", { weights: ["400", "500", "600"], ...latin }).fontFamily,
-};
+const display = loadFraunces("normal", { weights: ["600", "700"], ...latin });
+const body = loadSerif("normal", { weights: ["400", "600"], ...latin });
+const mono = loadMono("normal", { weights: ["400", "500", "600"], ...latin });
+export const F = { display: display.fontFamily, body: body.fontFamily, mono: mono.fontFamily };
+
+// Every web font the video loads, settled. The layout probe waits for this before it measures.
+const loading: Promise<void>[] = [display, body, mono].map((f) => f.waitUntilDone());
+export const trackFont = (f: { waitUntilDone: () => Promise<void> }) => loading.push(f.waitUntilDone());
+export const fontsSettled = () => Promise.allSettled(loading);

@@ -1,7 +1,10 @@
 // Checks, before rendering, that the video's two claims about the game hold when the real game code runs the way
 // the video runs it (fresh state, paddle never moved, one 1/30 s step per frame), and prints the totals the
-// end card shows, straight from the trace.
-// Usage: node scripts/check.ts
+// end card shows, straight from the trace. Then it renders a few frames of each cut with the layout probe on
+// (src/probe.tsx) and checks the Chinese-UI cut (HeroZhUI) against the English one (Hero): the same numbers on
+// screen, no text overflowing its box or running into another, and every Chinese character covered by a loaded web
+// font (no tofu). That part bundles the video and needs a network connection for the fonts.
+// Usage: node scripts/check.ts [--no-layout]
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -77,4 +80,84 @@ console.log(
   `${subsOk ? "ok  " : "FAIL"} subtitles: ${caps.length} lines, unique ${unique}, in order ${ordered}, own text ${own}, ` +
     `frames showing another phase's line: ${wrongFrames}`,
 );
+
+// ---------- layout of the cuts ----------
+if (!process.argv.includes("--no-layout")) ok = (await checkLayout()) && ok;
 if (!ok) process.exit(1);
+
+async function checkLayout(): Promise<boolean> {
+  // Frames where everything has settled: one per scene, three per call (model reading, harness running, result
+  // back), two for the last call (its reply, then "nothing to run").
+  const B = tl.scenes.loop.from;
+  const frames = [30, B + 40];
+  tl.callSlots.forEach((s, i) => {
+    const last = i === tl.callSlots.length - 1;
+    for (const at of last ? [10, 30] : [18, 24, 42]) frames.push(B + s.from + at);
+  });
+  frames.push(tl.scenes.fixed.from + 60, tl.scenes.totals.from + 70);
+
+  // Remotion writes its scratch files to the OS temp folder; keep them next to the video instead.
+  const tmp = path.join(here, "../out/tmp");
+  fs.mkdirSync(tmp, { recursive: true });
+  process.env.TEMP = process.env.TMP = process.env.TMPDIR = tmp;
+  const { bundle } = await import("@remotion/bundler");
+  const { openBrowser, renderStill, selectComposition } = await import("@remotion/renderer");
+  const { webpackOverride } = await import("../webpack-override.ts");
+
+  console.log(`layout: bundling, then probing frames ${frames.join(", ")} of Hero and HeroZhUI`);
+  const serveUrl = await bundle({
+    entryPoint: path.join(here, "../src/index.ts"),
+    outDir: path.join(here, "../out/check-bundle"),
+    webpackOverride,
+  });
+  const browser = await openBrowser("chrome");
+  type Probe = { frame: number; fit: string[]; tofu: string[]; numbers: string[] };
+  const probe = async (id: string) => {
+    const inputProps = { probe: true };
+    const composition = await selectComposition({ serveUrl, id, inputProps, puppeteerInstance: browser });
+    const out: Probe[] = [];
+    for (const frame of frames) {
+      let got: Probe | null = null;
+      await renderStill({
+        composition,
+        serveUrl,
+        frame,
+        inputProps,
+        puppeteerInstance: browser,
+        onBrowserLog: (log) => {
+          if (log.text.startsWith("PROBE ")) got = JSON.parse(log.text.slice(6));
+        },
+      });
+      if (!got) throw new Error(`${id}: no probe result for frame ${frame}`);
+      out.push(got);
+    }
+    return out;
+  };
+  const en = await probe("Hero");
+  const zh = await probe("HeroZhUI");
+  await browser.close({ silent: true });
+
+  let pass = true;
+  const report = (good: boolean, what: string, bad: string[]) => {
+    console.log(`${good ? "ok  " : "FAIL"} ${what}${bad.length ? `\n       ${bad.join("\n       ")}` : ""}`);
+    pass &&= good;
+  };
+  const numDiff = zh.flatMap((z, i) =>
+    z.numbers.join(" ") === en[i].numbers.join(" ")
+      ? []
+      : [`frame ${z.frame}: en [${en[i].numbers.join(" ")}] zh [${z.numbers.join(" ")}]`],
+  );
+  const count = zh.reduce((n, z) => n + z.numbers.length, 0);
+  report(numDiff.length === 0, `zh-ui numbers: the same ${count} numbers as the English cut on ${frames.length} frames`, numDiff);
+  const fitZh = zh.flatMap((z) => z.fit.map((m) => `frame ${z.frame}: ${m}`));
+  report(fitZh.length === 0, `zh-ui layout: no text overflowing, wrapping past its lines or overlapping`, fitZh);
+  const tofuZh = [...new Set(zh.flatMap((z) => z.tofu))];
+  report(tofuZh.length === 0, `zh-ui fonts: every non-ASCII character of our text has a loaded web font`, tofuZh);
+  const fitEn = en.flatMap((e) => e.fit.map((m) => `frame ${e.frame}: ${m}`));
+  report(fitEn.length === 0, `en layout: no text overflowing, wrapping past its lines or overlapping`, fitEn);
+  // The English cut's own non-ASCII characters (· and →) are reported, not required: that cut is not changed here.
+  const tofuEn = [...new Set(en.flatMap((e) => e.tofu))];
+  console.log(`info en fonts: characters without a loaded web font: ${tofuEn.length ? tofuEn.join(", ") : "none"}`);
+  return pass;
+}
+

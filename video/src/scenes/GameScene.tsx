@@ -3,14 +3,16 @@ import React, { useLayoutEffect, useRef } from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { SmallPrint } from "../Chrome";
 import { games, simulate, type Version } from "../game";
-import { C, F } from "../theme";
+import { useLocale } from "../locale";
+import { C } from "../theme";
 
 const SCALE = 1.85;
 const LEAD = 12; // frames the serve waits, so the eye finds the ball first
 const TRAIL = 9;
 
-export const GameScene: React.FC<{ version: Version; label: string; tone: string }> = ({ version, label, tone }) => {
+export const GameScene: React.FC<{ version: Version; tone: string }> = ({ version, tone }) => {
   const frame = useCurrentFrame();
+  const { ui, f } = useLocale();
   const { durationInFrames } = useVideoConfig();
   const game = games[version];
   const states = simulate(version, durationInFrames);
@@ -43,6 +45,7 @@ export const GameScene: React.FC<{ version: Version; label: string; tone: string
   return (
     <AbsoluteFill>
       <div
+        data-obstacle
         style={{
           position: "absolute",
           left,
@@ -85,24 +88,27 @@ export const GameScene: React.FC<{ version: Version; label: string; tone: string
         }}
       />
       <div
+        data-fit
+        data-maxlines={1}
         style={{
           position: "absolute",
-          left: left + (p.x + p.width / 2) * SCALE - 200,
-          width: (p.width / 2) * SCALE + 400,
+          left: left + (p.x + p.width / 2) * SCALE - 400,
+          width: (p.width / 2) * SCALE + 800,
           top: top + h + 30,
           textAlign: "center",
-          fontFamily: F.mono,
+          fontFamily: f.mono,
+          wordSpacing: f.ws,
           fontWeight: 600,
           fontSize: 28,
           whiteSpace: "nowrap",
           color: tone,
         }}
       >
-        {label}
+        {ui.game[version]}
       </div>
 
       <SmallPrint top={top + h + 76}>
-        Simulated frame by frame with the game's own code ({version} the edit). Paddle held still.
+        {ui.gameNote(version)}
       </SmallPrint>
     </AbsoluteFill>
   );

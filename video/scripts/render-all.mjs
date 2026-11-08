@@ -3,8 +3,8 @@
 //   node scripts/render-all.mjs <full-quality-dir>
 //
 // Full quality, into <full-quality-dir>: hero-16x9.mp4, hero-16x9-zh.mp4 (Chinese subtitles burned in),
-// hero-zh.srt and hero.gif.
-// Compressed copies, into the repo's media/: hero.mp4 (budget 4 MB) and hero.gif (budget 8 MB).
+// hero-16x9-zh-ui.mp4 (our on-screen text in Chinese), hero-zh.srt, hero.gif and hero-zh.gif (from the zh-UI cut).
+// Compressed copies, into the repo's media/: hero.mp4 (budget 4 MB), hero.gif and hero-zh.gif (budget 8 MB each).
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -32,12 +32,15 @@ const gif = (src, dst, width, fps, colours) =>
 
 const full = path.join(out, "hero-16x9.mp4");
 const zh = path.join(out, "hero-16x9-zh.mp4");
+const zhUi = path.join(out, "hero-16x9-zh-ui.mp4");
 
 run("node", ["scripts/check.ts"]);
 run("npx", ["remotion", "render", "Hero", q(full), "--codec=h264", "--crf=16", "--muted"]);
 run("npx", ["remotion", "render", "HeroZh", q(zh), "--codec=h264", "--crf=16", "--muted"]);
+run("npx", ["remotion", "render", "HeroZhUI", q(zhUi), "--codec=h264", "--crf=16", "--muted"]);
 run("node", ["scripts/write-srt.ts", q(path.join(out, "hero-zh.srt"))]);
 gif(full, path.join(out, "hero.gif"), 1280, 15, 256);
+gif(zhUi, path.join(out, "hero-zh.gif"), 1280, 15, 256);
 
 run("ffmpeg", [
   "-y", "-loglevel", "error", "-i", q(full),
@@ -45,13 +48,14 @@ run("ffmpeg", [
   q(path.join(media, "hero.mp4")),
 ]);
 gif(full, path.join(media, "hero.gif"), 800, 15, 256);
+gif(zhUi, path.join(media, "hero-zh.gif"), 800, 15, 256);
 
-const budget = { "hero.mp4": 4, "hero.gif": 8 };
+const budget = { "hero.mp4": 4, "hero.gif": 8, "hero-zh.gif": 8 };
 let over = false;
 console.log("");
 for (const [dir, names] of [
-  [out, ["hero-16x9.mp4", "hero-16x9-zh.mp4", "hero-zh.srt", "hero.gif"]],
-  [media, ["hero.mp4", "hero.gif"]],
+  [out, ["hero-16x9.mp4", "hero-16x9-zh.mp4", "hero-16x9-zh-ui.mp4", "hero-zh.srt", "hero.gif", "hero-zh.gif"]],
+  [media, ["hero.mp4", "hero.gif", "hero-zh.gif"]],
 ]) {
   for (const name of names) {
     const mb = fs.statSync(path.join(dir, name)).size / 1e6;

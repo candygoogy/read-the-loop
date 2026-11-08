@@ -2,12 +2,15 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { meta } from "./data";
-import { C, F } from "./theme";
-import { NARRATION, type PhaseId } from "./timeline";
+import { useLocale } from "./locale";
+import { C } from "./theme";
+import type { PhaseId } from "./timeline";
 
 export const SIDE = 100;
 
-export const TopBar: React.FC = () => (
+export const TopBar: React.FC = () => {
+  const { ui, f } = useLocale();
+  return (
   <div
     style={{
       position: "absolute",
@@ -17,23 +20,27 @@ export const TopBar: React.FC = () => (
       display: "flex",
       justifyContent: "space-between",
       alignItems: "baseline",
-      fontFamily: F.mono,
+      fontFamily: f.mono,
+      wordSpacing: f.ws,
       fontSize: 27,
     }}
   >
-    <span style={{ color: C.model, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-      Read the Loop · chapter 1
+    {/* "chapter 1" / "第一章": the chapter number is ours, not the trace's, so the numbers check skips it. */}
+    <span data-fit data-nonum style={{ color: C.model, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+      {ui.chapter}
     </span>
-    <span style={{ color: C.ink3, fontWeight: 500 }}>
-      real session · {meta.model} · Claude Code {meta.ccv} · run {meta.run} of {meta.runs}
+    <span data-fit style={{ color: C.ink3, fontWeight: 500 }}>
+      {ui.session(meta)}
     </span>
   </div>
-);
+  );
+};
 
 type Phase = { id: PhaseId; from: number; to: number };
 
 export const Headline: React.FC<{ phases: Phase[] }> = ({ phases }) => {
   const frame = useCurrentFrame();
+  const { lang, ui, f } = useLocale();
   return (
     <AbsoluteFill>
       {phases.map((p) => {
@@ -41,16 +48,18 @@ export const Headline: React.FC<{ phases: Phase[] }> = ({ phases }) => {
         return (
           <div
             key={p.id + p.from}
+            data-fit
+            data-maxlines={2}
             style={{
               position: "absolute",
               top: 134,
               left: SIDE,
               right: SIDE,
-              fontFamily: F.display,
+              fontFamily: f.display,
               fontWeight: 600,
               fontSize: 60,
-              lineHeight: 1.12,
-              letterSpacing: "-0.015em",
+              lineHeight: lang === "zh" ? 1.3 : 1.12,
+              letterSpacing: lang === "zh" ? "0.01em" : "-0.015em",
               color: C.ink,
               opacity: interpolate(frame, [p.from, p.from + 8, p.to - 5, p.to], [0, 1, 1, 0], {
                 extrapolateLeft: "clamp",
@@ -62,7 +71,7 @@ export const Headline: React.FC<{ phases: Phase[] }> = ({ phases }) => {
               }),
             }}
           >
-            {NARRATION[p.id].en}
+            {ui.headline(p.id)}
           </div>
         );
       })}
@@ -70,19 +79,25 @@ export const Headline: React.FC<{ phases: Phase[] }> = ({ phases }) => {
   );
 };
 
-export const SmallPrint: React.FC<{ children: React.ReactNode; top?: number }> = ({ children, top = 930 }) => (
+export const SmallPrint: React.FC<{ children: React.ReactNode; top?: number }> = ({ children, top = 930 }) => {
+  const { f } = useLocale();
+  return (
   <div
+    data-fit
+    data-maxlines={1}
     style={{
       position: "absolute",
       top,
       left: SIDE,
       right: SIDE,
       textAlign: "center",
-      fontFamily: F.mono,
+      fontFamily: f.mono,
+      wordSpacing: f.ws,
       fontSize: 26,
       color: C.ink3,
     }}
   >
     {children}
   </div>
-);
+  );
+};
