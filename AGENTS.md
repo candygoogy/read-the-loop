@@ -24,12 +24,19 @@ An interactive, illustrated explainer of how AI coding agents work, built on **r
 | `site/style.css` | Styles shared by every page |
 | `site/lib/trace-ui.js` | Shared helpers (`window.TraceUI`): escaping, formatting, markdown, excerpts, card HTML |
 | `site/loop/index.html`, `app.js`, `copy.en.js` | Chapter 1 page, step player, narration |
+| `site/context/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 2 page (the context window), its figures, styles, narration |
+| `site/cache/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 3 page (caching), its figures, styles, narration |
+| `site/compaction/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 4 page (compaction), its figures, styles, narration |
+| `site/tools/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 5 page (tools and permissions), its figures, styles, narration |
 | `site/lib/motion.js` | Shared motion (`window.Motion`): `enter`, `grow`, `pop`, `draw`, `along`, `count`, `reveal`, `settle`. Uses the `--ease-*`/`--dur-*` tokens in `style.css`; does nothing under reduced motion |
 | `site/contents.js` | The contents page's per-chapter pictures, drawn from each chapter's trace |
 | `site/data/trace-01.js` | Generated trace the page loads (`window.TRACE`) |
 | `data/trace-01.json` | The same trace as JSON (generated) |
+| `data/tools-05.json`, `data/trace-05.json` | Recording 05 (generated): the tool manual's shape and sizes, and the session's trace; the page loads `site/data/tools-05.js` (`window.TOOLS`) and `trace-05.js` |
 | `fixtures/cart/` | The buggy project given to the agent in recording 01 |
 | `scripts/build-trace.py` | Raw `stream-json` recording → redacted trace (`.json` + `.js`) |
+| `scripts/capture-proxy.py` | Local logging proxy: saves the request bodies Claude Code sends (never headers) |
+| `scripts/extract-tools.py` | Captured request bodies → tool manual shape and sizes (`.json` + `.js`), no private text |
 | `scripts/screenshot.js` | Playwright screenshots of every page (desktop, phone, dark), and reports console errors, horizontal overflow and broken local links |
 | `.zed/tasks.json` | Zed tasks: open the page, rebuild the trace, take screenshots |
 

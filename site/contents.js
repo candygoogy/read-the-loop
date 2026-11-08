@@ -1,11 +1,13 @@
 // The contents page: a small picture of each chapter, drawn from the same recording the chapter uses.
-// Chapter 1: window.TRACES.loop (site/data/trace-02-run2.js). Chapters 2 and 3: window.TRACES.context
-// (site/data/trace-03.js). Every number is read from the trace; only the labels below are written here.
-// Without the traces (or without JS) the pictures stay empty and are hidden.
+// Chapter 1: window.TRACES.loop (site/data/trace-02-run2.js). Chapters 2, 3 and 4: window.TRACES.context
+// (site/data/trace-03.js). Chapter 5: window.TOOLS (site/data/tools-05.js). Every number is read from the
+// data; only the labels below are written here. Without the data (or without JS) the pictures stay empty
+// and are hidden.
 (() => {
   "use strict";
   const U = window.TraceUI;
   const R = window.TRACES || {};
+  const TO = window.TOOLS;
   const LOCALE = "en-US";
   const { fmt } = U.numbers(LOCALE);
   const pct1 = (x) => new Intl.NumberFormat(LOCALE, { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(x);
@@ -16,6 +18,8 @@
     loop: (d) => `${d.calls} calls, each reading the whole conversation: ${d.first} tokens at the start, ${d.last} at the end`,
     context: (d) => `The last of ${d.calls} calls read ${d.last} tokens. One square is ${d.unit}.`,
     cache: (d) => `${d.pct} of what ${d.calls} calls read came from the cache`,
+    compaction: (d) => `${d.pre} tokens of conversation before compaction, ${d.post} after. Areas to scale.`,
+    tools: (d) => `Of the first request's characters: tools ${d.tools}, system ${d.system}, messages ${d.messages}`,
   };
 
   function figure(id, art, caption) {
@@ -66,5 +70,29 @@
     const h = (x) => `${(x / max) * 100}%`;
     const cols = calls.map((c) => `<span class="col"><i class="c" style="height:${h(c.cached_tokens)}"></i><i class="f" style="height:${h(c.new_tokens)}"></i></span>`).join("");
     figure("viz-cache", { cls: "art-cache", html: cols }, COPY.cache({ calls: fmt(N), pct: pct1(T.totals.cache_read_tokens / sum(ctx)) }));
+
+    // Chapter 4: the conversation before compaction and what was left after, as two squares whose
+    // areas are to scale.
+    if (T.compaction) {
+      const { pre_tokens: pre, post_tokens: post } = T.compaction;
+      const side = Math.sqrt(post / pre) * 100;
+      const sqs = `<i class="pre"></i><i class="post" style="height:${side}%"></i>`;
+      figure("viz-compaction", { cls: "art-compact", html: sqs }, COPY.compaction({ pre: fmt(pre), post: fmt(post) }));
+    }
+  }
+
+  // Chapter 5: the first request as one bar to scale, as the chapter draws it: the tool entries, the
+  // system blocks, the message blocks.
+  if (TO && TO.call1) {
+    const c1 = TO.call1;
+    const total = c1.parts_total_chars;
+    const parts = [
+      { k: "tools", chars: c1.parts_chars.tools, pieces: TO.tools.map((t) => t.tool_json_chars) },
+      { k: "system", chars: c1.parts_chars.system, pieces: TO.system.blocks.map((b) => b.chars) },
+      { k: "messages", chars: c1.parts_chars.messages, pieces: c1.message_shapes.flatMap((m) => m.blocks.map((b) => b.chars)) },
+    ];
+    const html = parts.map((p) => `<span class="part p-${p.k}" style="flex:${p.chars} 1 0">${p.pieces.map((x) => `<i style="flex:${x} 1 0"></i>`).join("")}</span>`).join("");
+    const share = Object.fromEntries(parts.map((p) => [p.k, pct1(p.chars / total)]));
+    figure("viz-tools", { cls: "art-request", html }, COPY.tools(share));
   }
 })();

@@ -21,20 +21,28 @@ and no server.
 
 | Path | What it is |
 |---|---|
-| `site/index.html` | Contents page: the 8 chapters, chapter 1 linked |
+| `site/index.html` | Contents page: the 8 chapters, chapters 1–5 linked |
 | `site/style.css` | Styles shared by every page |
 | `site/lib/trace-ui.js` | Helpers any chapter can use (`window.TraceUI`): escaping, number formatting, the model's markdown, line excerpts, request/result/text cards |
 | `site/loop/index.html`, `app.js` | Chapter 1 page, and its step player and live replay |
 | `site/loop/copy.en.js` | Chapter 1 narration and UI labels (`window.COPY`); a translated page loads its own copy file |
+| `site/context/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 2 page (the context window), its figures, styles and narration |
+| `site/cache/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 3 page (caching), its figures, styles and narration |
+| `site/compaction/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 4 page (compaction), its figures, styles and narration |
+| `site/tools/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 5 page (tools and permissions), its figures, styles and narration |
 | `site/harness-step.js`, `.css` | The "you are the harness" widget for round 1 (demo and check in `tests/`) |
 | `site/data/trace-02-runK.js` | Recording 02, runs 1 to 3 (generated); the page shows run 2 and lists all three |
 | `site/game/run2/before/`, `after/` | The game as given to the agent, and with the agent's recorded edits replayed (generated) |
 | `data/trace-*.json` | The same traces as JSON (generated) |
+| `site/data/tools-05.js`, `data/tools-05.json` | Recording 05's tool manual: its shape and sizes, with no private text (generated, `window.TOOLS`) |
+| `site/data/trace-05.js`, `data/trace-05.json` | Recording 05, the session whose requests chapter 5 opens (generated) |
 | `site/data/trace-01.js`, `data/trace-01.json` | Recording 01 (the shopping-cart bug of chapter 1 v1, tag `ch1-v1`) |
 | `fixtures/game/` | The buggy game the agent was given in recording 02 |
 | `fixtures/cart/` | The buggy project of recording 01 |
 | `scripts/record.py` | Records a command's output byte for byte, with arrival times |
 | `scripts/build-trace.py` | Turns a raw recording into the trace files |
+| `scripts/capture-proxy.py` | A local logging proxy that saves the request bodies Claude Code sends the model, never the headers |
+| `scripts/extract-tools.py` | Turns the captured request bodies into the tool manual files (`tools-05`), sizes and excerpts only |
 | `tests/` | Tests for the build script (`python -m unittest discover tests`) and the widget check (`node tests/harness-step-check.js`) |
 | `scripts/screenshot.js` | Screenshots of each page's states at desktop, phone and dark sizes (one entry per page); fails on console errors, horizontal overflow, a local link that doesn't resolve, or a game frame that doesn't load or take keys |
 | `AGENTS.md` | Rules for coding agents working on this repo |
