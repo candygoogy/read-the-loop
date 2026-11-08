@@ -2,8 +2,11 @@
 
 How an AI coding agent actually works, explained on real recorded sessions.
 
-Chapter 1, "An agent is a loop", steps through a real Claude Code session that fixes a one-line bug.
-A loop diagram, the 10-line agent loop and a context window drawn to scale move together, one step at a time.
+Chapter 1, "An agent is a loop", opens with a small brick-breaker game whose ball falls through the right half of
+the paddle. It then follows a real Claude Code session (recording 02, run 2 of 3) that finds and fixes the bug: the
+reader plays the harness for the first round, then steps through the rest or watches it at the recorded speed. A
+loop diagram, the 10-line agent loop and a context window drawn to scale move with each step. It ends with the fixed
+game, made of the agent's edited file as it is.
 
 ## Run it
 
@@ -13,14 +16,19 @@ Open `site/index.html` in a browser. There's no build step and no server.
 
 | Path | What it is |
 |---|---|
-| `site/` | The static site (`index.html`, `style.css`, `app.js`) |
-| `site/data/trace-01.js` | The chapter 1 trace, loaded by the page (generated) |
-| `data/trace-01.json` | The same trace as JSON (generated) |
-| `fixtures/cart/` | The buggy project the agent was given |
+| `site/index.html`, `style.css`, `app.js` | Chapter 1 page, styles, and the step player and live replay |
+| `site/copy.en.js` | Chapter 1 narration and UI labels (`window.COPY`); a translated page loads its own copy file |
+| `site/harness-step.js`, `.css` | The "you are the harness" widget for round 1 (demo and check in `tests/`) |
+| `site/data/trace-02-runK.js` | Recording 02, runs 1 to 3 (generated); the page shows run 2 and lists all three |
+| `site/game/run2/before/`, `after/` | The game as given to the agent, and with the agent's recorded edits replayed (generated) |
+| `data/trace-*.json` | The same traces as JSON (generated) |
+| `site/data/trace-01.js`, `data/trace-01.json` | Recording 01 (the shopping-cart bug of chapter 1 v1, tag `ch1-v1`) |
+| `fixtures/game/` | The buggy game the agent was given in recording 02 |
+| `fixtures/cart/` | The buggy project of recording 01 |
 | `scripts/record.py` | Records a command's output byte for byte, with arrival times |
 | `scripts/build-trace.py` | Turns a raw recording into the trace files |
-| `tests/` | Tests for the build script (`python -m unittest discover tests`) |
-| `scripts/screenshot.js` | Screenshots at desktop, phone and dark sizes, plus an error and overflow check |
+| `tests/` | Tests for the build script (`python -m unittest discover tests`) and the widget check (`node tests/harness-step-check.js`) |
+| `scripts/screenshot.js` | Screenshots of the page's states at desktop, phone and dark sizes; fails on console errors, horizontal overflow, or a game frame that doesn't load or take keys |
 | `AGENTS.md` | Rules for coding agents working on this repo |
 
 ## Record a session

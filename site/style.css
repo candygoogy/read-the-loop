@@ -65,7 +65,7 @@ a { color: var(--model); text-underline-offset: 3px; }
 .masthead {
   max-width: 64rem;
   margin: 0 auto;
-  padding: clamp(3rem, 9vw, 7rem) 1rem 2rem;
+  padding: clamp(3rem, 9vw, 7rem) 1rem 1.5rem;
 }
 .kicker {
   font: 600 0.78rem/1 var(--mono);
@@ -152,6 +152,10 @@ h1 {
   box-shadow: 0 1px 0 var(--rule), 0 30px 60px -40px color-mix(in srgb, var(--ink) 45%, transparent);
 }
 @media (max-width: 70rem) { .player { margin-left: 1rem; margin-right: 1rem; } }
+@media (max-width: 30rem) {
+  .controls { width: 100%; }
+  .controls .live-btn { flex: 1 1 auto; }
+}
 
 .player-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .step-meta { display: flex; gap: 0.8rem; align-items: baseline; flex-wrap: wrap; }
@@ -393,12 +397,12 @@ h1 {
   padding: 1.5rem 1rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
 }
 @media (max-width: 30rem) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.stats .n { display: block; font: 700 clamp(1.8rem, 5vw, 2.4rem)/1 var(--display); letter-spacing: -0.02em; }
+.stats .n { display: block; font: 700 clamp(1.5rem, 4.5vw, 1.9rem)/1.05 var(--display); letter-spacing: -0.02em; white-space: nowrap; }
 .stats .l { display: block; font: 500 0.75rem/1.3 var(--mono); color: var(--ink-3); margin-top: 0.35rem; }
 
 .next { padding-top: 3rem; padding-bottom: 3rem; }
@@ -412,6 +416,130 @@ h1 {
   color: var(--ink-3);
   border-top: 1px solid var(--rule);
 }
+
+/* ---------- the games ---------- */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.game-open { max-width: 64rem; margin: 0 auto; padding: 0 1rem 1rem; }
+.game-open .game { max-width: 48rem; }
+.skip { margin: 0 0 0.6rem; font: 500 0.85rem/1.4 var(--mono); }
+.skip a { display: inline-block; padding: 0.35rem 0; }
+.game { margin: 0; }
+.game-close .game { margin: 1.5rem 0 0; }
+.game figcaption { margin-top: 0.75rem; color: var(--ink-2); font-size: 1rem; line-height: 1.5; max-width: 40rem; }
+.game-label { display: block; font: 600 0.78rem/1.4 var(--mono); color: var(--ink); margin-bottom: 0.15rem; }
+.game[data-game="before"] .game-label { color: var(--model); }
+.game[data-game="after"] .game-label { color: var(--result); }
+
+/* The iframe is sized like the game page inside it: 16 px padding round a 3:2 canvas of at most 720 px. */
+.game-frame {
+  container-type: inline-size;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.game-frame iframe, .game-poster {
+  display: block;
+  width: 100%;
+  height: calc(min(100cqi - 32px, 720px) * 2 / 3 + 36px);
+  border: 0;
+}
+.game-poster {
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(135deg, var(--paper) 0 6px, var(--paper-2) 6px 12px);
+}
+.game-play {
+  font: 600 1rem/1.2 var(--mono);
+  color: var(--card);
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  min-height: 3rem;
+  padding: 0.8rem 1.6rem;
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+.game-play:active { transform: scale(0.97); }
+.game-play:focus-visible, .ghost:focus-visible, .skip a:focus-visible { outline: 2px solid var(--model); outline-offset: 3px; }
+.game-bar {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  padding: 0.5rem;
+  border-top: 1px solid var(--rule);
+  background: var(--card);
+}
+
+.ghost {
+  font: 600 0.82rem/1.2 var(--mono);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) { .ghost:hover { border-color: var(--ink-3); } }
+
+/* ---------- player additions ---------- */
+.timebar { display: flex; align-items: center; gap: 1rem; margin: 1rem 0 0.25rem; }
+.timebar #scrub { flex: 1 1 auto; min-width: 0; margin: 0; }
+.clock { font: 600 0.82rem/1 var(--mono); color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.live-status {
+  margin: 0 0 1.25rem;
+  min-height: 1.3em;
+  font: 500 0.8rem/1.3 var(--mono);
+  color: var(--ink-3);
+  visibility: hidden;
+}
+.player.is-live .live-status { visibility: visible; }
+.player.is-live .live-status::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem; height: 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background: var(--model);
+  animation: blink 1.2s ease-in-out infinite;
+}
+@keyframes blink { 50% { opacity: 0.25; } }
+.live-btn[aria-pressed="true"] { background: var(--model); border-color: var(--model); color: var(--card); }
+#play[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--card); }
+.controls { flex-wrap: wrap; }
+.live-btn { min-width: 8.5rem; }
+
+.step-actions:empty { display: none; }
+.step-actions { margin: 0 0 1rem; }
+.cards .card-slot { display: grid; gap: 0.7rem; }
+.cards .card-slot[hidden] { display: none; }
+.card-wait {
+  margin: 0;
+  padding: 1.1rem 0.9rem;
+  border: 2px dashed color-mix(in srgb, var(--model) 45%, var(--rule));
+  border-radius: 10px;
+  font: 500 0.82rem/1.4 var(--mono);
+  color: var(--ink-2);
+}
+
+.card.sys .card-head { background: var(--sys); }
+.card .note { margin: 0; padding: 0.75rem 0.8rem; font-size: 0.92rem; line-height: 1.5; color: var(--ink-2); }
+.card pre .ln { width: 3ch; margin-right: 1ch; }
+.card pre mark .ln { color: inherit; }
+
+.legend .sw.sys { background: var(--sys); }
+.legend .sw.round { background: var(--result); box-shadow: inset 3px 0 0 var(--model); }
+
+/* ---------- colophon additions ---------- */
+.colophon h2 { font: 650 1.15rem/1.3 var(--display); color: var(--ink); margin: 0 0 0.75rem; }
+.colophon p { margin: 0 0 0.8rem; }
+.runs { margin: 0 0 0.8rem; padding-left: 1.2rem; }
+.runs li { margin-bottom: 0.25rem; }
+#setup:focus { outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
