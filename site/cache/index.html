@@ -16,7 +16,7 @@
 <a class="skip-link" href="#reads">Skip to the first chart</a>
 
 <header class="masthead band">
-  <p class="kicker">Inside the Loop · Chapter 3 of 8</p>
+  <p class="kicker"><a href="../index.html">Inside the Loop</a> · Chapter 3 of 8</p>
   <h1>Caching</h1>
   <p class="dek">An agent sends the model the whole conversation on every call, and most of it is text the model read a moment ago. A cache makes that second reading cheap. This chapter shows how cheap, on a real session, and what made the cache miss in a few small experiments.</p>
 </header>
@@ -108,8 +108,16 @@
   <p id="price-note"></p>
   <p>The experiments: <span data-v="spikeList"></span>. Each resumed the same conversation with <code>claude -p --resume</code>. One changed the set-up with <code data-v="sysFlag"></code>, one switched the model with <code data-v="modelFlag"></code>. Claude Code reports a resumed session's cost added up over the whole conversation so far, so this page shows no cost for them.</p>
   <p>One experiment isn't published: the question asked right after a compaction, the one that read nothing from the cache. Earlier in that conversation, a command of ours went wrong and put a local folder path into it. The model's answer repeats that path, and our redaction check refuses to publish any trace that holds one.</p>
-  <p>The traces: <span id="trace-links"></span>. The same data as JSON is in the repo's <code>data/</code> folder. <a href="../index.html">All chapters</a>.</p>
+  <p>The traces: <span id="trace-links"></span>. The same data as JSON is in the repo's <code>data/</code> folder.</p>
 </footer>
+
+<nav class="chapter-nav band" aria-label="Chapters">
+  <div class="cn">
+    <a class="cn-link cn-prev" href="../context/index.html" rel="prev"><span class="cn-dir"><svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3 5 8l5 5"/></svg>Previous</span><span class="cn-title">Chapter 2: The context window</span></a>
+    <span class="cn-link cn-next cn-soon"><span class="cn-dir">Next · coming</span><span class="cn-title">Chapter 4: Compaction</span></span>
+    <a class="cn-toc" href="../index.html">All chapters</a>
+  </div>
+</nav>
 
 <script>window.TRACES = {};</script>
 <script src="../data/trace-03.js"></script>
@@ -128,6 +136,7 @@
 <script>TRACES.back = TRACE;</script>
 <script src="copy.en.js"></script>
 <script src="../lib/trace-ui.js"></script>
+<script src="../lib/motion.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

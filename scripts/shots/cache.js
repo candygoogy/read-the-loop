@@ -4,6 +4,7 @@
 const path = require("path");
 
 const wait = (p, ms) => p.waitForTimeout(ms);
+const settle = (p) => p.evaluate(() => window.Motion && window.Motion.settle());
 const readout = (p, id) => p.locator(`#${id}-readout`).textContent();
 
 async function states(p, { name, shot, problems, dir }) {
@@ -51,7 +52,25 @@ async function states(p, { name, shot, problems, dir }) {
   await p.locator("#trials").scrollIntoViewIfNeeded();
   await shot("trials", "#trials");
 
+  await settle(p);
   await p.screenshot({ path: path.join(dir, `${name}-full.png`), fullPage: true });
 }
 
-module.exports = { name: "cache", file: "cache/index.html", sizes: ["desk", "phone", "dark"], states };
+// Reduced motion: pick calls, switch the cost view both ways.
+async function exercise(p) {
+  await p.locator("#reads-body-pick").focus();
+  await p.keyboard.press("ArrowLeft");
+  await p.locator("#costs").scrollIntoViewIfNeeded();
+  await p.locator('#cost-mode input[value="with"]').focus();
+  await p.keyboard.press("ArrowRight");
+  await p.keyboard.press("ArrowLeft");
+}
+
+// The cost bars and the total moving between the two views.
+async function motion(p, capture) {
+  await p.locator("#costs").scrollIntoViewIfNeeded();
+  await capture("ch3-toggle", "#costs", () => p.locator('#cost-mode input[value="without"] + span').click());
+  await capture("ch3-toggle-back", "#costs", () => p.locator('#cost-mode input[value="with"] + span').click());
+}
+
+module.exports = { name: "cache", file: "cache/index.html", sizes: ["desk", "phone", "dark"], states, exercise, motion };

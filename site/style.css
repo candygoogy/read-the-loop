@@ -21,8 +21,29 @@
   --on-fill: var(--card);
   --on-you: var(--ink);
 
+  /* What a call read and wrote, in the cache charts (chapter 3, and its picture on the contents
+     page), all mixed from the tokens above. Cache reads: the result teal (the same text again, and
+     cheap). New tokens: the "you" ochre, the loud one. What the model wrote: the model's own colour,
+     as everywhere else on the site. "New" sits between the other two in a stack, so it takes the
+     far lightness and touches both at 3:1 or more. WCAG contrast, light: cache 11.2 / new 3.45 /
+     wrote 11.2 on --card, new 3.14 on --paper, cache-new 3.24, new-wrote 3.24. Dark: cache 3.29 /
+     new 10.4 / wrote 3.12 on --card, cache-new 3.15, new-wrote 3.33. Cache and wrote never touch;
+     their hues (teal, red) tell them apart. */
+  --c-cached: color-mix(in srgb, var(--result) 35%, var(--ink));   /* #243c35 */
+  --c-fresh: color-mix(in srgb, var(--you) 90%, var(--ink));       /* #b47a1a */
+  --c-out: color-mix(in srgb, var(--model) 35%, var(--ink));       /* #5a291d */
+
   --focus: var(--ink);
+
+  /* Motion: one set of curves and durations for every page (site/lib/motion.js reads these too).
+     Entering and leaving: --ease-out. Moving or morphing on screen: --ease-in-out. Hover: ease. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 160ms;   /* press feedback */
+  --dur-fast: 150ms;    /* hover, a highlight that follows the pointer */
+  --dur-base: 240ms;    /* a step's text, a highlight moving between parts */
+  --dur-slow: 400ms;    /* a chart changing state, a number counting */
+  --dur-reveal: 450ms;  /* a figure arriving on scroll, a bar growing in */
 
   --display: "Fraunces", Georgia, serif;
   --body: "Source Serif 4", Georgia, serif;
@@ -63,13 +84,21 @@
     --on-you: var(--card);
     /* Light text on dark paper looks heavier than the same weight in light; ease it off a step. */
     --say: #e2d9c8;
+    --c-cached: color-mix(in srgb, var(--result) 60%, var(--card)); /* #3b766a */
+    --c-fresh: color-mix(in srgb, var(--you) 55%, var(--ink));      /* #e8c384 */
+    --c-out: color-mix(in srgb, var(--model) 65%, var(--card));     /* #a64e3a */
     color-scheme: dark;
   }
 }
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-color: color-mix(in srgb, var(--ink-3) 60%, transparent) transparent;
+  accent-color: var(--model);
+}
 
 body {
   margin: 0;
@@ -96,7 +125,7 @@ a {
   color: var(--model-text);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
-  transition: text-decoration-color 150ms ease;
+  transition: text-decoration-color var(--dur-fast) ease;
 }
 @media (hover: hover) and (pointer: fine) {
   a:hover { text-decoration-thickness: 2px; }
@@ -162,6 +191,7 @@ h1 {
   text-wrap: balance;
 }
 .masthead > h1 { grid-column: text-start / wide-end; }
+.kicker a { color: inherit; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
 .dek {
   font: 400 clamp(1.2rem, 2.3vw, 1.5rem)/1.42 var(--display);
   font-variation-settings: "opsz" 30;
@@ -231,12 +261,13 @@ h1 {
 /* The iframe is sized like the game page inside it: 16 px padding round a 3:2 canvas of at most
    720 px. The poster uses the same box, so pressing play doesn't move anything. */
 .game-frame {
+  position: relative;
   container-type: inline-size;
   background: var(--paper);
   border: 1px solid var(--rule);
   border-radius: 14px;
   overflow: hidden;
-  transition: border-color 150ms ease;
+  transition: border-color var(--dur-fast) ease;
 }
 /* While the game has the keys, or the poster has focus, the whole frame shows it. */
 .game.is-playing .game-frame:focus-within,
@@ -263,9 +294,8 @@ h1 {
   aspect-ratio: 3 / 2;
   height: auto;
   margin: 0 auto;
-  transition: opacity 200ms ease, filter 200ms ease;
+  transition: opacity var(--dur-fast) ease;
   opacity: 0.88;
-  filter: saturate(0.9);
 }
 /* The button sits between the ball and the paddle, where the first frame is empty. */
 .game-play {
@@ -284,15 +314,26 @@ h1 {
   background: var(--ink);
   border-radius: 999px;
   box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--ink) 70%, transparent);
-  transition: transform 160ms var(--ease-out), background-color 150ms ease;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-fast) ease;
 }
 .game-play svg { width: 0.8rem; height: 0.8rem; fill: currentColor; flex: none; }
 @media (hover: hover) and (pointer: fine) {
-  .game-poster:hover .game-still { opacity: 1; filter: none; }
+  .game-poster:hover .game-still { opacity: 1; }
   .game-poster:hover .game-play { background: var(--model-text); }
 }
-.game-poster:focus-visible .game-still { opacity: 1; filter: none; }
+.game-poster:focus-visible .game-still { opacity: 1; }
 .game-poster:active .game-play { transform: translate(-50%, -50%) scale(0.97); }
+/* Pressing play: the still stays over the game while it loads, then fades into it (the game's
+   first frame is the same picture). */
+.game-fade {
+  position: absolute;
+  inset: 0 0 auto;
+  height: calc(min(100cqi - 32px, 720px) * 2 / 3 + 36px);
+  padding: 16px;
+  background: var(--paper);
+  pointer-events: none;
+}
+.game-fade img { display: block; width: min(100%, 720px); aspect-ratio: 3 / 2; height: auto; margin: 0 auto; }
 
 .game-bar {
   display: flex;
@@ -312,7 +353,7 @@ h1 {
   min-height: 2.75rem;
   padding: 0.5rem 0.95rem;
   cursor: pointer;
-  transition: transform 160ms var(--ease-out), border-color 150ms ease, background-color 150ms ease;
+  transition: transform var(--dur-press) var(--ease-out), border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
 }
 .ghost:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) {
@@ -363,7 +404,7 @@ main.band > .player { max-width: none; margin-inline: 0; }
   height: 2.75rem;
   padding: 0 0.95rem;
   cursor: pointer;
-  transition: transform 160ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 .controls svg { width: 0.85rem; height: 0.85rem; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .controls svg.solid { fill: currentColor; stroke: none; }
@@ -415,7 +456,7 @@ main.band > .player { max-width: none; margin-inline: 0; }
   background: var(--model);
   border: 3px solid var(--card);
   box-shadow: 0 0 0 1px var(--model);
-  transition: transform 160ms var(--ease-out);
+  transition: transform var(--dur-press) var(--ease-out);
 }
 #scrub:active::-webkit-slider-thumb { transform: scale(1.15); }
 #scrub::-moz-range-track { height: 4px; border-radius: 2px; background: var(--rule); }
@@ -461,7 +502,7 @@ main.band > .player { max-width: none; margin-inline: 0; }
   stroke-width: 2;
   stroke-dasharray: 5 5;
   opacity: 0.35;
-  transition: opacity 0.3s, stroke 0.3s, stroke-width 0.3s;
+  transition: opacity var(--dur-base) ease, stroke var(--dur-base) ease;
 }
 .loop .edge.on {
   opacity: 1;
@@ -473,12 +514,17 @@ main.band > .player { max-width: none; margin-inline: 0; }
 #e-to-model.on { color: var(--sys); stroke: var(--ink-2); }
 #e-to-harness.on { color: var(--model); stroke: var(--model); }
 #e-to-pc.on, #e-from-pc.on { color: var(--result); stroke: var(--result); }
+/* The token: what travels along an edge when a step starts (site/loop/app.js). At rest it's hidden. */
+.loop .token { opacity: 0; pointer-events: none; stroke: var(--card); stroke-width: 2; }
+.loop .token.t-to-model { fill: var(--ink-2); }
+.loop .token.t-to-harness { fill: var(--model); }
+.loop .token.t-to-pc, .loop .token.t-from-pc { fill: var(--result); }
 
 .loop .node circle, .loop .node rect {
   fill: var(--paper);
   stroke: var(--rule);
   stroke-width: 1.5;
-  transition: fill 0.3s, stroke 0.3s;
+  transition: fill var(--dur-base) ease, stroke var(--dur-base) ease;
 }
 .loop .node text {
   font: 650 15px var(--display);
@@ -489,7 +535,7 @@ main.band > .player { max-width: none; margin-inline: 0; }
 .loop .node.on circle { fill: color-mix(in srgb, var(--model) 16%, var(--card)); stroke: var(--model); }
 #n-harness.on rect { fill: color-mix(in srgb, var(--result) 16%, var(--card)); stroke: var(--result); }
 #n-pc.on rect { fill: color-mix(in srgb, var(--result) 10%, var(--card)); stroke: var(--result); }
-.loop .edge-label { font: 500 10.5px var(--mono); fill: var(--ink-2); opacity: 0; transition: opacity 0.3s; }
+.loop .edge-label { font: 500 10.5px var(--mono); fill: var(--ink-2); opacity: 0; transition: opacity var(--dur-base) ease; }
 .loop .edge-label.on { opacity: 1; }
 
 /* loop code */
@@ -515,7 +561,7 @@ main.band > .player { max-width: none; margin-inline: 0; }
   display: block;
   padding: 0 0.9rem;
   border-left: 3px solid transparent;
-  transition: background-color 0.25s, border-color 0.25s;
+  transition: background-color var(--dur-base) ease, border-color var(--dur-base) ease;
   white-space: pre;
 }
 .loopcode i { font-style: normal; color: var(--ink-3); }
@@ -539,7 +585,7 @@ main.band > .player { max-width: none; margin-inline: 0; }
 
 /* ---------- cards ---------- */
 .cards { display: grid; gap: 0.75rem; }
-.cards .card-slot { display: grid; gap: 0.75rem; animation: rise 240ms var(--ease-out) both; }
+.cards .card-slot { display: grid; gap: 0.75rem; animation: rise var(--dur-base) var(--ease-out) both; }
 .cards .card-slot:nth-child(2) { animation-delay: 50ms; }
 .cards .card-slot:nth-child(3) { animation-delay: 100ms; }
 .cards .card-slot:nth-child(n + 4) { animation-delay: 150ms; }
@@ -648,16 +694,21 @@ main.band > .player { max-width: none; margin-inline: 0; }
   border: 1px solid var(--rule);
 }
 .blk {
-  height: 100%;
-  flex: none;
-  transition: width 0.6s cubic-bezier(.2,.7,.2,1), opacity 0.4s;
-  position: relative;
+  position: absolute;
+  top: 0;
+  bottom: 0;
   border-right: 2px solid var(--card);
+  transform-origin: 0 50%;
 }
-.blk.sys { background: var(--sys); }
-.blk.round { background: var(--result); box-shadow: inset 4px 0 0 var(--model); }
-.blk.fresh { animation: pop 0.6s ease-out; }
-@keyframes pop { from { filter: brightness(1.5); } }
+.blk.sys { left: 0; background: var(--sys); }
+/* A round sits at its place in the conversation and grows in from its left edge when it lands. */
+.blk.round {
+  background: var(--result);
+  box-shadow: inset 4px 0 0 var(--model);
+  transform: scaleX(0);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.blk.round.in { transform: none; }
 .blk span {
   position: absolute;
   left: 0.75rem; top: 50%;
@@ -666,18 +717,19 @@ main.band > .player { max-width: none; margin-inline: 0; }
   color: var(--on-fill);
   white-space: nowrap;
 }
+/* While the model reads: a soft light passes over the whole conversation, left to right. */
 .stack.reading::after {
   content: "";
   position: absolute;
-  inset: 0;
-  width: var(--read-w, 100%);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30%;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--card) 40%, transparent) 50%, transparent);
-  background-size: 30% 100%;
-  background-repeat: no-repeat;
   animation: sweep 1.4s ease-in-out infinite;
   pointer-events: none;
 }
-@keyframes sweep { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+@keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(334%); } }
 
 .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; margin-top: 0.7rem; font: 400 0.78rem/1.45 var(--mono); color: var(--ink-2); }
 .legend i { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 3px; margin-right: 0.45rem; vertical-align: -0.1rem; }
@@ -729,7 +781,7 @@ main.band > section.stats > * { grid-column: auto; }
 .next { padding-bottom: var(--section); }
 
 .colophon {
-  padding-block: 0 4.5rem;
+  padding-block: 0 2.5rem;
   font-size: 0.9rem;
   line-height: 1.6;
   color: var(--ink-2);
@@ -739,16 +791,152 @@ main.band > section.stats > * { grid-column: auto; }
 .colophon p { margin: 0 0 0.85rem; }
 .runs { margin: 0 0 0.85rem; padding-left: 1.2rem; }
 .runs li { margin-bottom: 0.3rem; }
-.colophon a { display: inline-block; padding-block: 0.15rem; }
+.colophon a { padding-block: 0.15rem; }
+
+/* ---------- chapter navigation (the foot of every chapter) ---------- */
+.chapter-nav { padding-bottom: clamp(3rem, 8vw, 4.5rem); }
+.chapter-nav > * { grid-column: text; }
+.cn {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--rule);
+}
+.cn-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-height: 2.75rem;
+  padding: 0.95rem 1.1rem 1rem;
+  color: var(--ink);
+  text-decoration: none;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  transition: transform var(--dur-press) var(--ease-out), border-color var(--dur-fast) ease;
+}
+a.cn-link:active { transform: scale(0.98); }
+@media (hover: hover) and (pointer: fine) {
+  a.cn-link:hover { border-color: var(--ink-3); }
+  a.cn-link:hover .cn-title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+}
+.cn-next { grid-column: 2; text-align: right; }
+.cn-dir { display: inline-flex; align-items: center; gap: 0.4rem; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--model-text); }
+.cn-next .cn-dir { justify-content: flex-end; }
+.chev { width: 0.7rem; height: 0.7rem; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--dur-base) var(--ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  a.cn-prev:hover .chev { transform: translateX(-2px); }
+  a.cn-next:hover .chev { transform: translateX(2px); }
+}
+.cn-title { font: 600 1.1rem/1.3 var(--display); text-wrap: balance; }
+.cn-soon { background: transparent; border-style: dashed; color: var(--ink-2); }
+.cn-soon .cn-dir { color: var(--ink-2); }
+.cn-toc {
+  grid-column: 1 / -1;
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 0.9rem;
+  font: 600 0.82rem/1 var(--mono);
+  color: var(--ink-2);
+}
+@media (max-width: 30rem) {
+  .cn { grid-template-columns: minmax(0, 1fr); }
+  .cn-next { grid-column: auto; text-align: left; }
+  .cn-next .cn-dir { justify-content: flex-start; }
+}
 
 /* ---------- contents page (site/index.html) ---------- */
-.toc { list-style: none; margin: 0; padding: 0 0 clamp(3rem, 8vw, 5.5rem); border-top: 1px solid var(--rule); }
-.toc li { padding-block: 1.25rem; border-bottom: 1px solid var(--rule); }
-.toc-n { display: block; font: 600 0.78rem/1.3 var(--mono); letter-spacing: 0.04em; color: var(--ink-2); margin-bottom: 0.4rem; }
-.toc h3 { font: 650 clamp(1.35rem, 3.2vw, 1.75rem)/1.15 var(--display); letter-spacing: -0.01em; margin: 0 0 0.4rem; text-wrap: balance; }
+.toc-main { padding-bottom: clamp(3rem, 8vw, 5.5rem); }
+.toc { grid-column: text-start / wide-end; list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.toc-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 21rem);
+  gap: 1rem clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+  padding-block: clamp(1.5rem, 3.5vw, 2.25rem);
+  border-bottom: 1px solid var(--rule);
+}
+.toc-n { display: block; font: 600 0.78rem/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--model-text); margin-bottom: 0.5rem; }
+.toc h3 { font: 650 clamp(1.6rem, 3.6vw, 2.2rem)/1.1 var(--display); letter-spacing: -0.015em; margin: 0 0 0.55rem; text-wrap: balance; }
 .toc h3 a { color: var(--ink); text-decoration-color: var(--model); }
-.toc p { margin: 0; color: var(--ink-2); text-wrap: pretty; }
-.toc .coming h3 { color: var(--ink-2); }
+/* The whole row opens the chapter; the title is the link a screen reader hears. */
+.toc h3 a::after { content: ""; position: absolute; inset: 0; border-radius: 14px; }
+.toc h3 a:focus-visible { outline: none; }
+.toc h3 a:focus-visible::after { outline: 2px solid var(--focus); outline-offset: 2px; }
+.toc p { margin: 0; color: var(--ink-2); text-wrap: pretty; max-width: var(--measure); }
+.toc-go { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.85rem; font: 600 0.8rem/1.3 var(--mono); color: var(--model-text); }
+
+/* A small picture of each chapter, drawn from its own recording (site/contents.js). */
+.toc-viz {
+  margin: 0;
+  padding: 1rem 1.1rem 0.85rem;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-fast) ease;
+}
+.toc-viz:empty { display: none; }
+.toc-art { height: 5.5rem; display: flex; }
+.toc-cap { margin-top: 0.7rem; font: 500 0.72rem/1.4 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+@media (hover: hover) and (pointer: fine) {
+  .toc-item:hover .toc-viz { transform: translateY(-3px); border-color: var(--ink-3); }
+  .toc-item:hover h3 a { text-decoration-thickness: 2px; }
+  .toc-item:hover .toc-go .chev { transform: translateX(3px); }
+}
+.toc-item:has(a:active) .toc-viz { transform: scale(0.98); transition-duration: var(--dur-press); }
+
+/* chapter 1: one bar per call, everything that call read, to one scale */
+.art-loop { flex-direction: column; justify-content: center; gap: 5px; }
+.art-loop .row { position: relative; height: 12px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--paper) 0 4px, var(--paper-2) 4px 8px); overflow: hidden; }
+.art-loop .row i { position: absolute; top: 0; bottom: 0; border-right: 2px solid var(--card); }
+.art-loop .s { background: var(--sys); }
+.art-loop .r { background: var(--result); box-shadow: inset 3px 0 0 var(--model); }
+/* chapter 2: the last call's conversation as squares, in reading order */
+.art-waffle { display: grid; grid-template-columns: repeat(auto-fill, 9px); grid-auto-rows: 9px; gap: 2px; align-content: center; }
+.art-waffle i { border-radius: 2px; }
+.art-waffle .s { background: var(--sys); }
+.art-waffle .m { background: var(--model); }
+.art-waffle .b { background: var(--result); }
+/* chapter 3: each call's reading, the cached part and the new part */
+.art-cache { align-items: flex-end; gap: 2px; }
+.art-cache .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column-reverse; gap: 1px; height: 100%; }
+.art-cache .col i { display: block; min-height: 1px; }
+.art-cache .c { background: var(--c-cached); }
+.art-cache .f { background: var(--c-fresh); border-radius: 2px 2px 0 0; }
+
+.toc-later-head { grid-column: text-start / wide-end; margin: clamp(2.5rem, 6vw, 3.5rem) 0 1rem; font: 600 0.78rem/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.toc-later {
+  grid-column: text-start / wide-end;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 0.75rem;
+}
+.toc-later li { padding: 1rem 1.1rem 1.1rem; border: 1px dashed var(--rule); border-radius: 12px; }
+.toc-later .toc-n { color: var(--ink-2); margin-bottom: 0.35rem; }
+.toc-later h3 { font: 600 1.2rem/1.25 var(--display); margin: 0 0 0.35rem; color: var(--ink); }
+.toc-later p { margin: 0; font-size: 0.95rem; line-height: 1.5; color: var(--ink-2); text-wrap: pretty; }
+
+@media (max-width: 48rem) {
+  .toc-item { grid-template-columns: minmax(0, 1fr); }
+  .toc-art { height: 4.5rem; }
+}
+
+/* ---------- motion ---------- */
+/* Reveal on scroll (site/lib/motion.js): only set on figures that start below the fold, and only
+   while an observer is there to show them. */
+.rv { opacity: 0; transform: translateY(12px); }
+.rv.rv-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--dur-reveal) var(--ease-out), transform var(--dur-reveal) var(--ease-out);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

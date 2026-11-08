@@ -32,6 +32,7 @@
   const T = R.run;
   const C = window.COPY;
   const U = window.TraceUI;
+  const Mo = window.Motion;
   const { esc, list } = { esc: U.esc, list: U.numbers(C.locale).list };
   const { fmt } = U.numbers(C.locale);
   const $ = (id) => document.getElementById(id);
@@ -144,7 +145,7 @@
     host.innerHTML =
       `<div class="viz-plot" role="img" aria-label="${esc(o.label)}">` +
         `<div class="viz-grid" aria-hidden="true">${ticks.map((v) => `<div class="tick" style="bottom:${(v / top) * 100}%"><span>${esc(o.tick(v))}</span></div>`).join("")}</div>` +
-        `<div class="viz-cols" aria-hidden="true">${calls.map((_, i) => `<div class="col" data-i="${i}">${o.keys.map((k) => `<i class="seg s-${k}"></i>`).join("")}</div>`).join("")}</div>` +
+        `<div class="viz-cols" aria-hidden="true"><i class="sel-band"></i>${calls.map((_, i) => `<div class="col" data-i="${i}">${o.keys.map((k) => `<i class="seg s-${k}"></i>`).join("")}</div>`).join("")}</div>` +
       `</div>` +
       `<div class="viz-x" aria-hidden="true">${calls.map((_, i) => (i === 0 || i === N - 1 || ((i + 1) % 10 === 0 && N - (i + 1) >= 5))
         ? `<span style="--x:${(i + 0.5) / N}">${fmt(i + 1)}</span>` : "").join("")}</div>` +
@@ -154,28 +155,69 @@
         `<p class="viz-readout" id="${id}-readout"></p>` +
       `</div>`;
     const cols = [...host.querySelectorAll(".col")];
+    const band = host.querySelector(".sel-band");
     const pick = host.querySelector(".pick");
     let segs = o.segs;
     let cur = o.start;
 
-    function draw() {
+    // Each part's place, from the values. With `animate`, every part then moves from where it was on
+    // screen (its rect, even mid-way through a move) to its new place, with a transform only: FLIP.
+    // A part that goes to zero shrinks into its new base first, then takes its zero place.
+    function draw(animate) {
+      const moving = animate && !Mo.reduced();
+      const plotBox = moving ? cols[0].getBoundingClientRect() : null;
+      const before = moving ? cols.map((col) => [...col.children].map((el) => el.getBoundingClientRect())) : null;
+      const H = moving ? plotBox.height : 0;
       cols.forEach((col, i) => {
         let base = 0;
         const parts = segs(i);
         const last = parts.map((p) => p.v > 0).lastIndexOf(true);
         parts.forEach((p, j) => {
           const el = col.children[j];
+          Mo.stop(el, "flip");
           el.style.bottom = `${(base / top) * 100}%`;
           el.style.height = `${(p.v / top) * 100}%`;
+          el.dataset.base = String((base / top) * H);
           el.classList.toggle("zero", !(p.v > 0));
           el.classList.toggle("top", j === last);
           base += p.v;
         });
       });
+      if (!moving) return;
+      const opts = { duration: Mo.dur.slow, easing: Mo.ease.inOut, key: "flip" };
+      cols.forEach((col, i) => [...col.children].forEach((el, j) => {
+        const b = before[i][j];
+        const fromBottom = plotBox.bottom - b.bottom;
+        if (el.classList.contains("zero")) {
+          if (b.height < 0.5) return;
+          // Hold its old place for the move, shrinking into where its base is now.
+          el.classList.remove("zero");
+          el.style.bottom = `${(fromBottom / H) * 100}%`;
+          el.style.height = `${(b.height / H) * 100}%`;
+          const a = Mo.play(el, [{ transform: "none" }, { transform: `translateY(${fromBottom - +el.dataset.base}px) scaleY(0)` }], { ...opts, fill: "forwards" });
+          const end = () => { el.style.bottom = `${(+el.dataset.base / H) * 100}%`; el.style.height = "0%"; el.classList.add("zero"); };
+          if (!a) return end();
+          a.finished.then(() => { end(); a.cancel(); }, () => {});
+          return;
+        }
+        const a = el.getBoundingClientRect();
+        if (a.height < 0.5) return;
+        const dy = b.bottom - a.bottom;
+        const sy = b.height / a.height;
+        if (Math.abs(dy) < 0.5 && Math.abs(sy - 1) < 0.01) return;
+        Mo.play(el, [{ transform: `translateY(${dy}px) scaleY(${Math.max(sy, 0.001)})` }, { transform: "none" }], opts);
+      }));
+    }
+    // The band behind the picked column glides to it; its size follows the columns.
+    function placeBand() {
+      const c = cols[cur];
+      band.style.width = `${c.offsetWidth + 2}px`;
+      band.style.transform = `translateX(${c.offsetLeft - 1}px)`;
     }
     function select(i) {
       cur = Math.max(0, Math.min(N - 1, i));
       cols.forEach((c, j) => c.classList.toggle("sel", j === cur));
+      placeBand();
       pick.value = String(cur + 1);
       const html = o.readout(cur);
       $(`${id}-readout`).innerHTML = html;
@@ -190,10 +232,13 @@
     };
     plot.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" || e.buttons) select(at(e)); });
     plot.addEventListener("pointerdown", (e) => select(at(e)));
-    draw();
+    draw(false);
     select(cur);
+    // Glide only once the band has its first place, and not while the columns resize.
+    requestAnimationFrame(() => band.classList.add("glide"));
+    new ResizeObserver(() => { band.classList.remove("glide"); placeBand(); requestAnimationFrame(() => band.classList.add("glide")); }).observe(plot);
     return {
-      redraw(newSegs) { segs = newSegs; draw(); select(cur); },
+      redraw(newSegs, animate) { segs = newSegs; draw(animate); select(cur); },
     };
   }
 
@@ -243,16 +288,22 @@
       segs: segsFor(mode),
       readout: readoutFor,
     });
-    function setMode(m) {
+    // The total rolls to its new value; screen readers hear only the end of it (Motion.count).
+    let heroValue = null;
+    function setMode(m, animate) {
       mode = m;
+      const to = m === "with" ? computed : noCache;
       $("costs-legend").innerHTML = legendFor(m);
-      $("hero-n").textContent = money(m === "with" ? computed : noCache, 2);
+      if (animate) Mo.count($("hero-n"), to, { from: heroValue, format: (x) => money(x, 2), round: (x) => x, easing: Mo.ease.inOut });
+      else $("hero-n").textContent = money(to, 2);
+      heroValue = to;
       $("hero-l").textContent = m === "with" ? C.costs.heroWith : C.costs.heroWithout;
+      if (animate) Mo.enter($("hero-l"), { y: 3, duration: Mo.dur.base });
       $("costs").dataset.mode = m;
-      chart.redraw(segsFor(m));
+      chart.redraw(segsFor(m), animate);
     }
-    fs.addEventListener("change", (e) => setMode(e.target.value));
-    setMode(mode);
+    fs.addEventListener("change", (e) => setMode(e.target.value, true));
+    setMode(mode, false);
 
     // The table: every call, tokens and both costs.
     $("table-summary").textContent = C.table.summary;
@@ -301,4 +352,20 @@
     ...TRIALS.map((x) => [`../data/trace-spike-a2-${x.key}.js`, C.trials[x.key].title.toLowerCase()]),
   ];
   $("trace-links").innerHTML = list(links.map(([href, t]) => `<a href="${href}">${esc(t)}</a>`));
+
+  // ---------- motion ----------
+  // Figures rise in as they come into view. The experiment cards' bars fill once, card by card, the
+  // cached part and then the new part.
+  Mo.reveal([...document.querySelectorAll(".viz")], (el) => {
+    const cols = [...el.querySelectorAll(".col")];
+    cols.forEach((col, i) => Mo.grow(col, { axis: "y", delay: 120 + (i / cols.length) * 300 }));
+  });
+  Mo.reveal([...document.querySelectorAll(".viz-table, .stats")]);
+  Mo.reveal($("trials"), (el) => {
+    el.querySelectorAll(".trial").forEach((card, i) => {
+      const [c, f] = card.querySelectorAll(".split i");
+      Mo.grow(c, { delay: 150 + i * 70 });
+      Mo.grow(f, { delay: 150 + i * 70 + 160, duration: Mo.dur.slow });
+    });
+  });
 })();

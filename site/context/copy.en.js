@@ -162,8 +162,8 @@ window.COPY = {
   },
 
   next: {
-    kicker: "Coming next",
-    title: "Chapter 3: The cache",
+    kicker: "Next",
+    title: `<a href="../cache/index.html">Chapter 3: Caching</a>`,
     p1: (d) => `Of the ${d.sumRead} tokens the model read, ${d.cacheTotal} (${d.cachePct}) came from a <strong>cache</strong>, a stored copy of text the model's provider had seen recently. What is it, and what breaks it?`,
     p2: (d) => `After the run, we also asked Claude Code to compact the conversation by hand. It went from ${d.pre} tokens to ${d.post}. Chapter 4 is about what a compaction keeps and what it drops.`,
   },

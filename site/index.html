@@ -18,51 +18,75 @@
   <p class="dek">How an AI coding agent actually works, shown on real sessions we recorded and you can step through.</p>
 </header>
 
-<main class="band">
+<main class="band toc-main">
   <h2 class="sr-only">Chapters</h2>
   <ol class="toc">
-    <li>
-      <span class="toc-n">Chapter 1</span>
-      <h3><a href="loop/index.html">An agent is a loop</a></h3>
-      <p>A model can only read text and write more. Watch a real session fix a bug in a small game it never sees, one round at a time.</p>
+    <li class="toc-item">
+      <div class="toc-text">
+        <span class="toc-n">Chapter 1</span>
+        <h3><a href="loop/index.html">An agent is a loop</a></h3>
+        <p>A model can only read text and write more. Watch a real session fix a bug in a small game it never sees, one round at a time.</p>
+        <span class="toc-go" aria-hidden="true">Start here<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span>
+      </div>
+      <figure class="toc-viz" id="viz-loop"></figure>
     </li>
-    <li>
-      <span class="toc-n">Chapter 2</span>
-      <h3><a href="context/index.html">The context window</a></h3>
-      <p>How much the model reads on every call, and what that adds up to over a real session.</p>
+    <li class="toc-item">
+      <div class="toc-text">
+        <span class="toc-n">Chapter 2</span>
+        <h3><a href="context/index.html">The context window</a></h3>
+        <p>How much the model reads on every call, and what that adds up to over a real session.</p>
+        <span class="toc-go" aria-hidden="true">Read<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span>
+      </div>
+      <figure class="toc-viz" id="viz-context"></figure>
     </li>
-    <li>
-      <span class="toc-n">Chapter 3</span>
-      <h3><a href="cache/index.html">Caching</a></h3>
-      <p>Why reading the whole conversation again is cheap, and what breaks the cache.</p>
+    <li class="toc-item">
+      <div class="toc-text">
+        <span class="toc-n">Chapter 3</span>
+        <h3><a href="cache/index.html">Caching</a></h3>
+        <p>Why reading the whole conversation again is cheap, and what breaks the cache.</p>
+        <span class="toc-go" aria-hidden="true">Read<svg class="chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg></span>
+      </div>
+      <figure class="toc-viz" id="viz-cache"></figure>
     </li>
-    <li class="coming">
-      <span class="toc-n">Chapter 4 · coming</span>
+  </ol>
+
+  <h2 class="toc-later-head" id="later-title">Coming next</h2>
+  <ol class="toc-later" start="4" aria-labelledby="later-title">
+    <li>
+      <span class="toc-n">Chapter 4</span>
       <h3>Compaction</h3>
       <p>Why agents forget, shown on a real long session.</p>
     </li>
-    <li class="coming">
-      <span class="toc-n">Chapter 5 · coming</span>
+    <li>
+      <span class="toc-n">Chapter 5</span>
       <h3>Tools and permissions</h3>
       <p>What the model is told about each tool, and who decides what may run.</p>
     </li>
-    <li class="coming">
-      <span class="toc-n">Chapter 6 · coming</span>
+    <li>
+      <span class="toc-n">Chapter 6</span>
       <h3>Subagents</h3>
       <p>A fresh conversation for a side task, and what comes back from it.</p>
     </li>
-    <li class="coming">
-      <span class="toc-n">Chapter 7 · coming</span>
+    <li>
+      <span class="toc-n">Chapter 7</span>
       <h3>Failure modes</h3>
       <p>Loops, made-up functions, a false “done”, and the guard rails against each.</p>
     </li>
-    <li class="coming">
-      <span class="toc-n">Chapter 8 · coming</span>
+    <li>
+      <span class="toc-n">Chapter 8</span>
       <h3>Build your own agent</h3>
       <p>A small agent you can run in your browser, on a model replayed from a recording.</p>
     </li>
   </ol>
 </main>
+
+<script>window.TRACES = {};</script>
+<script src="data/trace-02-run2.js"></script>
+<script>TRACES.loop = TRACE;</script>
+<script src="data/trace-03.js"></script>
+<script>TRACES.context = TRACE;</script>
+<script src="lib/trace-ui.js"></script>
+<script src="contents.js"></script>
 
 </body>
 </html>

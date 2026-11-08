@@ -1,7 +1,6 @@
 /* Chapter 2: the context window. Builds on ../style.css (tokens, grid, prose, legend, stats, colophon);
    only what this chapter adds lives here. */
 
-.kicker a { color: inherit; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
 
 /* ---------- the issue and the full prompt ---------- */
 .prompt.issue { font-size: clamp(1.2rem, 2.4vw, 1.4rem); }
@@ -19,7 +18,7 @@ details.more > summary {
   border-radius: 8px;
   cursor: pointer;
   list-style: none;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
 }
 details.more > summary::-webkit-details-marker { display: none; }
 details.more > summary::before {
@@ -27,7 +26,7 @@ details.more > summary::before {
   width: 0.45rem; height: 0.45rem;
   border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
   transform: rotate(-45deg);
-  transition: transform 160ms var(--ease-out);
+  transition: transform var(--dur-press) var(--ease-out);
   flex: none;
 }
 details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, -1px); }
@@ -140,7 +139,7 @@ details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, 
   border: 1px solid var(--rule);
   border-radius: 10px;
   cursor: pointer;
-  transition: transform 160ms var(--ease-out), background-color 150ms ease, border-color 150ms ease;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-fast) ease, border-color var(--dur-fast) ease;
 }
 .ex-step svg { width: 0.85rem; height: 0.85rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .ex-step:not(:disabled):active { transform: scale(0.97); }
@@ -175,16 +174,22 @@ details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, 
   background: var(--model);
   border: 3px solid var(--card);
   box-shadow: 0 0 0 1px var(--model);
-  transition: transform 160ms var(--ease-out);
+  transition: transform var(--dur-press) var(--ease-out);
 }
 #ex-scrub:active::-webkit-slider-thumb { transform: scale(1.15); }
 #ex-scrub::-moz-range-track { height: 4px; border-radius: 2px; background: var(--rule); }
 #ex-scrub::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--model); }
 #ex-scrub::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--model); border: 3px solid var(--card); box-shadow: 0 0 0 1px var(--model); }
 /* the phases under the slider, each as wide as its share of the calls (the thumb's travel) */
-.ex-strip { display: flex; gap: 2px; height: 5px; margin: -0.6rem 9px 0; }
-.ex-strip span { background: var(--rule); border-radius: 2px; transition: background-color 200ms ease; }
-.ex-strip span.on { background: var(--ink-2); }
+.ex-strip { position: relative; display: flex; gap: 2px; height: 5px; margin: -0.6rem 9px 0; }
+.ex-strip span { background: var(--rule); border-radius: 2px; }
+/* The current phase: one mark that glides along the strip (app.js sets its place with a transform). */
+.ex-strip-on {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  border-radius: 2px; background: var(--ink-2);
+  transform-origin: 0 50%;
+}
+.ex-strip-on.glide { transition: transform var(--dur-base) var(--ease-in-out); }
 
 .ex-phases { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1rem 0 1.5rem; }
 .chip {
@@ -197,7 +202,7 @@ details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, 
   border: 1px solid var(--rule);
   border-radius: 999px;
   cursor: pointer;
-  transition: transform 160ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 .chip-n {
   display: inline-grid; place-items: center;
@@ -228,7 +233,7 @@ details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, 
   width: var(--cell); height: var(--cell);
   margin: 0 var(--gap) var(--gap) 0;
   border-radius: 2px;
-  transition: opacity 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
+  transition: opacity var(--dur-fast) ease;
 }
 .waffle .c.s { background: var(--sys); }
 .waffle .c.m { background: var(--model); }
@@ -238,8 +243,6 @@ details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, 
 .waffle .rnd.on .c { opacity: 1; }
 /* the round added last: a ring in ink round each of its squares */
 .waffle .rnd.newest .c { box-shadow: 0 0 0 1px var(--card), 0 0 0 2px var(--ink); }
-.waffle .rnd.fresh .c { animation: pop 0.5s ease-out; }
-@keyframes pop { from { filter: brightness(1.45); } }
 .ex-legend { margin-top: 0.9rem; }
 .legend .sw.s { background: var(--sys); }
 .legend .sw.m { background: var(--model); }

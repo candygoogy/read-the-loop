@@ -1,26 +1,10 @@
 /* Chapter 3: the column charts, the cost toggle, the table and the experiment cards. Shared tokens
-   (paper, ink, fonts, the grid) come from ../style.css.
-   Chart colours, all mixed from the site's tokens. Cache reads: the result teal (the same text again,
-   and cheap). New tokens: the "you" ochre, the loud one. What the model wrote: an ink neutral, since
-   it costs the same with or without the cache. In each theme "new" takes the far lightness, because
-   it is the part that touches both others in a stack. Contrast (WCAG), light: cache 11.2 / new 3.45 /
-   output 16.2 on --card, new 3.14 on --paper, cache-new 3.24, new-output 4.68. Dark: cache 3.29 /
-   new 10.4 / output 3.06 on --card, cache-new 3.15, new-output 3.39. Cache and output never touch;
-   their hues tell them apart. */
+   (paper, ink, fonts, the grid, and the chart colours --c-cached, --c-fresh, --c-out) come from
+   ../style.css. */
 :root {
-  --c-cached: color-mix(in srgb, var(--result) 35%, var(--ink));   /* #243c35 */
-  --c-fresh: color-mix(in srgb, var(--you) 90%, var(--ink));       /* #b47a1a */
-  --c-out: var(--ink);                                              /* #1f1b16 */
   --viz-surface: var(--card);
   /* The band behind the picked call: opaque, so the gap between parts can wear it too. */
   --sel: color-mix(in srgb, var(--ink) 8%, var(--card));
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --c-cached: color-mix(in srgb, var(--result) 60%, var(--card)); /* #3b766a */
-    --c-fresh: color-mix(in srgb, var(--you) 55%, var(--ink));      /* #e8c384 */
-    --c-out: color-mix(in srgb, var(--ink-3) 65%, var(--card));     /* #6e6658 */
-  }
 }
 
 /* ---------- a chart panel ---------- */
@@ -58,15 +42,18 @@
   cursor: crosshair;
 }
 .col { position: relative; flex: 1 1 0; min-width: 0; }
-/* The picked call: a band behind its column. */
-.col::before {
-  content: ""; position: absolute; inset: -0.35rem -1px -0.35rem; border-radius: 4px;
-  background: var(--sel); opacity: 0; transition: opacity 150ms ease;
+/* The picked call: one band behind its column, gliding from call to call (cache/app.js sets its
+   place with a transform). */
+.sel-band {
+  position: absolute; top: -0.35rem; bottom: -0.35rem; left: 0; width: 0;
+  border-radius: 4px; background: var(--sel); pointer-events: none;
 }
-.col.sel::before { opacity: 1; }
+.sel-band.glide { transition: transform var(--dur-fast) var(--ease-out); }
+/* A part of a column. Its place is set by bottom and height; when the view changes, cache/app.js
+   moves it from where it was with a transform (FLIP), so only the transform animates. */
 .seg {
-  position: absolute; left: 50%; width: min(100%, 24px); transform: translateX(-50%);
-  transition: height 520ms var(--ease-out), bottom 520ms var(--ease-out);
+  position: absolute; left: 0; right: 0; margin-inline: auto; width: min(100%, 24px);
+  transform-origin: 50% 100%;
 }
 /* The surface gap between stacked parts: each part above the bottom one casts 2px of surface downwards. */
 .seg + .seg { box-shadow: 0 2px 0 var(--viz-surface); }
@@ -116,8 +103,9 @@ fieldset.mode {
 .seg-opt span {
   display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1rem;
   font: 600 0.82rem/1.2 var(--mono); color: var(--ink-2); border-radius: 7px; cursor: pointer;
-  transition: background-color 180ms ease, color 180ms ease;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
+.seg-opt span:active { transform: scale(0.97); }
 .seg-opt input:checked + span { background: var(--ink); color: var(--card); }
 .seg-opt input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (hover: hover) and (pointer: fine) {
@@ -170,7 +158,7 @@ fieldset.mode {
 .trial-changed code { font-size: 0.8rem; white-space: nowrap; }
 .trial[data-k="sysprompt"] .trial-changed code { white-space: normal; }
 .split { display: flex; gap: 2px; height: 10px; margin-top: 0.3rem; }
-.split i { display: block; height: 100%; min-width: 2px; }
+.split i { display: block; height: 100%; min-width: 2px; transform-origin: 0 50%; }
 .split i:first-child { border-radius: 5px 0 0 5px; }
 .split i:last-child { border-radius: 0 5px 5px 0; }
 .trial-numbers { font: 500 0.8rem/1.45 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }

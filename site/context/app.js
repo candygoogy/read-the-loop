@@ -8,6 +8,7 @@
   const CH1 = (window.TRACES || {}).ch1;
   const C = window.COPY;
   const U = window.TraceUI;
+  const Mo = window.Motion;
   const { esc, base, toolsOf, textsOf, lineCount } = U;
   const { fmt, pl, list } = U.numbers(C.locale);
   const $ = (id) => document.getElementById(id);
@@ -287,6 +288,9 @@
   let cur = N;            // the call shown (1-based): its conversation is the set-up and rounds 1..cur-1
   let pinned = null;      // the round chosen by click or focus (null: the newest)
   let hovered = null;
+  let shown = null;       // the call the grid showed before this one
+  let cellsOf = [];       // each round's squares, in reading order
+  let fills = [];         // the squares animating in right now
 
   function buildWaffle() {
     // Cells per part by cumulative rounding, so the squares always add up to the total.
@@ -298,6 +302,34 @@
       html += `<span class="rnd" data-r="${r.r}">${sq("m", cells(r.model))}${sq("b", cells(r.back))}</span>`;
     });
     waffle.innerHTML = html;
+    cellsOf = [...waffle.querySelectorAll(".rnd")].map((r) => [...r.children]);
+  }
+
+  // Moving forward, the squares that just joined the conversation fill in, in reading order: each
+  // grows in over 160 ms, the whole run within `spread` ms. A new move cancels the last one at once
+  // (the squares are simply there), so scrubbing never queues motion. Moving back is instant.
+  function fillIn(from, to, { spread = 240, max = 240 } = {}) {
+    fills.forEach((a) => a.cancel());
+    fills = [];
+    if (from === null || to <= from || Mo.reduced()) return;
+    let sq = [];
+    for (let k = from; k < to; k++) sq = sq.concat(cellsOf[k] || []);
+    sq = sq.slice(-max);
+    const span = Math.min(spread, sq.length * 6);
+    sq.forEach((c, i) => {
+      const a = Mo.play(c, [{ opacity: 0, transform: "scale(0.5)" }, { opacity: 1, transform: "none" }],
+        { duration: 160, delay: sq.length > 1 ? (i / (sq.length - 1)) * span : 0, fill: "backwards", key: "fill" });
+      if (a) fills.push(a);
+    });
+  }
+
+  // The current phase's mark on the strip under the slider: one element, moved with a transform.
+  function placeStrip(key) {
+    const strip = $("ex-strip");
+    const on = strip.querySelector(".ex-strip-on");
+    const span = strip.querySelector(`span[data-k="${key}"]`);
+    if (!on || !span || !strip.clientWidth) return;
+    on.style.transform = `translateX(${span.offsetLeft}px) scaleX(${span.offsetWidth / strip.clientWidth})`;
   }
 
   const toolNames = (r) => list([...new Set(r.tools.map((t) => t.tool))]);
@@ -358,8 +390,6 @@
       const on = k <= cur - 1;
       e.classList.toggle("future", !on);
       const isNew = k === cur - 1 && k > 0;
-      if (isNew && !e.classList.contains("newest")) { e.classList.remove("fresh"); void e.offsetWidth; e.classList.add("fresh"); }
-      if (!isNew) e.classList.remove("fresh");
       e.classList.toggle("newest", isNew);
       if (on) {
         e.setAttribute("role", "option");
@@ -388,11 +418,15 @@
       if (b.dataset.k === p.key) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
     });
     document.querySelectorAll("#ex-strip span").forEach((s) => s.classList.toggle("on", s.dataset.k === p.key));
+    placeStrip(p.key);
     if ($("ex-phase-name").dataset.k !== p.key) {
       $("ex-phase-name").dataset.k = p.key;
       $("ex-phase-name").textContent = p.name;
       $("ex-phase-text").innerHTML = C.phases[p.key].text(d, p);
+      if (shown !== null) Mo.enter([$("ex-phase-name"), $("ex-phase-text")], { y: 4, stagger: 40 });
     }
+    fillIn(shown, cur);
+    shown = cur;
     showDetail(shownRound());
   }
 
@@ -422,7 +456,14 @@
     $("ex-phases").setAttribute("aria-label", C.explore.phases);
     $("ex-phases").innerHTML = phases.map((p, k) =>
       `<button type="button" class="chip" data-k="${p.key}" data-n="${p.from + 1}"><span class="chip-n" aria-hidden="true">${fmt(k + 1)}</span><span class="chip-name">${esc(p.name)}</span></button>`).join("");
-    $("ex-strip").innerHTML = phases.map((p) => `<span data-k="${p.key}" style="flex:${p.to - p.from + 1}"></span>`).join("");
+    $("ex-strip").innerHTML = phases.map((p) => `<span data-k="${p.key}" style="flex:${p.to - p.from + 1}"></span>`).join("") + `<i class="ex-strip-on"></i>`;
+    // Glide between phases, but not while the strip resizes.
+    const stripOn = $("ex-strip").querySelector(".ex-strip-on");
+    new ResizeObserver(() => {
+      stripOn.classList.remove("glide");
+      placeStrip(phaseOf(cur - 1).key);
+      requestAnimationFrame(() => stripOn.classList.add("glide"));
+    }).observe($("ex-strip"));
 
     scrub.addEventListener("input", () => { pinned = null; setCall(+scrub.value, { fromScrub: true }); });
     $("ex-prev").addEventListener("click", () => { pinned = null; setCall(cur - 1); });
@@ -610,4 +651,36 @@
   responsive($("reread-chart"), drawReread);
   responsive($("speed-ctx"), drawScatter("speed-ctx", "ctx", rCtx, C.speed.axisCtx, C.speed.axisCtx));
   responsive($("speed-out"), drawScatter("speed-out", "out", rOut, C.speed.axisOut, C.speed.axisOut));
+
+  // ---------- motion ----------
+  // Each figure rises in as it comes into view, and its chart draws in once: bars grow from zero,
+  // lines trace from the first call to the last, points arrive left to right. The conversation's
+  // squares fill in reading order. A chart redrawn later (a resize) just appears.
+  const figOf = (id) => $(id).closest("figure");
+  const labelsIn = (box, delay) => Mo.enter([...box.querySelectorAll("svg text.value, svg text.mark-label")], { y: 0, duration: Mo.dur.base, delay });
+  Mo.reveal(figOf("compare-chart"), () => {
+    const box = $("compare-chart");
+    Mo.grow([...box.querySelectorAll(".bar-ch1, .bar-ch2")], { delay: 120, stagger: 80 });
+    labelsIn(box, 420);
+  });
+  Mo.reveal(figOf("kinds-chart"), () => {
+    const box = $("kinds-chart");
+    Mo.grow([...box.querySelectorAll(".k-sys, .k-model, .k-back")], { delay: 120, stagger: 60 });
+    labelsIn(box, 380);
+  });
+  Mo.reveal(figOf("reread-chart"), () => {
+    const box = $("reread-chart");
+    box.querySelectorAll(".line-sum, .line-ctx").forEach((l) => Mo.draw(l, { delay: 120 }));
+    Mo.enter(box.querySelector(".area-sum"), { y: 0, duration: Mo.dur.base, delay: 400 });
+    Mo.enter([...box.querySelectorAll("circle:not([visibility])")], { y: 0, duration: Mo.dur.fast, delay: 520 });
+    labelsIn(box, 520);
+  });
+  Mo.reveal(document.querySelector(".pair"), (el) => {
+    el.querySelectorAll(".chart-box").forEach((box) => {
+      const dots = [...box.querySelectorAll("circle.dot")].sort((a, b) => a.getAttribute("cx") - b.getAttribute("cx"));
+      Mo.pop(dots, { delay: 120 });
+    });
+  });
+  Mo.reveal(document.querySelector(".explorer"), () => fillIn(0, cur, { spread: 450, max: Infinity }));
+  Mo.reveal([...document.querySelectorAll(".stats, .table-wrap")]);
 })();

@@ -24,6 +24,8 @@ An interactive, illustrated explainer of how AI coding agents work, built on **r
 | `site/style.css` | Styles shared by every page |
 | `site/lib/trace-ui.js` | Shared helpers (`window.TraceUI`): escaping, formatting, markdown, excerpts, card HTML |
 | `site/loop/index.html`, `app.js`, `copy.en.js` | Chapter 1 page, step player, narration |
+| `site/lib/motion.js` | Shared motion (`window.Motion`): `enter`, `grow`, `pop`, `draw`, `along`, `count`, `reveal`, `settle`. Uses the `--ease-*`/`--dur-*` tokens in `style.css`; does nothing under reduced motion |
+| `site/contents.js` | The contents page's per-chapter pictures, drawn from each chapter's trace |
 | `site/data/trace-01.js` | Generated trace the page loads (`window.TRACE`) |
 | `data/trace-01.json` | The same trace as JSON (generated) |
 | `fixtures/cart/` | The buggy project given to the agent in recording 01 |

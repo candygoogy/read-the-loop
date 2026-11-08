@@ -2,6 +2,28 @@
 const path = require("path");
 
 const wait = (p, ms) => p.waitForTimeout(ms);
+const settle = (p) => p.evaluate(() => window.Motion && window.Motion.settle());
+
+// Scrub the explorer's slider from the first call to the last with the keyboard, one key press at a
+// time at a key-repeat pace, and record every long task (over 50 ms) on the page meanwhile.
+async function longTasks(p) {
+  await p.locator(".explorer").scrollIntoViewIfNeeded();
+  await settle(p);
+  const n = await p.evaluate(() => +document.getElementById("ex-scrub").max);
+  await p.locator("#ex-scrub").focus();
+  await p.keyboard.press("Home");
+  await wait(p, 300);
+  await p.evaluate(() => {
+    window.__long = [];
+    window.__lto = new PerformanceObserver((l) => l.getEntries().forEach((e) => window.__long.push(Math.round(e.duration))));
+    window.__lto.observe({ type: "longtask" });
+  });
+  for (let i = 1; i < n; i++) { await p.keyboard.press("ArrowRight"); await wait(p, 33); }
+  await wait(p, 600);
+  const at = await p.evaluate(() => +document.getElementById("ex-scrub").value);
+  const long = await p.evaluate(() => { window.__lto.disconnect(); return window.__long; });
+  return { n, at, long };
+}
 
 // Go to a call through the slider, as a reader would.
 async function call(p, n) {
@@ -11,6 +33,11 @@ async function call(p, n) {
 
 async function states(p, { name, shot, problems, dir }) {
   await shot("top");
+
+  const lt = await longTasks(p);
+  console.log(`  keyboard scrub 1 -> ${lt.at} of ${lt.n}: ${lt.long.length} long tasks${lt.long.length ? ` (${lt.long.join(", ")} ms)` : ""}`);
+  if (lt.at !== lt.n) problems.push(`keyboard scrub ended on call ${lt.at}, expected ${lt.n}`);
+  if (lt.long.some((x) => x > 50)) problems.push(`long tasks while scrubbing: ${lt.long.join(", ")} ms`);
 
   await p.locator("#compare-chart svg").scrollIntoViewIfNeeded();
   await shot("compare", "#ctx-title ~ figure");
@@ -98,7 +125,26 @@ async function states(p, { name, shot, problems, dir }) {
   await wait(p, 200);
   await shot("end");
 
+  await settle(p);
   await p.screenshot({ path: path.join(dir, `${name}-full.png`), fullPage: true });
 }
 
-module.exports = { name: "context", file: "context/index.html", sizes: ["desk", "phone", "dark"], states };
+// Reduced motion: scrub, use a phase chip and the arrow keys.
+async function exercise(p) {
+  await p.locator(".explorer").scrollIntoViewIfNeeded();
+  await p.locator("#ex-scrub").focus();
+  for (const k of ["Home", "ArrowRight", "ArrowRight", "End"]) await p.keyboard.press(k);
+  await p.locator("#ex-phases button").nth(4).click();
+  await p.locator("#ex-next").click();
+}
+
+// The grid filling as the slider moves one call, and a phase chip jumping several.
+async function motion(p, capture) {
+  await p.locator(".explorer").scrollIntoViewIfNeeded();
+  await call(p, 21);
+  await p.locator("#ex-scrub").focus();
+  await capture("ch2-scrub", ".explorer", () => p.keyboard.press("ArrowRight"));
+  await capture("ch2-phase", ".explorer", () => p.locator("#ex-phases button").nth(5).click());
+}
+
+module.exports = { name: "context", file: "context/index.html", sizes: ["desk", "phone", "dark"], states, exercise, motion };

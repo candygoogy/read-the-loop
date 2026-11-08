@@ -8,6 +8,7 @@
   const RUNS = window.TRACES || {};
   const C = window.COPY;
   const U = window.TraceUI;
+  const Mo = window.Motion;
   const calls = T.calls;
   const $ = (id) => document.getElementById(id);
   const { fmt, pl, list } = U.numbers(C.locale);
@@ -180,9 +181,11 @@
   const stack = $("stack");
   const rounds = added.slice(1);
   const pct = (x) => `${(x / last) * 100}%`;
+  // Each block sits at its place in the conversation; a round grows in from its left edge when it lands.
+  const startOf = (k) => first + rounds.slice(0, k - 1).reduce((a, b) => a + b, 0);
   stack.innerHTML =
     `<div class="blk sys" style="width:${pct(first)}"><span>${esc(C.ui.setupBlock(d))}</span></div>` +
-    rounds.map((x, i) => `<div class="blk round" data-r="${i + 1}" style="width:0" title="${esc(C.ui.roundTitle(fmt(i + 1), fmt(x)))}"></div>`).join("");
+    rounds.map((x, i) => `<div class="blk round" data-r="${i + 1}" style="left:${pct(startOf(i + 1))};width:${pct(x)}" title="${esc(C.ui.roundTitle(fmt(i + 1), fmt(x)))}"></div>`).join("");
   $("context-label").textContent = C.ui.contextLabel;
   $("legend").innerHTML =
     `<span><i class="sw sys"></i>${esc(C.ui.legendSys)}</span>` +
@@ -227,8 +230,9 @@
       onDone: () => {
         round1Done = true;
         $("step-text").innerHTML = C.steps[s.key].textDone(d);
+        Mo.enter($("step-text"), { y: 4 });
         $("step-actions").innerHTML = "";
-        $("context-count").innerHTML = countText(s);
+        setCount(countText(s));
         paintStack(s);
         // Let the reader see the result land, then the session carries on by itself.
         setTimeout(() => { if (cur === ROUND1 && !live) { render(ROUND1 + 1, { focus: true }); play(); } }, 1400);
@@ -248,14 +252,37 @@
   }
 
   function paintStack(s, r = shownRounds(s)) {
-    stack.querySelectorAll(".blk.round").forEach((el) => {
-      const k = +el.dataset.r;
-      const show = k <= r;
-      const was = el.style.width !== "0px" && el.style.width !== "0";
-      el.style.width = show ? pct(rounds[k - 1]) : "0";
-      el.classList.toggle("fresh", show && !was);
-    });
+    stack.querySelectorAll(".blk.round").forEach((el) => el.classList.toggle("in", +el.dataset.r <= r));
     stack.classList.toggle("reading", !!s.reading);
+  }
+
+  // The token count counts to its new value when it changes (the number itself is in the copy's <b>).
+  let shownCount = null;
+  function setCount(html) {
+    const box = $("context-count");
+    box.innerHTML = html;
+    const b = box.querySelector("b");
+    if (!b) return;
+    const v = +b.textContent.replace(/\D/g, "");
+    if (booted && shownCount !== null && v !== shownCount) Mo.count(b, v, { from: shownCount, format: fmt });
+    shownCount = v;
+  }
+
+  // ---------- the loop diagram's token ----------
+  // On each step, a dot travels the step's edges in loop order: what goes from whom to whom.
+  const EDGE_ORDER = ["e-to-model", "e-to-harness", "e-to-pc", "e-from-pc"];
+  const loopSvg = $("loop");
+  const tokens = {};
+  EDGE_ORDER.forEach((id) => {
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("r", "5");
+    c.setAttribute("class", `token t-${id.slice(2)}`);
+    loopSvg.insertBefore(c, $("n-model"));
+    tokens[id] = c;
+  });
+  function sendTokens(s) {
+    EDGE_ORDER.forEach((id) => Mo.stop(tokens[id], "along"));
+    EDGE_ORDER.filter((id) => s.loop.includes(id)).forEach((id, i) => Mo.along(tokens[id], $(id), { duration: 380, delay: i * 340 }));
   }
 
   // Cards for a step. Stepping shows a call's requests on the model step and its results on the
@@ -266,8 +293,11 @@
     return s.events.filter((e) => e.side === (s.key === "you" ? "req" : s.side));
   }
 
+  let drawn = -1; // the step on screen, to tell a new step from a redraw of the same one
   function render(i, opts = {}) {
     cur = Math.max(0, Math.min(steps.length - 1, i));
+    const moved = booted && cur !== drawn;
+    drawn = cur;
     const s = steps[cur];
     const copy = C.steps[s.key];
     const isLive = !!opts.live;
@@ -297,9 +327,14 @@
       }
     }
 
-    $("context-count").innerHTML = countText(s);
+    setCount(countText(s));
     document.querySelectorAll("#loop .on").forEach((el) => el.classList.remove("on"));
     s.loop.forEach((id) => $(id).classList.add("on"));
+    // A new step: its text settles in, and the token runs the loop's edges for it.
+    if (moved) {
+      Mo.enter([$("step-title"), $("step-text"), $("step-actions")], { y: 4, stagger: 40 });
+      sendTokens(s);
+    }
     document.querySelectorAll("#loopcode span[data-l]").forEach((el) => el.classList.toggle("on", s.code.includes(+el.dataset.l)));
     paintStack(s);
 
@@ -381,7 +416,8 @@
       $("step-title").textContent = copy.title(d, fmt(s.n));
       $("step-text").innerHTML = waiting ? copy.text(d) : s.hands ? copy.textDone(d) : copy.text(d);
       // The context bar and count also wait: the result isn't in the conversation yet.
-      $("context-count").innerHTML = waiting ? C.count.pending(d, s.i) : countText(s);
+      setCount(waiting ? C.count.pending(d, s.i) : countText(s));
+      if (liveWaiting !== null) Mo.enter([$("step-title"), $("step-text")], { y: 4, stagger: 40 });
       paintStack(s, waiting ? s.rounds - 1 : s.rounds);
       liveWaiting = waiting;
     }
@@ -477,14 +513,40 @@
       fig.classList.remove("is-playing");
     }
     function start() {
+      // The still stays over the game while it loads, then fades into it: the game's first frame is
+      // the same picture.
+      const still = box.querySelector(".game-still");
+      const src0 = still && (still.currentSrc || still.src);
       box.innerHTML =
         `<iframe src="${src}" title="${esc(fig.dataset.title)}" scrolling="no"></iframe>` +
         `<div class="game-bar"><button type="button" class="ghost game-restart">${esc(C.game.restart)}</button>` +
         `<button type="button" class="ghost game-stop">${esc(C.game.stop)}</button></div>`;
       fig.classList.add("is-playing");
       box.querySelector(".game-restart").addEventListener("click", () => { box.querySelector("iframe").src = src; });
-      box.querySelector(".game-stop").addEventListener("click", () => { poster(); box.querySelector(".game-poster").focus(); });
-      box.querySelector("iframe").focus();
+      box.querySelector(".game-stop").addEventListener("click", () => {
+        poster();
+        Mo.enter(box.querySelector(".game-poster"), { y: 0, duration: Mo.dur.base });
+        box.querySelector(".game-poster").focus();
+      });
+      const frame = box.querySelector("iframe");
+      if (src0 && !Mo.reduced()) {
+        const fade = document.createElement("div");
+        fade.className = "game-fade";
+        fade.setAttribute("aria-hidden", "true");
+        fade.innerHTML = `<img src="${esc(src0)}" alt="">`;
+        box.appendChild(fade);
+        let gone = false;
+        const out = () => {
+          if (gone) return;
+          gone = true;
+          const a = Mo.play(fade, [{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: "ease", fill: "forwards" });
+          if (a) a.finished.then(() => fade.remove(), () => fade.remove()); else fade.remove();
+        };
+        // The game draws its first frame on load; give it two frames, then fade. Never wait long.
+        frame.addEventListener("load", () => requestAnimationFrame(() => requestAnimationFrame(out)), { once: true });
+        setTimeout(out, 1500);
+      }
+      frame.focus();
     }
     poster();
   });
@@ -502,4 +564,7 @@
   setPlayLabel();
   setLiveLabel();
   render(0);
+
+  // Figures further down rise in as they come into view.
+  Mo.reveal([$("player"), document.querySelector('.game[data-game="after"]'), document.querySelector(".stats")]);
 })();
