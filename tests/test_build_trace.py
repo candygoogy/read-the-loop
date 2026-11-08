@@ -157,8 +157,8 @@ class BuildTraceTest(unittest.TestCase):
         TMP_BASE.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=TMP_BASE) as d:
             out = pathlib.Path(d) / "rec.jsonl"
-            env = dict(os.environ, CLAUDE_EFFORT="high", CLAUDECODE="1", KEEP_ME="yes")
-            code = "import os, json; print(json.dumps(sorted(k for k in os.environ if k.startswith(('CLAUDE', 'KEEP')))))"
+            env = dict(os.environ, CLAUDE_EFFORT="high", CLAUDECODE="1", AI_AGENT="x", KEEP_ME="yes")
+            code = "import os, json; print(json.dumps(sorted(k for k in os.environ if k.startswith(('CLAUDE', 'KEEP', 'AI_AGENT')))))"
             r = subprocess.run([sys.executable, str(REPO / "scripts" / "record.py"), str(out), "--", sys.executable, "-c", code],
                                env=env, capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stderr)
