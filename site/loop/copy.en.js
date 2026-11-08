@@ -23,6 +23,10 @@ window.COPY = {
     legendRound: (list) => `each round: the model's request and the result (${list})`,
     setupBlock: (d) => `set-up · ${d.setup}`,
     roundTitle: (n, tokens) => `round ${n}: +${tokens} tokens`,
+    // The bar's text alternative, for the rounds that have landed so far (list: "+96, +4,893").
+    stackLabel: (d, n, list) => n
+      ? `Bar drawn to scale: the set-up, ${d.setup} tokens, then ${n === 1 ? "1 round" : `${n} rounds`}: ${list} tokens.`
+      : `Bar drawn to scale: the set-up, ${d.setup} tokens. No rounds yet.`,
   },
 
   // Shown under the clock in "Watch it live".

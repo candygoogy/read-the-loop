@@ -368,4 +368,7 @@
       Mo.grow(f, { delay: 150 + i * 70 + 160, duration: Mo.dur.slow });
     });
   });
+
+  // Any of these that scrolls at the reader's width can be reached and scrolled by keyboard.
+  U.watchScrollBoxes(".card pre");
 })();

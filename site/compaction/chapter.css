@@ -44,10 +44,10 @@
 /* the kinds of square */
 .k-sys { background: var(--sys); }
 .k-model { background: var(--model); }
-.k-back { background: var(--result); }
+.k-back { background: var(--tex-teal) var(--result); }
 .k-after { background: var(--k-after); }
 .k-pre { background: var(--k-pre); }
-.k-cached { background: var(--c-cached); }
+.k-cached { background: var(--tex-cached) var(--c-cached); }
 .k-fresh { background: var(--c-fresh); }
 .k-out { background: var(--c-out); }
 .k-gone { background: transparent; box-shadow: inset 0 0 0 1px var(--k-gone); }

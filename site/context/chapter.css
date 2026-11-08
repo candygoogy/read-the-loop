@@ -68,7 +68,10 @@ details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, 
 .chart-box .bar-ch2 { fill: var(--ink-2); }
 .chart-box .k-sys { fill: var(--sys); }
 .chart-box .k-model { fill: var(--model); }
-.chart-box .k-back { fill: var(--result); }
+.chart-box .k-back { fill: url(#tex-teal) var(--result); }
+/* The hatch as an SVG pattern (context/app.js adds it to each chart that has a --result bar). */
+.chart-box .tex-bg { fill: var(--result); }
+.chart-box .tex-line { fill: color-mix(in srgb, var(--card) 25%, transparent); }
 .chart-box .track { fill: none; }
 .chart-box .area-sum { fill: color-mix(in srgb, var(--model) 10%, transparent); }
 .chart-box .line-sum, .chart-box .line-ctx { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
@@ -237,7 +240,7 @@ details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, 
 }
 .waffle .c.s { background: var(--sys); }
 .waffle .c.m { background: var(--model); }
-.waffle .c.b { background: var(--result); }
+.waffle .c.b { background: var(--tex-teal) var(--result); }
 .waffle .future .c { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-3) 45%, var(--rule)); }
 .waffle.has-on .rnd:not(.on):not(.future) .c { opacity: 0.45; }
 .waffle .rnd.on .c { opacity: 1; }
@@ -246,7 +249,7 @@ details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, 
 .ex-legend { margin-top: 0.9rem; }
 .legend .sw.s { background: var(--sys); }
 .legend .sw.m { background: var(--model); }
-.legend .sw.b { background: var(--result); }
+.legend .sw.b { background: var(--tex-teal) var(--result); }
 .legend .sw.f { background: transparent; box-shadow: inset 0 0 0 1px var(--ink-3); }
 
 .ex-side { display: grid; gap: 1.25rem; }
@@ -266,7 +269,7 @@ details.more[open] > summary::before { transform: rotate(45deg) translate(-1px, 
 .ex-detail .sw { display: inline-block; width: 0.65rem; height: 0.65rem; border-radius: 2px; margin-right: 0.3rem; vertical-align: -0.05rem; }
 .ex-detail .sw.s { background: var(--sys); }
 .ex-detail .sw.m { background: var(--model); }
-.ex-detail .sw.b { background: var(--result); margin-right: 0.5rem; }
+.ex-detail .sw.b { background: var(--tex-teal) var(--result); margin-right: 0.5rem; }
 .dt-note { margin-top: 0.6rem !important; font-size: 0.92rem; line-height: 1.5; color: var(--ink-2); }
 .dt-reqs { list-style: none; margin: 0.8rem 0 0; padding: 0.7rem 0 0; border-top: 1px dashed var(--rule); display: grid; gap: 0.45rem; }
 .dt-reqs li { font: 400 0.8rem/1.45 var(--body); color: var(--ink-2); overflow-wrap: anywhere; }

@@ -1,7 +1,8 @@
 // Screenshots of every page in PAGES (at the bottom) at desktop, phone and dark mode, plus checks on
 // each: console errors, horizontal overflow, and that every local link resolves to a file. Chapter 1
 // also checks (desktop) that both game iframes load from file:// and take keyboard input.
-// Usage: node scripts/screenshot.js [out-dir] [page]. Writes <out-dir>/<page>/<size>-<state>.png.
+// Usage: node scripts/screenshot.js [out-dir] [page] [--browser chromium|firefox|webkit].
+// Writes <out-dir>/<page>/<size>-<state>.png (chromium, the default) or <out-dir>/<browser>/<page>/... .
 // Screenshots show settled states: before each one, window.Motion.settle() finishes every animation
 // and shows anything waiting to be revealed on scroll.
 // Then two passes per page:
@@ -24,10 +25,23 @@ function loadPlaywright() {
   return require(path.join(root, "@playwright", "cli", "node_modules", "playwright"));
 }
 
-const out = path.resolve(process.argv[2] || "shots");
+// Arguments: positional [out-dir] [page], and --browser <name> (or --browser=<name>) anywhere.
+const args = process.argv.slice(2);
+let engine = "chromium";
+const positional = [];
+for (let i = 0; i < args.length; i++) {
+  const m = args[i].match(/^--browser(?:=(.+))?$/);
+  if (m) engine = m[1] || args[++i];
+  else positional.push(args[i]);
+}
+if (!["chromium", "firefox", "webkit"].includes(engine)) {
+  console.error(`unknown --browser ${engine}: use chromium, firefox or webkit`);
+  process.exit(2);
+}
+const out = path.join(path.resolve(positional[0] || "shots"), engine === "chromium" ? "" : engine);
 const site = path.resolve(__dirname, "..", "site");
 const urlOf = (file) => "file:///" + path.join(site, file).split(path.sep).join("/");
-const { chromium } = loadPlaywright();
+const browserType = loadPlaywright()[engine];
 
 const SIZES = {
   desk: { viewport: { width: 1360, height: 900 }, colorScheme: "light" },
@@ -244,11 +258,12 @@ const shotsDir = path.join(__dirname, "shots");
 if (fs.existsSync(shotsDir)) {
   for (const f of fs.readdirSync(shotsDir).filter((x) => x.endsWith(".js")).sort()) PAGES.push(require(path.join(shotsDir, f)));
 }
-const only = process.argv[3];
+const only = positional[1];
 if (only) PAGES.splice(0, PAGES.length, ...PAGES.filter((p) => p.name === only));
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await browserType.launch();
+  console.log(`browser: ${engine} ${browser.version()}`);
   let bad = false;
   for (const page of PAGES) {
     const dir = path.join(out, page.name);
@@ -256,7 +271,8 @@ if (only) PAGES.splice(0, PAGES.length, ...PAGES.filter((p) => p.name === only))
     console.log(`${page.name} (${page.file})`);
     for (const name of page.sizes) {
       const { viewport, colorScheme, mobile } = SIZES[name];
-      const ctx = await browser.newContext({ viewport, colorScheme, hasTouch: !!mobile, isMobile: !!mobile });
+      // Firefox has no mobile emulation (isMobile); it still gets the phone viewport and touch.
+      const ctx = await browser.newContext({ viewport, colorScheme, hasTouch: !!mobile, ...(engine === "firefox" ? {} : { isMobile: !!mobile }) });
       const p = await ctx.newPage();
       const errors = [];
       const problems = [];

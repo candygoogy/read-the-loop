@@ -30,7 +30,7 @@
   <p>The session made <span data-v="calls"></span> model calls in <span data-v="duration"></span> seconds. It was recorded on <span data-v="date"></span> with <span data-v="model"></span>. The conversation grew from <span data-v="first"></span> tokens on the first call to <span data-v="last"></span> on the last (a token is a word or a piece of one). Added up over all the calls, the model read <strong data-v="sumRead"></strong> tokens.</p>
   <p>Most of that reading came from the <strong>cache</strong>: a stored copy of text the model's provider saw recently. The usage the API reports for each call splits what the model read into two parts: tokens read from that stored copy, and tokens that were new. The chart shows both, call by call.</p>
 
-  <figure class="viz wide" id="reads">
+  <figure class="viz wide" id="reads" aria-labelledby="reads-title">
     <figcaption class="viz-head">
       <span class="viz-title" id="reads-title"></span>
       <span class="viz-legend" id="reads-legend"></span>
@@ -47,7 +47,7 @@
   <p>A token read from the cache isn't free, but it's cheap. Anthropic's pricing page lists these prices for <span data-v="model"></span>, per million tokens: <span data-v="pInput"></span> for normal input, <span data-v="pRead"></span> for input read from the cache, and <span data-v="pOutput"></span> for what the model writes. A token read from the cache costs <strong data-v="readPct"></strong> of a normal one.</p>
   <p>The recording holds only the session's total cost, <span data-v="recorded"></span>. From the prices and each call's token counts we get <span data-v="computed"></span>, the same to within a cent. So the per-call costs below are our arithmetic on the published prices, checked against that total. They aren't recorded.</p>
 
-  <figure class="viz wide" id="costs">
+  <figure class="viz wide" id="costs" aria-labelledby="costs-title">
     <figcaption class="viz-head">
       <span class="viz-title" id="costs-title"></span>
       <span class="viz-legend" id="costs-legend"></span>
@@ -66,7 +66,7 @@
   <details class="viz-table wide">
     <summary id="table-summary"></summary>
     <p class="table-note" id="table-note"></p>
-    <div class="table-wrap"><table id="table"></table></div>
+    <div class="table-wrap" tabindex="0" role="region" aria-labelledby="table-summary"><table id="table"></table></div>
   </details>
 </section>
 

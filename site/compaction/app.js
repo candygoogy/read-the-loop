@@ -699,4 +699,7 @@
     el.querySelectorAll(".bar").forEach((bar, j) => Mo.grow(bar, { delay: 120 + j * 120 }));
   });
   Mo.reveal([...document.querySelectorAll(".survive, .doc.wide, .matrix-wrap, .stats, .files")]);
+
+  // Any of these that scrolls at the reader's width can be reached and scrolled by keyboard.
+  U.watchScrollBoxes(".card pre, .d-code");
 })();

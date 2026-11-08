@@ -33,6 +33,17 @@
   --c-fresh: color-mix(in srgb, var(--you) 90%, var(--ink));       /* #b47a1a */
   --c-out: color-mix(in srgb, var(--model) 35%, var(--ink));       /* #5a291d */
 
+  /* The one non-colour cue, for colour-blind readers: the teal family (--result, what the harness
+     pastes back, and --c-cached, read from the cache) wears a fine 135° hatch of the surface
+     colour, everywhere it fills a shape, legends included. With red-green colour blindness --result
+     and --sys both turn grey, and --c-cached turns as dark as --c-out and --ink; the hatch keeps
+     them apart. Layer it over the fill: `background: var(--tex-teal) var(--result)`, and
+     `var(--tex-cached) var(--c-cached)`. The line is a quarter of the surface colour mixed in, which
+     keeps every line at 3:1 or more against --card (light 3.0 on --result, 4.8 on --c-cached; dark 4.4, 5.0).
+     In dark, the cached line mixes in --ink instead, as the surface would sink it into the dark fill. */
+  --tex-teal: repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in srgb, var(--card) 25%, transparent) 3px 4.5px);
+  --tex-cached: var(--tex-teal);
+
   --focus: var(--ink);
 
   /* Motion: one set of curves and durations for every page (site/lib/motion.js reads these too).
@@ -87,6 +98,7 @@
     --c-cached: color-mix(in srgb, var(--result) 60%, var(--card)); /* #3b766a */
     --c-fresh: color-mix(in srgb, var(--you) 55%, var(--ink));      /* #e8c384 */
     --c-out: color-mix(in srgb, var(--model) 65%, var(--card));     /* #a64e3a */
+    --tex-cached: repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in srgb, var(--ink) 25%, transparent) 3px 4.5px);
     color-scheme: dark;
   }
 }
@@ -703,7 +715,7 @@ main.band > .player { max-width: none; margin-inline: 0; }
 .blk.sys { left: 0; background: var(--sys); }
 /* A round sits at its place in the conversation and grows in from its left edge when it lands. */
 .blk.round {
-  background: var(--result);
+  background: var(--tex-teal) var(--result);
   box-shadow: inset 4px 0 0 var(--model);
   transform: scaleX(0);
   transition: transform var(--dur-slow) var(--ease-out);
@@ -717,6 +729,32 @@ main.band > .player { max-width: none; margin-inline: 0; }
   color: var(--on-fill);
   white-space: nowrap;
 }
+/* A round too thin to see at this width (loop/app.js decides, under about 4px): a tick under it
+   and its size. Hidden until the round lands, like the round itself. */
+.stack-marks { position: relative; height: 1.4rem; }
+.stack-marks:not(.has) { display: none; }
+.mark {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  font: 600 0.7rem/1 var(--mono);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+.mark.in { opacity: 1; }
+.mark[hidden] { display: none; }
+.stack-marks.has + .legend { margin-top: 0.3rem; }
+.mark::before { content: ""; width: 2px; height: 0.4rem; margin-bottom: 0.2rem; background: var(--ink-2); }
+.mark[data-align="start"] { transform: translateX(-1px); align-items: flex-start; }
+.mark[data-align="end"] { transform: translateX(calc(-100% + 1px)); align-items: flex-end; }
+.mark.no-label b { visibility: hidden; }
+
 /* While the model reads: a soft light passes over the whole conversation, left to right. */
 .stack.reading::after {
   content: "";
@@ -734,7 +772,7 @@ main.band > .player { max-width: none; margin-inline: 0; }
 .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; margin-top: 0.7rem; font: 400 0.78rem/1.45 var(--mono); color: var(--ink-2); }
 .legend i { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 3px; margin-right: 0.45rem; vertical-align: -0.1rem; }
 .legend .sw.sys { background: var(--sys); }
-.legend .sw.round { background: var(--result); box-shadow: inset 3px 0 0 var(--model); }
+.legend .sw.round { background: var(--tex-teal) var(--result); box-shadow: inset 3px 0 0 var(--model); }
 
 /* ---------- phone: one column, in reading order ---------- */
 @media (max-width: 48rem) {
@@ -751,6 +789,8 @@ main.band > .player { max-width: none; margin-inline: 0; }
   .loop { order: 8; max-width: 19rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px dashed var(--rule); }
   .code-fig { order: 9; }
   .loopcode { font-size: 0.7rem; }
+  /* No sideways scrolling on a phone: a long line wraps, its tail indented under its start. */
+  .loopcode span { white-space: pre-wrap; padding-left: 3.6rem; text-indent: -2.7rem; }
   .context-head { flex-direction: column-reverse; align-items: flex-start; }
 }
 @media (max-width: 30rem) {
@@ -894,18 +934,18 @@ a.cn-link:active { transform: scale(0.98); }
 .art-loop .row { position: relative; height: 12px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--paper) 0 4px, var(--paper-2) 4px 8px); overflow: hidden; }
 .art-loop .row i { position: absolute; top: 0; bottom: 0; border-right: 2px solid var(--card); }
 .art-loop .s { background: var(--sys); }
-.art-loop .r { background: var(--result); box-shadow: inset 3px 0 0 var(--model); }
+.art-loop .r { background: var(--tex-teal) var(--result); box-shadow: inset 3px 0 0 var(--model); }
 /* chapter 2: the last call's conversation as squares, in reading order */
 .art-waffle { display: grid; grid-template-columns: repeat(auto-fill, 9px); grid-auto-rows: 9px; gap: 2px; align-content: center; }
 .art-waffle i { border-radius: 2px; }
 .art-waffle .s { background: var(--sys); }
 .art-waffle .m { background: var(--model); }
-.art-waffle .b { background: var(--result); }
+.art-waffle .b { background: var(--tex-teal) var(--result); }
 /* chapter 3: each call's reading, the cached part and the new part */
 .art-cache { align-items: flex-end; gap: 2px; }
 .art-cache .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column-reverse; gap: 1px; height: 100%; }
 .art-cache .col i { display: block; min-height: 1px; }
-.art-cache .c { background: var(--c-cached); }
+.art-cache .c { background: var(--tex-cached) var(--c-cached); }
 .art-cache .f { background: var(--c-fresh); border-radius: 2px 2px 0 0; }
 /* chapter 4: the conversation before compaction and what was left, areas to scale (chapter 4's colours) */
 .art-compact { align-items: flex-end; gap: 0.75rem; }

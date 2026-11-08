@@ -243,7 +243,8 @@
         const bw = box.clientWidth, tw = tip.offsetWidth;
         tip.style.left = `${Math.max(0, Math.min(bw - tw, x - tw / 2))}px`;
         tip.style.top = `${Math.max(0, y - tip.offsetHeight - 12)}px`;
-        if (say !== undefined && live.textContent !== say) live.textContent = say;
+        // Spoken only while the chart has focus (keys), not as a pointer sweeps across it.
+        if (say !== undefined && box.contains(document.activeElement) && live.textContent !== say) live.textContent = say;
       },
       hide() { tip.hidden = true; },
     };
@@ -506,6 +507,10 @@
     const max = Math.max(...rows.map((r) => r.v));
     const x = (v) => (v / max) * (w - valW);
     const svg = el("svg", { width: w, height: h, viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": C.fills.chartLabel });
+    // The --result hatch (style.css --tex-teal) as a pattern: a 1.5px line every 4.5px at 135°.
+    const pat = el("pattern", { id: "tex-teal", width: 4.5, height: 4.5, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, el("defs", {}, svg));
+    el("rect", { width: 4.5, height: 4.5, class: "tex-bg" }, pat);
+    el("rect", { x: 3, width: 1.5, height: 4.5, class: "tex-line" }, pat);
     rows.forEach((r, k) => {
       const y = k * rowH;
       text(svg, 0, y + 15, r.label, "label");
@@ -683,4 +688,7 @@
   });
   Mo.reveal(document.querySelector(".explorer"), () => fillIn(0, cur, { spread: 450, max: Infinity }));
   Mo.reveal([...document.querySelectorAll(".stats, .table-wrap")]);
+
+  // Any of these that scrolls at the reader's width can be reached and scrolled by keyboard.
+  U.watchScrollBoxes(".card pre, .prompt-full");
 })();

@@ -1,7 +1,8 @@
 // Pure helpers for showing a recorded session (a window.TRACE) on any chapter page: escaping, number
 // formatting, the light markdown for what the model wrote, line excerpts, and the HTML of the cards
 // (request, result, model text). Nothing here reads the page or a particular trace; labels come from
-// the chapter's copy file. Classic script, one global: window.TraceUI.
+// the chapter's copy file. The one exception is watchScrollBoxes, which keeps the page's scroll
+// boxes reachable by keyboard. Classic script, one global: window.TraceUI.
 (() => {
   "use strict";
 
@@ -97,10 +98,36 @@
   // What the model wrote to the reader, under a plain-text title.
   const textCard = (text, title, labels) => `<div class="card model text">${cardHead(esc(title), esc(labels.plain))}${md(text)}</div>`;
 
+  // Scroll boxes a keyboard can reach (WCAG 2.1.1): every element matching `selector` that scrolls
+  // at its current size gets tabindex="0", and loses it again when it stops scrolling. Checked when
+  // one is added to the page and whenever it changes size, so it holds for every width and state.
+  const SCROLL_TAB = "data-scroll-tab";
+  function markScroll(el) {
+    const scrolls = el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
+    if (scrolls && !el.hasAttribute("tabindex")) { el.setAttribute("tabindex", "0"); el.setAttribute(SCROLL_TAB, ""); }
+    else if (!scrolls && el.hasAttribute(SCROLL_TAB)) { el.removeAttribute("tabindex"); el.removeAttribute(SCROLL_TAB); }
+  }
+  function watchScrollBoxes(selector = ".card pre") {
+    const seen = new WeakSet();
+    const ro = window.ResizeObserver ? new ResizeObserver((es) => es.forEach((e) => markScroll(e.target))) : null;
+    const scan = () => document.querySelectorAll(selector).forEach((el) => {
+      if (seen.has(el)) return;
+      seen.add(el);
+      markScroll(el);
+      if (ro) ro.observe(el);
+    });
+    let queued = false;
+    new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; scan(); }); } })
+      .observe(document.body, { childList: true, subtree: true });
+    if (!ro) window.addEventListener("resize", () => document.querySelectorAll(selector).forEach(markScroll));
+    scan();
+  }
+
   window.TraceUI = {
     esc, base, secs, clock, numbers,
     toolsOf, textsOf, lineCount, readLines,
     md, mark, range, excerpt,
     cardHead, requestBody, requestMeta, requestCard, resultCard, textCard,
+    watchScrollBoxes,
   };
 })();

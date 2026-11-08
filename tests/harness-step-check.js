@@ -1,7 +1,8 @@
 // Playwright check for site/harness-step.js, run against tests/harness-step-demo.html from file://.
 // Paths: mouse drag at 1360 px, keyboard only, touch, 390 px, dark mode, reduced motion.
 // Each path must end with onDone fired exactly once and no console errors.
-// Usage: node tests/harness-step-check.js [screenshot-dir]
+// Usage: node tests/harness-step-check.js [screenshot-dir] [--browser chromium|firefox|webkit]
+// Touch drags go through CDP, so they run in chromium only; firefox and webkit check touch with taps.
 const path = require("path");
 const fs = require("fs");
 const { execSync } = require("child_process");
@@ -14,10 +15,19 @@ function loadPlaywright() {
   return require(path.join(root, "@playwright", "cli", "node_modules", "playwright"));
 }
 
-const out = path.resolve(process.argv[2] || "D:/Workspace/Docs/inside-the-loop/screenshots/harness-step");
+const args = process.argv.slice(2);
+let engine = "chromium";
+const positional = [];
+for (let i = 0; i < args.length; i++) {
+  const m = args[i].match(/^--browser(?:=(.+))?$/);
+  if (m) engine = m[1] || args[++i];
+  else positional.push(args[i]);
+}
+if (!["chromium", "firefox", "webkit"].includes(engine)) { console.error(`unknown --browser ${engine}`); process.exit(2); }
+const out = path.join(path.resolve(positional[0] || "D:/Workspace/Docs/inside-the-loop/screenshots/harness-step"), engine === "chromium" ? "" : engine);
 fs.mkdirSync(out, { recursive: true });
 const url = "file:///" + path.resolve(__dirname, "harness-step-demo.html").split(path.sep).join("/");
-const { chromium } = loadPlaywright();
+const browserType = loadPlaywright()[engine];
 
 const DESK = { width: 1360, height: 900 };
 const PHONE = { width: 390, height: 844 };
@@ -153,9 +163,8 @@ const paths = {
 
   // 3. Touch at phone size: tap run, drag with a finger (snap back once, then drop).
   async touch(browser) {
-    const t = await open(browser, "touch", { viewport: PHONE, hasTouch: true, isMobile: true, colorScheme: "light" });
+    const t = await open(browser, "touch", { viewport: PHONE, hasTouch: true, ...(engine === "firefox" ? {} : { isMobile: true }), colorScheme: "light" });
     const p = t.page;
-    const cdp = await t.ctx.newCDPSession(p);
     await p.evaluate(() => {
       window.__types = [];
       document.addEventListener("pointerdown", (e) => window.__types.push(e.pointerType), true);
@@ -173,6 +182,17 @@ const paths = {
     ok(s0 >= 0 && h.y < PHONE.height - 20, `slot top ${s0.toFixed(0)} / handle ${h.y.toFixed(0)}: not both in view after run`);
     await shot(t, "1-ran", "viewport");
 
+    // No CDP outside chromium: tap the paste button instead of dragging.
+    if (engine !== "chromium") {
+      await p.tap(".hs-paste");
+      await finish(t);
+      const types = await p.evaluate(() => window.__types);
+      ok(types.includes("touch"), `no touch pointer events seen (${types})`);
+      await shot(t, "3-done", "viewport");
+      await t.ctx.close();
+      return t;
+    }
+    const cdp = await t.ctx.newCDPSession(p);
     await touchDrag(p, cdp, h, { x: h.x, y: h.y - 60 });
     await wait(p, 450);
     ok((await state(p)) === "ran", "a short touch drag outside the slot did not snap back");
@@ -255,7 +275,8 @@ const paths = {
 };
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await browserType.launch();
+  console.log(`browser: ${engine} ${browser.version()}`);
   let bad = 0;
   for (const [name, fn] of Object.entries(paths)) {
     try {

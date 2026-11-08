@@ -391,4 +391,7 @@
     Mo.enter([...el.querySelectorAll(".req-label, .req-prompt")], { y: 3, delay: 300, stagger: 120 });
   });
   Mo.reveal([...document.querySelectorAll(".refusal, .stats")]);
+
+  // Any of these that scrolls at the reader's width can be reached and scrolled by keyboard.
+  U.watchScrollBoxes(".card pre");
 })();

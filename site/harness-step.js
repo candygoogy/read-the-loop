@@ -168,10 +168,15 @@
           { duration: 320, delay: 140, easing: EASE_OUT, fill: "backwards" });
       }
       // The run button is gone; the next action is the paste button. Scroll only as far as the
-      // bottom of the output, so that when stacked the drop slot above stays in view.
+      // bottom of the output, so that when stacked the drop slot above stays in view. If the slot
+      // is already above the viewport (the reader scrolled down to the run button) and the slot and
+      // the output fit together, scroll up to the slot instead, so both ends of the drag are on screen.
       n.paste.focus({ preventScroll: true });
-      var below = n.out.getBoundingClientRect().bottom + 16 - window.innerHeight;
-      if (below > 0) window.scrollBy({ top: below, behavior: reducedMotion() ? "auto" : "smooth" });
+      var outBottom = n.out.getBoundingClientRect().bottom + 16;
+      var slotTop = n.slot.getBoundingClientRect().top - 8;
+      var by = Math.max(0, outBottom - window.innerHeight);
+      if (slotTop < by && outBottom - slotTop <= window.innerHeight) by = slotTop;
+      if (by) window.scrollBy({ top: by, behavior: reducedMotion() ? "auto" : "smooth" });
       announce(L.liveRan);
     }
 

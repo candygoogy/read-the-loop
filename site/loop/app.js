@@ -191,6 +191,41 @@
     `<span><i class="sw sys"></i>${esc(C.ui.legendSys)}</span>` +
     `<span><i class="sw round"></i>${esc(C.ui.legendRound(rounds.map((x) => "+" + fmt(x)).join(", ")))}</span>`;
 
+  // The bar stays to scale, so a small round can come out thinner than a pixel. Any round whose
+  // fill (its width less the 2px separator) is under TINY px at the bar's current width gets a
+  // tick and its size (from the trace) under the bar.
+  const TINY = 4, SEP = 2;
+  const marks = document.createElement("div");
+  marks.className = "stack-marks";
+  marks.setAttribute("aria-hidden", "true"); // the legend and the count say the same in text
+  marks.innerHTML = rounds.map((x, i) =>
+    `<span class="mark" data-r="${i + 1}" style="left:${pct(startOf(i + 1) + x / 2)}"><b>+${esc(fmt(x))}</b></span>`).join("");
+  stack.after(marks);
+  let marksW = -1;
+  function placeMarks() {
+    const w = stack.clientWidth;
+    if (!w || w === marksW) return;
+    marksW = w;
+    let any = false, prevEnd = -Infinity;
+    marks.querySelectorAll(".mark").forEach((m) => {
+      const k = +m.dataset.r;
+      const x = rounds[k - 1];
+      const mid = ((startOf(k) + x / 2) / last) * w;
+      const tiny = (x / last) * w - SEP < TINY;
+      // Near an end the label lines up with the edge instead of hanging past it.
+      m.dataset.align = mid < 28 ? "start" : mid > w - 28 ? "end" : "mid";
+      // Two tiny rounds side by side: the second keeps its tick, its label waits for room.
+      m.classList.toggle("no-label", tiny && mid - prevEnd < 44);
+      if (tiny && !m.classList.contains("no-label")) prevEnd = mid;
+      m.hidden = !tiny;
+      any = any || tiny;
+    });
+    marks.classList.toggle("has", any);
+  }
+  placeMarks();
+  if (window.ResizeObserver) new ResizeObserver(placeMarks).observe(stack);
+  else window.addEventListener("resize", placeMarks);
+
   // ---------- icons (decorative; every button has a text label or aria-label) ----------
   const ICON = {
     play: '<svg class="solid" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2.8v10.4a.6.6 0 0 0 .9.5l8.2-5.2a.6.6 0 0 0 0-1L5.4 2.3a.6.6 0 0 0-.9.5z"/></svg>',
@@ -253,6 +288,8 @@
 
   function paintStack(s, r = shownRounds(s)) {
     stack.querySelectorAll(".blk.round").forEach((el) => el.classList.toggle("in", +el.dataset.r <= r));
+    marks.querySelectorAll(".mark").forEach((el) => el.classList.toggle("in", +el.dataset.r <= r));
+    stack.setAttribute("aria-label", C.ui.stackLabel(d, r, rounds.slice(0, r).map((x) => "+" + fmt(x)).join(", ")));
     stack.classList.toggle("reading", !!s.reading);
   }
 
@@ -567,4 +604,7 @@
 
   // Figures further down rise in as they come into view.
   Mo.reveal([$("player"), document.querySelector('.game[data-game="after"]'), document.querySelector(".stats")]);
+
+  // Any of these that scrolls at the reader's width can be reached and scrolled by keyboard.
+  U.watchScrollBoxes(".card pre, .loopcode");
 })();

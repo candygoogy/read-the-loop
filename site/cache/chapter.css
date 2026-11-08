@@ -21,7 +21,7 @@
 .viz-legend span { display: inline-flex; align-items: center; gap: 0.45rem; }
 .sw { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 3px; flex: none; }
 
-.s-cached { background: var(--c-cached); }
+.s-cached { background: var(--tex-cached) var(--c-cached); }
 .s-fresh { background: var(--c-fresh); }
 .s-out { background: var(--c-out); }
 
