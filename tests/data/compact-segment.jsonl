@@ -1,0 +1,6 @@
+{"type":"system","subtype":"status","status":"compacting","session_id":"sample"}
+{"type":"system","subtype":"init","cwd":"__REC__","session_id":"sample","tools":["Bash","Read"],"model":"claude-sample","claude_code_version":"0.0.0"}
+{"type":"system","subtype":"compact_boundary","session_id":"sample","uuid":"boundary-1","compact_metadata":{"trigger":"manual","pre_tokens":1100,"post_tokens":400,"cumulative_dropped_tokens":700,"duration_ms":5000}}
+{"type":"user","message":{"role":"user","content":"Summary: the user asked what __REC__\\app.py prints. If you need details, read the full transcript at: C:\\Users\\__USER__\\.claude\\projects\\__PROJ__\\sample.jsonl"},"session_id":"sample","uuid":"summary-1","timestamp":"2026-01-02T10:01:05.000Z","isSynthetic":true}
+{"type":"user","message":{"role":"user","content":"<local-command-stdout>Compacted </local-command-stdout>"},"session_id":"sample","timestamp":"2026-01-02T10:01:05.100Z","isReplay":true}
+{"type":"result","subtype":"success","result":"","duration_ms":5200,"total_cost_usd":0.08,"usage":{"input_tokens":0,"cache_read_input_tokens":0,"cache_creation_input_tokens":0,"output_tokens":0},"modelUsage":{"claude-sample":{"costUSD":0.08}},"model_usage_since_last_result":{"claude-sample":{"costUSD":0.03}},"permission_denials":[]}

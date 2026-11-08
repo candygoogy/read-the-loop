@@ -11,13 +11,18 @@ import unittest
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 BUILDER = REPO / "scripts" / "build-trace.py"
-SAMPLE = REPO / "tests" / "data" / "sample-session.jsonl"
+DATA = REPO / "tests" / "data"
+SAMPLE = DATA / "sample-session.jsonl"
 # Temp folders go in out/ (gitignored), next to the repo rather than in the system temp folder.
 TMP_BASE = REPO / "out" / "test-tmp"
 
-RAW_01 = pathlib.Path("D:/Workspace/Docs/inside-the-loop/recordings/raw-01.jsonl")
-REC_01 = "D:/Workspace/Claude/scratch/itl-rec-01"
-PROMPT_01 = "The tests are failing. Please find the bug and fix it."
+RECORDINGS = pathlib.Path("D:/Workspace/Docs/inside-the-loop/recordings")
+PROMPT_02 = "In my game the ball sometimes goes straight through the paddle. Please find the bug and fix it."
+# (name, rec dir, alias, prompt, uses a .times.json, run) for each committed trace.
+COMMITTED = [("01", "D:/Workspace/Claude/scratch/itl-rec-01", "~/cart",
+              "The tests are failing. Please find the bug and fix it.", False, None)] + [
+    (f"02-run{k}", f"D:/Workspace/Claude/scratch/itl-rec-02c-run{k}", "~/game", PROMPT_02, True, (k, 3))
+    for k in (1, 2, 3)]
 
 BUGGY = b"def f():\n    return 1 - 2\n"
 FIXED = b"def f():\n    return 1 + 2\n"
@@ -35,11 +40,13 @@ def tmpdir():
     return tempfile.TemporaryDirectory(dir=TMP_BASE)
 
 
-def write_sample(tmp, rec):
-    """The sample recording, with the real user name and a real folder filled in at test time."""
-    text = SAMPLE.read_text(encoding="utf-8")
-    text = text.replace("__REC__", json.dumps(str(rec))[1:-1]).replace("__USER__", getpass.getuser())
-    raw = tmp / "sample.jsonl"
+def write_sample(tmp, rec, src=SAMPLE):
+    """A test recording, with the real user name and a real folder filled in at test time
+    (__PROJ__ is the folder as Claude Code names it under ~/.claude/projects)."""
+    text = src.read_text(encoding="utf-8")
+    text = (text.replace("__REC__", json.dumps(str(rec))[1:-1]).replace("__USER__", getpass.getuser())
+            .replace("__PROJ__", load_builder().project_folder(str(rec))))
+    raw = tmp / src.name
     raw.write_text(text, encoding="utf-8", newline="\n")
     return raw
 
@@ -172,29 +179,105 @@ class BuildTraceTest(unittest.TestCase):
             self.assertEqual(json.loads(out.read_text()), ["KEEP_ME"])
             self.assertIn("CLAUDE_EFFORT", r.stderr)
 
-    @unittest.skipUnless(RAW_01.exists(), "raw-01 recording not on this machine")
-    def test_trace_01_keeps_existing_fields(self):
+    def test_denials_come_from_the_result_list(self):
+        with tmpdir() as t:
+            tmp = pathlib.Path(t)
+            rec = tmp / "rec"
+            rec.mkdir()
+            raw = write_sample(tmp, rec, DATA / "denial-session.jsonl")
+            out = tmp / "data" / "trace-denial.json"
+            out.parent.mkdir()
+            prompt = tmp / "prompt.txt"
+            prompt.write_bytes("Check it.\nThanks \u2014 me\n".encode("utf-8"))
+
+            r = run_builder(raw, out, rec, "--prompt-file", prompt, "--alias", "~/app")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            trace = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(trace["prompt"], "Check it.\nThanks \u2014 me\n")
+            steps = {s["id"]: s["result"] for c in trace["calls"] for s in c["output"] if s["kind"] == "tool"}
+            # Listed in permission_denials: denied. An error whose text sounds like a denial: not denied.
+            self.assertEqual({k: (v["is_error"], v["denied"]) for k, v in steps.items()},
+                             {"tu_denied": (True, True), "tu_lookalike": (True, False), "tu_ok": (False, False)})
+            # The new per-call usage; output_tokens needs the session file, so it's None here.
+            c = trace["calls"][1]
+            self.assertEqual((c["input_tokens"], c["cache_write_5m"], c["cache_write_1h"], c["output_tokens"]),
+                             (2, 0, 60, None))
+
+    def test_compaction_segment_and_its_cost(self):
+        with tmpdir() as t:
+            tmp = pathlib.Path(t)
+            rec = tmp / "rec"
+            rec.mkdir()
+            raw, then, session = (write_sample(tmp, rec, DATA / n) for n in
+                                  ("compact-run.jsonl", "compact-segment.jsonl", "compact-session.jsonl"))
+            then_times = tmp / "segment.times.json"
+            then_times.write_text(json.dumps({"started_at": "2026-01-02T10:01:00.000Z",
+                                              "arrivals_ms": [0, 100, 200, 300, 400, 500]}))
+            out = tmp / "data" / "trace-compact.json"
+            out.parent.mkdir()
+            args = [raw, out, rec, "--prompt", "What does app.py print?", "--alias", "~/app",
+                    "--then", then, "--then-times", then_times, "--session", session]
+
+            r = run_builder(*args)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            text = out.read_text(encoding="utf-8")
+            trace = json.loads(text)
+            # Final output tokens come from the session file and add up to the result's 300.
+            self.assertEqual([c["output_tokens"] for c in trace["calls"]], [120, 180])
+            comp = trace["compaction"]
+            self.assertEqual({k: comp[k] for k in ("trigger", "pre_tokens", "post_tokens", "t_ms", "calls")},
+                             {"trigger": "manual", "pre_tokens": 1100, "post_tokens": 400, "t_ms": 60200, "calls": []})
+            # Its own cost, not the cumulative total_cost_usd (0.08) of the resumed session.
+            self.assertEqual(comp["cost_usd"], 0.03)
+            self.assertEqual(comp["reattached"], [{"path": "~/app/notes.md", "kind": "stub", "chars": None},
+                                                  {"path": "~/app/app.py", "kind": "full", "chars": 9}])
+            # Redacted, including the folder in Claude Code's projects form; nothing else from the session file.
+            self.assertTrue(comp["summary_text"].startswith("Summary: the user asked what ~/app/app.py prints."))
+            self.assertIn(r"C:\Users\you\.claude\projects\--app\<session>.jsonl", comp["summary_text"])
+            for s in (getpass.getuser(), str(rec), "SECRET", "environment", "prompt_snapshot"):
+                self.assertNotIn(s, text)
+
+            # Without model_usage_since_last_result, the cost is the per-model delta.
+            then.write_text(then.read_text(encoding="utf-8").replace("model_usage_since_last_result", "x"),
+                            encoding="utf-8", newline="\n")
+            r = run_builder(*args)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertEqual(json.loads(out.read_text(encoding="utf-8"))["compaction"]["cost_usd"], 0.03)
+
+            # Output tokens that don't add up to the result stop the build.
+            session.write_text(session.read_text(encoding="utf-8").replace('"output_tokens":180', '"output_tokens":181'),
+                               encoding="utf-8", newline="\n")
+            r = run_builder(*args)
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("add up to 301", r.stderr)
+
+    def test_committed_traces_keep_existing_fields(self):
+        """Rebuilding 01 and 02-run1..3 keeps every field and value; only new fields may appear."""
         bt = load_builder()
-        committed = json.loads((REPO / "data" / "trace-01.json").read_text(encoding="utf-8"))
-        events, _ = bt.read_events(RAW_01)
-        variants = bt.dir_variants(REC_01)
-        rebuilt = bt.clean(bt.build(events, PROMPT_01), bt.make_redact(variants, "~/cart", getpass.getuser()))
+        for name, rec_dir, alias, prompt, timed, run in COMMITTED:
+            raw = RECORDINGS / f"raw-{name}.jsonl"
+            if not raw.exists():
+                self.skipTest(f"{raw.name} not on this machine")
+            with self.subTest(name):
+                committed = json.loads((REPO / "data" / f"trace-{name}.json").read_text(encoding="utf-8"))
+                events, _ = bt.read_events(raw)
+                times = json.loads(raw.with_suffix(".times.json").read_text(encoding="utf-8")) if timed else None
+                redact = bt.make_redact(bt.dir_variants(rec_dir), alias, getpass.getuser())
+                self.same(committed, bt.clean(bt.build(events, prompt, times, run), redact), "trace")
 
-        def same(old, new, where):
-            if isinstance(old, dict):
-                self.assertIsInstance(new, dict, where)
-                for k, v in old.items():
-                    self.assertIn(k, new, f"{where}.{k} is gone")
-                    same(v, new[k], f"{where}.{k}")
-            elif isinstance(old, list):
-                self.assertIsInstance(new, list, where)
-                self.assertEqual(len(old), len(new), f"{where} changed length")
-                for i, (a, b) in enumerate(zip(old, new)):
-                    same(a, b, f"{where}[{i}]")
-            else:
-                self.assertEqual(old, new, where)
-
-        same(committed, rebuilt, "trace")
+    def same(self, old, new, where):
+        if isinstance(old, dict):
+            self.assertIsInstance(new, dict, where)
+            for k, v in old.items():
+                self.assertIn(k, new, f"{where}.{k} is gone")
+                self.same(v, new[k], f"{where}.{k}")
+        elif isinstance(old, list):
+            self.assertIsInstance(new, list, where)
+            self.assertEqual(len(old), len(new), f"{where} changed length")
+            for i, (a, b) in enumerate(zip(old, new)):
+                self.same(a, b, f"{where}[{i}]")
+        else:
+            self.assertEqual(old, new, where)
 
 
 if __name__ == "__main__":

@@ -1,14 +1,23 @@
 """Turn a raw `claude -p --output-format stream-json` recording into the page's trace JSON.
 
-Usage: python scripts/build-trace.py <raw.jsonl> data/<name>.json <recording-dir> --prompt TEXT
+Usage: python scripts/build-trace.py <raw.jsonl> data/<name>.json <recording-dir> (--prompt TEXT | --prompt-file F)
            [--alias ~/cart] [--times <raw>.times.json] [--run K --runs N]
            [--fixture fixtures/<name> --files-out <dir>]
+           [--then <raw-compact.jsonl> [--then-times <raw-compact>.times.json]] [--session <session>.jsonl]
 (also writes site/data/<name>.js)
 
 Redacts the recording folder (it becomes --alias) and the local user name. Everything else is kept
 as recorded. Token counts come from the API usage on each model call: the context a call reads is
 input + cache_read + cache_creation; the growth between two calls is what the previous step added
-(the model's request plus the tool results).
+(the model's request plus the tool results). A call's output_tokens needs --session (see final_usage).
+
+A tool step whose id is in the result event's permission_denials list gets result.denied = true.
+
+--then adds a manual /compact recorded on the same session (claude -p "/compact" --resume <id>) as
+trace.compaction, with any model calls of that segment in trace.compaction.calls. --session reads
+Claude Code's own session file: it gives each call's final output_tokens and, after the compaction
+boundary, the files Claude Code attached again (trace.compaction.reattached). Only those fields are
+copied from it; the session file holds much more (prompt snapshots, request blobs, account ids).
 
 Timing: t_ms is ms since the start of the session. With --times (written by scripts/record.py) it is
 the moment each line arrived; without it, it comes from the events' own timestamps, and the start is
@@ -19,7 +28,8 @@ the first model event minus the recorded time to first token (ttft_ms).
 changed some other way, e.g. by Bash, is caught). node_modules, __pycache__ and dotfiles are ignored.
 
 Before writing, a leak check fails the build if any string in the trace still holds the recording
-folder, the local user name, a home folder (":\\Users", "/Users/") or a drive path ("D:\\", "C:/").
+folder (also as ~/.claude/projects names it, D--x-y), the local user name, a home folder (":\\Users",
+"/Users/") or a drive path ("D:\\", "C:/").
 A home folder already redacted to "you" (C:\\Users\\you\\...) is allowed.
 """
 import argparse
@@ -40,18 +50,25 @@ def parse_args(argv=None):
     p.add_argument("raw")
     p.add_argument("out")
     p.add_argument("rec_dir", help="the folder the session was recorded in")
-    p.add_argument("--prompt", required=True, help="the prompt given to claude -p (the recording doesn't hold it)")
+    prompt = p.add_mutually_exclusive_group(required=True)
+    prompt.add_argument("--prompt", help="the prompt given to claude -p (the recording doesn't hold it)")
+    prompt.add_argument("--prompt-file", help="a UTF-8 file holding the exact prompt (read as is)")
     p.add_argument("--alias", default="~/cart", help="what the recording folder becomes (default ~/cart)")
     p.add_argument("--times", help="arrival times sidecar written by scripts/record.py")
     p.add_argument("--run", type=int, help="which run this is (1-based), with --runs")
     p.add_argument("--runs", type=int, help="how many runs were recorded, with --run")
     p.add_argument("--fixture", help="the fixture folder the session started from, with --files-out")
     p.add_argument("--files-out", help="where to write before/ and after/, with --fixture")
+    p.add_argument("--then", help="a later recording on the same session holding a manual /compact")
+    p.add_argument("--then-times", help="arrival times sidecar for --then")
+    p.add_argument("--session", help="Claude Code's session file (.jsonl) for this session")
     a = p.parse_args(argv)
     if (a.run is None) != (a.runs is None):
         p.error("--run and --runs go together")
     if (a.fixture is None) != (a.files_out is None):
         p.error("--fixture and --files-out go together")
+    if a.then_times and not a.then:
+        p.error("--then-times needs --then")
     return a
 
 
@@ -87,14 +104,10 @@ def make_clock(events, result, times):
 
 # --- building ----------------------------------------------------------------------------------
 
-def build(events, prompt, times=None, run=None):
-    """The trace before redaction. Keeps the event order (a tool result can arrive before the next
-    tool_use of the same model call)."""
-    init = next(e for _, e in events if e.get("type") == "system" and e.get("subtype") == "init")
-    result = next(e for _, e in events if e.get("type") == "result")
-    started_at, time_source, t = make_clock(events, result, times)
-
-    calls = []  # one per model call (assistant message id)
+def collect_calls(events, t, result):
+    """{message id: call}, one per model call, in order. Keeps the event order (a tool result can
+    arrive before the next tool_use of the same model call). Marks the denied tool steps."""
+    denied = {d["tool_use_id"] for d in result.get("permission_denials") or []}
     by_id = {}
     pending = {}  # tool_use_id -> step
     for i, e in events:
@@ -102,15 +115,18 @@ def build(events, prompt, times=None, run=None):
             m = e["message"]
             if m["id"] not in by_id:
                 u = m["usage"]
-                call = {
+                cw = u.get("cache_creation") or {}
+                by_id[m["id"]] = {
                     "t_ms": t(i, e),
                     "context_tokens": u["input_tokens"] + u["cache_read_input_tokens"] + u["cache_creation_input_tokens"],
                     "cached_tokens": u["cache_read_input_tokens"],
                     "new_tokens": u["input_tokens"] + u["cache_creation_input_tokens"],
+                    "input_tokens": u["input_tokens"],  # not cached
+                    "cache_write_5m": cw.get("ephemeral_5m_input_tokens"),
+                    "cache_write_1h": cw.get("ephemeral_1h_input_tokens"),
+                    "output_tokens": None,  # filled in from the session file, see final_usage
                     "output": [],
                 }
-                by_id[m["id"]] = call
-                calls.append(call)
             call = by_id[m["id"]]
             for c in m["content"]:
                 if c["type"] == "text":
@@ -120,17 +136,136 @@ def build(events, prompt, times=None, run=None):
                             "t_ms": t(i, e), "result": None}
                     call["output"].append(step)
                     pending[c["id"]] = step
-        elif e.get("type") == "user":
+        elif e.get("type") == "user" and isinstance(e["message"]["content"], list):  # str: summary, command output
             for c in e["message"]["content"]:
                 if c.get("type") == "tool_result":
                     cc = c["content"]
                     text = cc if isinstance(cc, str) else "\n".join(x.get("text", "") for x in cc)
                     pending[c["tool_use_id"]]["result"] = {"text": text.replace("\r\n", "\n"),
                                                            "is_error": bool(c.get("is_error")),
+                                                           "denied": c["tool_use_id"] in denied,
                                                            "t_ms": t(i, e)}
+    # The denial is read from the result's list, never guessed from the error text.
+    unmatched = [d for d in denied if d not in pending or pending[d]["result"] is None]
+    if unmatched:
+        sys.exit(f"permission_denials names tool calls with no tool result in the stream: {unmatched}")
 
+    calls = list(by_id.values())
     for i, call in enumerate(calls):
         call["added_since_previous"] = None if i == 0 else call["context_tokens"] - calls[i - 1]["context_tokens"]
+    return by_id
+
+
+def final_usage(by_id, session, result):
+    """Set each call's output_tokens from the session file.
+
+    The stream can't give it: every assistant event of one call carries the same usage, taken when the
+    message started (output_tokens is a few tokens, stop_reason is null). In recording 03 those add up to
+    1,291 against result.usage.output_tokens 24,637; recordings 01 and 02 are short in the same way. The
+    session file's assistant records carry the final usage, and those add up to the result exactly, which
+    is checked here. Their input and cache fields must match the stream's."""
+    final = {r["message"]["id"]: r["message"]["usage"] for r in session if r.get("type") == "assistant"}
+    for mid, call in by_id.items():
+        u = final.get(mid)
+        if u is None:
+            sys.exit(f"The session file has no assistant record for model call {mid}.")
+        cw = u.get("cache_creation") or {}
+        if (u["input_tokens"], u["cache_read_input_tokens"], u["cache_creation_input_tokens"],
+                cw.get("ephemeral_5m_input_tokens"), cw.get("ephemeral_1h_input_tokens")) != (
+                call["input_tokens"], call["cached_tokens"], call["new_tokens"] - call["input_tokens"],
+                call["cache_write_5m"], call["cache_write_1h"]):
+            sys.exit(f"The session file's usage for {mid} doesn't match the stream's.")
+        call["output_tokens"] = u["output_tokens"]
+    total = sum(c["output_tokens"] for c in by_id.values())
+    if total != result["usage"]["output_tokens"]:
+        sys.exit(f"Per-call output tokens add up to {total}, but the result says {result['usage']['output_tokens']}.")
+
+
+def segment_clock(events, times, start):
+    """t(line, event) in ms since the run's start, for a later recording on the same session."""
+    if times:
+        offset = round((parse_ts(times["started_at"]) - start).total_seconds() * 1000)
+        return lambda i, e: offset + times["arrivals_ms"][i]
+
+    def t(i, e):
+        # Some events (compact_boundary, status) have no timestamp; use the next event that has one.
+        stamped = next(x for j, x in events if j >= i and "timestamp" in x)
+        return round((parse_ts(stamped["timestamp"]) - start).total_seconds() * 1000)
+    return t
+
+
+def build_compaction(events, t, run_result, session=None):
+    """trace.compaction from the recording of a manual /compact on the same session."""
+    i_b, boundary = next(((i, e) for i, e in events if e.get("subtype") == "compact_boundary"), (None, None))
+    if boundary is None:
+        sys.exit("The --then recording has no compact_boundary event.")
+    meta = boundary["compact_metadata"]
+    summary = next(e for i, e in events if i > i_b and e.get("type") == "user" and e.get("isSynthetic"))
+    content = summary["message"]["content"]
+    result = next(e for _, e in events if e.get("type") == "result")
+
+    # total_cost_usd and modelUsage are cumulative on a resumed session: here they include the whole run.
+    # The segment's own cost is model_usage_since_last_result (used when present); without it, the
+    # per-model costUSD minus the run's.
+    since = result.get("model_usage_since_last_result")
+    if since:
+        cost = sum(m["costUSD"] for m in since.values())
+    else:
+        before = run_result.get("modelUsage") or {}
+        cost = sum(m["costUSD"] - before.get(k, {}).get("costUSD", 0) for k, m in result["modelUsage"].items())
+
+    comp = {
+        "trigger": meta["trigger"],
+        "pre_tokens": meta["pre_tokens"],
+        "post_tokens": meta["post_tokens"],
+        "summary_text": content if isinstance(content, str) else "\n".join(x.get("text", "") for x in content),
+        "t_ms": t(i_b, boundary),
+        "cost_usd": round(cost, 4),
+        # Model calls that show up as assistant events. The summarising call itself has none; its cost
+        # is in cost_usd.
+        "calls": list(collect_calls(events, t, result).values()),
+    }
+    if session is not None:
+        comp["reattached"] = reattached(session, boundary["uuid"])
+    return comp
+
+
+def reattached(session, boundary_uuid):
+    """What Claude Code put back after the boundary: [{path, kind, chars}]. "full" is a file attachment
+    holding the whole file (chars = its length as recorded); "stub" is a compact_file_reference, which
+    names the file but holds no text, so chars is None. The session file has no token counts for these."""
+    at = next((i for i, r in enumerate(session)
+               if r.get("subtype") == "compact_boundary" and r.get("uuid") == boundary_uuid), None)
+    if at is None:
+        sys.exit(f"The session file has no compact_boundary {boundary_uuid}.")
+    out = []
+    for r in session[at + 1:]:
+        if r.get("type") == "assistant":
+            break  # the next model call: everything attached for it came before
+        a = r.get("attachment") if r.get("type") == "attachment" else None
+        if not a:
+            continue
+        if a["type"] == "file":
+            f = a["content"]["file"]
+            if f.get("startLine", 1) != 1 or f.get("numLines") != f.get("totalLines"):
+                sys.exit(f"Re-attached file {a['filename']} is only part of the file; 'full' wouldn't be true.")
+            out.append({"path": a["filename"], "kind": "full", "chars": len(f["content"])})
+        elif a["type"] == "compact_file_reference":
+            out.append({"path": a["filename"], "kind": "stub", "chars": None})
+    return out
+
+
+def build(events, prompt, times=None, run=None, session=None, then=None):
+    """The trace before redaction. session: the session file's records. then: (events, times) of a
+    manual /compact recorded on the same session."""
+    init = next(e for _, e in events if e.get("type") == "system" and e.get("subtype") == "init")
+    result = next(e for _, e in events if e.get("type") == "result")
+    started_at, time_source, t = make_clock(events, result, times)
+
+    by_id = collect_calls(events, t, result)
+    if session is not None:
+        final_usage(by_id, session, result)
+    calls = list(by_id.values())
 
     trace = {
         "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. "
@@ -158,6 +293,10 @@ def build(events, prompt, times=None, run=None):
         },
         "final_answer": result["result"],
     }
+    if then:
+        then_events, then_times = then
+        trace["compaction"] = build_compaction(then_events, segment_clock(then_events, then_times, started_at),
+                                               result, session)
     return trace
 
 
@@ -174,14 +313,27 @@ def dir_variants(rec_dir):
     return v
 
 
-def make_redact(variants, alias, user):
+def project_folder(path):
+    """Claude Code's name for a project's folder under ~/.claude/projects (D:\\x\\y -> D--x-y). The
+    compaction summary names the session file there, so this form of the recording folder must go too."""
+    return re.sub(r"[^A-Za-z0-9]", "-", path)
+
+
+def make_redact(variants, alias, user, session_ids=()):
+    projects = {project_folder(v) for v in variants}
+
     def redact(s):
         for v in sorted(variants, key=len, reverse=True):
             s = s.replace(v, alias)
+        for v in projects:
+            s = re.sub(re.escape(v), project_folder(alias), s, flags=re.I)
         s = s.replace(alias + "\\", alias + "/")
         s = re.sub(rf"\b{re.escape(user)}\b", "you", s)
         # Windows also writes home folders in 8.3 short form (C:\Users\JOHNDO~1); that's the user name too.
         s = SHORT_HOME.sub(r"\1you", s)
+        # Session ids are local details (README); one can turn up inside a compaction summary.
+        for sid in session_ids:
+            s = s.replace(sid, "<session>")
         return s
     return redact
 
@@ -216,7 +368,7 @@ REDACTED_HOME = re.compile(r"(?:[A-Za-z]:)?[\\/]Users[\\/]you(?=[\\/]|$)", re.I)
 
 def find_leaks(trace, variants, user):
     """Return a short excerpt around each leak. Checks the strings themselves, not their JSON escapes."""
-    patterns = [(re.escape(v), re.I) for v in variants] + [
+    patterns = [(re.escape(v), re.I) for v in variants | {project_folder(v) for v in variants}] + [
         (rf"\b{re.escape(user)}\b", re.I),
         (r":\\Users", re.I),
         (r"/Users/", 0),
@@ -300,17 +452,28 @@ def replay(calls, fixture, files_out, rec_dir, variants):
 
 # --- main --------------------------------------------------------------------------------------
 
+def read_times(path, raw, n_lines):
+    if not path:
+        return None
+    times = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+    if len(times["arrivals_ms"]) != n_lines:
+        sys.exit(f"{path} has {len(times['arrivals_ms'])} arrival times but {raw} has {n_lines} lines.")
+    return times
+
+
 def main(argv=None):
     a = parse_args(argv)
     user = getpass.getuser()
     variants = dir_variants(a.rec_dir)
     events, n_lines = read_events(a.raw)
-    times = None
-    if a.times:
-        times = json.loads(pathlib.Path(a.times).read_text(encoding="utf-8"))
-        if len(times["arrivals_ms"]) != n_lines:
-            sys.exit(f"{a.times} has {len(times['arrivals_ms'])} arrival times but {a.raw} has {n_lines} lines.")
-    trace = build(events, a.prompt, times, (a.run, a.runs) if a.run is not None else None)
+    times = read_times(a.times, a.raw, n_lines)
+    prompt = a.prompt if a.prompt is not None else pathlib.Path(a.prompt_file).read_bytes().decode("utf-8")
+    then = None
+    if a.then:
+        then_events, then_lines = read_events(a.then)
+        then = (then_events, read_times(a.then_times, a.then, then_lines))
+    session = [e for _, e in read_events(a.session)[0]] if a.session else None
+    trace = build(events, prompt, times, (a.run, a.runs) if a.run is not None else None, session, then)
 
     if a.fixture:
         problems = replay(trace["calls"], a.fixture, a.files_out, a.rec_dir, variants)
@@ -318,8 +481,9 @@ def main(argv=None):
             sys.exit("Replaying the recorded edits doesn't reproduce the recording folder:\n  " + "\n  ".join(problems))
         print("replay ok: after/ matches", a.rec_dir)
 
-    trace = clean(trace, make_redact(variants, a.alias, user))
-    leaks = find_leaks(trace, variants, user)
+    session_ids = {e["session_id"] for _, e in events + (then[0] if then else []) if e.get("session_id")}
+    trace = clean(trace, make_redact(variants, a.alias, user, session_ids))
+    leaks = find_leaks(trace, variants | session_ids, user)
     if leaks:
         sys.exit("Leak check failed, nothing written. Still in the trace:\n  " + "\n  ".join(leaks))
 
@@ -332,6 +496,12 @@ def main(argv=None):
         f.write("// Generated by scripts/build-trace.py. Do not edit.\n")
         f.write("window.TRACE = " + json.dumps(trace, ensure_ascii=False) + ";\n")
     print("calls", len(trace["calls"]), [c["context_tokens"] for c in trace["calls"]])
+    print("denied", sum(1 for c in trace["calls"] for s in c["output"] if s["kind"] == "tool" and (s["result"] or {}).get("denied")))
+    if "compaction" in trace:
+        comp = trace["compaction"]
+        print("compaction", comp["pre_tokens"], "->", comp["post_tokens"], "cost", comp["cost_usd"],
+              "calls", len(comp["calls"]), "reattached", len(comp.get("reattached", [])))
+    print(js_path, js_path.stat().st_size, "bytes")
 
 
 if __name__ == "__main__":
