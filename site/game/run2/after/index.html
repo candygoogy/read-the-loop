@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bricks</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; padding: 16px; background: #f3ede2; }
+    @media (prefers-color-scheme: dark) { body { background: #17150f; } }
+    canvas { display: block; width: 100%; max-width: 720px; height: auto; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <canvas aria-label="Ball and paddle game. Move the paddle with the pointer or the arrow keys."></canvas>
+  <script src="game.js"></script>
+  <script>
+    start(document.querySelector("canvas"));
+  </script>
+</body>
+</html>
