@@ -10,9 +10,13 @@ step through.
 1. [An agent is a loop](https://loop.candygoogy.dev/loop/)
 2. [The context window](https://loop.candygoogy.dev/context/)
 3. [Caching](https://loop.candygoogy.dev/cache/)
+4. [Compaction](https://loop.candygoogy.dev/compaction/)
+5. [Tools and permissions](https://loop.candygoogy.dev/tools/)
 
-Five more are coming, one at a time: compaction, tools and permissions, subagents, failure modes, and building
-your own agent. To hear when one is out, choose Watch → Custom → Releases at the top of this page.
+All five are also in Chinese: [中文版](https://loop.candygoogy.dev/zh/).
+
+Three more are coming, one at a time: subagents, failure modes, and building your own agent. To hear when one is
+out, choose Watch → Custom → Releases at the top of this page.
 
 ## How it's made
 
