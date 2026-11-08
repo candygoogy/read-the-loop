@@ -8,7 +8,7 @@
   --rule: #d6cbb8;
 
   /* one colour per kind of text in the conversation */
-  --sys: #6b7a8c;      /* instructions + tool manual */
+  --sys: #617083;      /* instructions + tool manual (darkened from #6b7a8c for AA with white text) */
   --you: #c4841a;      /* your message */
   --model: #c8432b;    /* what the model writes */
   --result: #2c7a6f;   /* what the harness pastes back */
