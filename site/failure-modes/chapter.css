@@ -37,16 +37,23 @@
 .prose .mode-claude { padding: 0.55rem 0.75rem; background: var(--paper-2); border-radius: 8px; font-size: 1rem; }
 .prose .mode-by, .prose .mode-src, .prose .mode-note { font-size: 0.92rem; line-height: 1.55; color: var(--ink-2); }
 .prose .mode-by { margin-bottom: 0.35rem; }
+.prose .mode-case .mode-note { margin-top: 0.95rem; padding-top: 0.75rem; border-top: 1px dashed var(--rule); color: var(--ink); }
 .mode-src a { padding-block: 0.2rem; }
 .src-k { display: block; font: 600 0.7rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.15rem; }
 
 /* ---------- what we planted ---------- */
-.planted { margin: 0.5rem 0 1.25rem; display: grid; gap: 0; }
-.planted > div { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 0.25rem 1rem; padding: 0.7rem 0; border-top: 1px solid var(--rule); }
-.planted > div:last-child { border-bottom: 1px solid var(--rule); }
-.planted dt { font: 500 0.82rem/1.5 var(--mono); color: var(--ink-2); }
-.planted dt b { color: var(--ink); font-weight: 600; margin-right: 0.25rem; }
+/* Grouped by the failure each project was built to catch, in the order of the cases and the grid; the
+   project's letter is set as in the grid, so the two read together. */
+.planted { margin: 0.75rem 0 1.75rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.75rem clamp(1.25rem, 3vw, 2.5rem); align-items: start; }
+.pl-group { min-width: 0; }
+.pl-group dl { margin: 0; }
+.pl-group dl > div { display: grid; grid-template-columns: 6.25rem minmax(0, 1fr); gap: 0.25rem 1rem; padding: 0.7rem 0 0.8rem; }
+.pl-group dl > div + div { border-top: 1px solid var(--rule); }
+.planted dt { font: 500 0.76rem/1.35 var(--mono); color: var(--ink-2); padding-top: 0.15rem; }
+.planted dt b { display: block; margin-bottom: 0.15rem; font: 650 1.05rem/1.2 var(--display); color: var(--ink); }
+.pl-name, .pl-round { display: block; }
 .planted dd { margin: 0; font-size: 1rem; line-height: 1.55; }
+.planted dd code { white-space: nowrap; }
 
 /* ---------- a figure panel (as chapter 6) ---------- */
 .fig {
@@ -59,9 +66,11 @@
 .fig-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; margin-bottom: 1.1rem; }
 .fig-title { font: 600 1.15rem/1.3 var(--display); color: var(--ink); }
 .prose .fig p { margin: 0; }
+.prose .fig .fig-readout, .prose .fig .fig-note { max-width: 46rem; }
 .prose .fig .fig-readout { margin-top: 1.1rem; font-size: 1.02rem; line-height: 1.55; color: var(--ink-2); text-wrap: pretty; }
 .prose .fig .fig-note { margin-top: 0.6rem; font: 500 0.75rem/1.5 var(--mono); color: var(--ink-2); }
 .fig-legend { margin-top: 1.1rem; }
+.fig-head .fig-legend { margin-top: 0; }
 
 /* ---------- the grid of runs ---------- */
 .groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem clamp(1.25rem, 3vw, 2.5rem); }
@@ -87,14 +96,17 @@
 .tile[aria-pressed="true"] { background: var(--card); border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .t-run { font: 600 0.68rem/1.2 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-2); }
 .t-n { font: 700 1.6rem/1 var(--display); font-variant-numeric: lining-nums tabular-nums; }
-.t-l { font: 500 0.7rem/1 var(--mono); color: var(--ink-2); }
+.t-l { font: 500 0.72rem/1 var(--mono); color: var(--ink-2); }
 .t-ref { display: flex; flex-wrap: wrap; gap: 3px; min-height: 9px; align-content: flex-start; }
 .t-ref i, .sw-ref { display: block; width: 9px; height: 9px; border-radius: 2px; background: var(--tex-teal) var(--result); }
-.t-st { display: flex; align-items: center; gap: 0.3rem; font: 500 0.68rem/1.2 var(--mono); color: var(--ink-2); }
-.dot, .legend i.sw-pass, .legend i.sw-none { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: none; }
+.t-st { display: flex; align-items: center; gap: 0.3rem; font: 500 0.72rem/1.2 var(--mono); color: var(--ink-2); }
+/* The status marks differ in shape as well as colour: a filled dot (passed, or nothing changed), a ring
+   (no check), and, should a run ever have one, a red square (files changed) or diamond (check failed). */
+.dot, .legend i.sw-pass, .legend i.sw-none, .legend i.sw-fail, .legend i.sw-changed { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: none; }
 .st-pass .dot, .st-same .dot, .legend i.sw-pass { background: var(--ink); }
 .st-none .dot, .legend i.sw-none { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-2); }
-.st-fail .dot, .st-changed .dot { background: var(--model); }
+.st-fail .dot, .st-changed .dot, .legend i.sw-fail, .legend i.sw-changed { background: var(--model); border-radius: 1px; }
+.st-fail .dot, .legend i.sw-fail { transform: rotate(45deg) scale(0.85); }
 .legend i.sw-ref { width: 0.7rem; height: 0.7rem; }
 
 /* the run chosen */
@@ -121,7 +133,7 @@
 .r-cmd .more { color: var(--ink-3); font-style: italic; }
 .detail .verdict { border-left-color: var(--ink); font-weight: 600; }
 .prose .detail .r-why { margin-top: 0.3rem; font-size: 0.9rem; padding-left: 0.65rem; border-left: 3px solid var(--result); color: var(--ink); }
-.r-why span { font: 600 0.7rem/1.3 var(--mono); color: var(--result-text); }
+.r-why .r-k { font: 600 0.7rem/1.3 var(--mono); color: var(--result-text); }
 .prose .detail .d-said { margin: 0 0 0.45rem; padding-left: 0.65rem; border-left: 3px solid var(--model); }
 
 /* ---------- the refusal, the build script ---------- */
@@ -131,15 +143,22 @@
 /* ---------- the six cleanup runs ---------- */
 .cround + .cround { margin-top: 1.5rem; }
 .prose .cround-t { margin: 0 0 0.6rem; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+/* Side by side, each card's seven parts (head, request, refusal, next, database, rebuilt, foot) share
+   rows across the round, so the same part starts at the same height in every card. */
 .ccards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; align-items: stretch; }
-.ccard { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); overflow: hidden; }
+.ccard {
+  display: grid; grid-row: span 7; grid-template-rows: subgrid; row-gap: 0;
+  min-width: 0; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); overflow: hidden;
+}
 .ccard .card-head { background: var(--ink); color: var(--card); }
-.cc-part { padding: 0.75rem 0.85rem 0; }
+.cc-part { padding: 0.75rem 0.85rem 0; min-width: 0; }
+.cc-part.cc-empty { padding: 0; }
+.prose .cc-swipe { display: none; }
 .prose .cc-part p { margin: 0 0 0.35rem; font-size: 0.93rem; line-height: 1.5; }
 .prose .cc-part .cc-k { margin: 0 0 0.35rem; font: 600 0.66rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
 .prose .cc-part .cc-aside { color: var(--ink-2); font-size: 0.86rem; }
 .cc-ask pre {
-  margin: 0 0 0.35rem; padding: 0.5rem 0.6rem; font-size: 0.72rem; line-height: 1.55;
+  margin: 0 0 0.35rem; padding: 0.5rem 0.6rem; font-size: 0.76rem; line-height: 1.55;
   white-space: pre-wrap; word-break: break-word; overflow: auto; max-height: 12rem;
   background: var(--card); border-left: 3px solid var(--model); border-radius: 0 6px 6px 0;
 }
@@ -149,13 +168,16 @@
 .cc-say code { font-size: 0.84em; }
 .cc-claim.is-over .cc-say { background: color-mix(in srgb, var(--model) 8%, transparent); border-radius: 0 6px 6px 0; padding-block: 0.2rem; }
 .prose .cc-foot {
-  display: flex; flex-direction: column; gap: 0.15rem; margin: auto 0 0; padding: 0.7rem 0.85rem 0.8rem;
+  display: flex; flex-direction: column; gap: 0.15rem; margin: 0.75rem 0 0; align-self: end; padding: 0.7rem 0.85rem 0.8rem;
   border-top: 1px dashed var(--rule); font: 500 0.72rem/1.4 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums;
 }
-.cc-part:last-of-type { padding-bottom: 0.65rem; }
+/* In dark, a cream head on every card would outshine the cards themselves. */
+@media (prefers-color-scheme: dark) {
+  .ccard .card-head { background: var(--paper-2); color: var(--ink); box-shadow: inset 0 -1px 0 var(--rule); }
+}
 
 /* ---------- A2's words ---------- */
-.said { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; margin: 1.25rem 0 1.5rem; align-items: start; }
+.said { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; margin: 1.25rem 0 1.5rem; align-items: stretch; }
 .prose .said p { margin: 0; }
 
 /* ---------- what these runs show (as chapter 6) ---------- */
@@ -185,12 +207,29 @@
 @media (max-width: 48rem) {
   .mode { grid-template-columns: minmax(0, 1fr); }
   .groups { grid-template-columns: minmax(0, 1fr); }
-  .ccards, .said { grid-template-columns: minmax(0, 1fr); }
+  .said { grid-template-columns: minmax(0, 1fr); }
   .d-body { grid-template-columns: minmax(0, 1fr); }
-  .planted > div { grid-template-columns: minmax(0, 1fr); }
+  .planted { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+  /* A round's cards in a row that scrolls sideways, one card and the edge of the next in view: the six
+     cards would otherwise stand about 5,000 px tall on a phone. The row takes the keyboard when it
+     scrolls (app.js, TraceUI.watchScrollBoxes). */
+  .ccards {
+    display: flex; gap: 0.7rem; align-items: stretch;
+    overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+    padding: 2px 2px 0.6rem; margin: -2px -2px 0; scrollbar-width: thin;
+  }
+  .ccard { display: flex; flex-direction: column; flex: 0 0 min(88%, 24rem); scroll-snap-align: start; }
+  .cc-part.cc-empty { display: none; }
+  .prose .cc-foot { margin-top: auto; padding-top: 0.7rem; align-self: stretch; }
+  .cc-part:not(.cc-empty):not(:has(~ .cc-part:not(.cc-empty))) { padding-bottom: 0.75rem; }
+  .prose .cc-swipe { display: block; margin: -0.25rem 0 0.55rem; font: 500 0.75rem/1.4 var(--mono); color: var(--ink-2); }
 }
 @media (max-width: 30rem) {
   .fig { padding: 0.9rem 0.6rem; }
+  .pl-group dl > div { grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  .planted dt b, .pl-name, .pl-round { display: inline; }
+  .planted dt b { margin-right: 0.3rem; }
+  .pl-round::before { content: "· "; }
   .fx-row { grid-template-columns: minmax(0, 1fr); gap: 0.3rem; }
   .fx-label b { display: inline; margin-right: 0.3rem; }
   .fx-round { display: inline; }

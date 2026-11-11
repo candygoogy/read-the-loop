@@ -51,7 +51,7 @@ window.COPY = {
     note: (d) => `One scale for both columns: a full column is ${d.scaleMax} tokens. Coloured by what it is, as in chapter 2: the model's part of each step is what the API says the call before it wrote, and the rest is the results pasted back.`,
     readout: (d) => `The subagent's conversation reached <b>${d.subPeak}</b> tokens. Across the hand-back, the main conversation grew by <b>${d.growth}</b>.`,
     // Text alternatives for the rows.
-    srCall: (lane, n, tokens, did) => `${lane}, call ${n}: read ${tokens} tokens, then ${did}.`,
+    srCall: (lane, n, tokens, did, at) => `${lane}, call ${n}, at ${at}: read ${tokens} tokens, then ${did}.`,
     srSplit: (setup, model, back) => `Of those, ${setup} were the set-up, ${model} what the model wrote and ${back} results pasted back.`,
     srCache: (cached, fresh) => `${cached} read from the cache, ${fresh} new.`,
     srWrote: (n) => `It wrote ${n} tokens: the report.`,
@@ -94,7 +94,7 @@ window.COPY = {
     title: "What this run shows",
     small: {
       title: "The main conversation stayed small",
-      text: (d) => `The subagent read the whole of <code>${d.file}</code> and searched the other files. The main conversation got ${d.reportChars} characters of report and grew by ${d.growth} tokens. That is what a subagent is for: the reading and searching for a side task stay in a context of their own, and the main conversation, which every later call reads again, gets only the report.`,
+      text: (d) => `The subagent read the whole of <code>${d.file}</code> and searched the other files. The main conversation got ${d.reportChars} characters of report and grew by ${d.growth} tokens. The reading and searching for the side task stayed in the subagent's own context, and the main conversation, which every later call reads again, got only the report.`,
     },
     trust: {
       title: "Nobody saw the test fail",

@@ -1,10 +1,13 @@
 // Chapter 7 (site/failure-modes/) for scripts/screenshot.js: the top, the four cases, what we planted,
 // the grid of runs (a run chosen by keyboard or tap), the result, the six cleanup runs, the build
 // script, the agent's own words on what it couldn't check, the points and the end. Checks, against
-// window.RUNS07 and the cleanup traces (not against the page's own code): one tile per run, the
-// arrow keys and a tap move the choice with aria-pressed and the roving tabindex kept in step, the
-// detail panel names the chosen run and lists its refused requests, the six cleanup cards are all
-// there, every refusal text the cards quote is the trace's own, and the totals in the stats match.
+// window.RUNS07 and the cleanup traces (not against the page's own code): one tile per run, each named
+// by its own text (no aria-label) with its project in the name, the arrow keys and a tap move the choice
+// with aria-pressed and the roving tabindex kept in step, a tap leaves the tapped tile where it was on
+// screen, the detail panel names the chosen run and lists its refused requests, the six cleanup cards
+// are all there, every refusal text the cards quote is the trace's own, and the totals in the stats
+// match. Side by side, the same part of each card in a round starts at the same height; on a phone each
+// round is a row that scrolls sideways, reachable by keyboard, and doesn't widen the page.
 const path = require("path");
 
 const wait = (p, ms) => p.waitForTimeout(ms);
@@ -23,9 +26,16 @@ const truth = (p) => p.evaluate(() => {
     byKey: Object.fromEntries(R.runs.map((r) => [`${r.fixture}/${r.run}`, { fixture: r.fixture, run: r.run, refused: r.refused }])) };
 });
 
-async function choose(p, how, idx) {
-  if (how === "tap") await p.locator(`#groups .tile[data-i="${idx}"]`).tap();
-  else {
+async function choose(p, how, idx, problems) {
+  if (how === "tap") {
+    const tile = p.locator(`#groups .tile[data-i="${idx}"]`);
+    await tile.scrollIntoViewIfNeeded();
+    const before = (await tile.boundingBox()).y;
+    await tile.tap();
+    await wait(p, 150);
+    const after = (await tile.boundingBox()).y;
+    if (problems && Math.abs(after - before) > 2) problems.push(`grid: the tapped tile moved ${Math.round(after - before)} px on screen`);
+  } else {
     await p.locator('#groups .tile[tabindex="0"]').focus();
     await p.keyboard.press("ArrowRight");
   }
@@ -53,9 +63,11 @@ async function states(p, { name, shot, problems, dir }) {
   if (tiles !== t.runs) problems.push(`grid tiles: ${tiles}, RUNS07 has ${t.runs} runs`);
   const tabbable = await p.locator('#groups .tile[tabindex="0"]').count();
   if (tabbable !== 1) problems.push(`grid: ${tabbable} tiles in the tab order, expected 1`);
+  const named = await p.locator("#groups .tile").evaluateAll((els) => els.filter((e) => e.hasAttribute("aria-label") || !e.textContent.includes(e.dataset.run.split("/")[0])).length);
+  if (named) problems.push(`grid: ${named} tiles have an aria-label or lack their project in their text`);
 
   // Choose the second tile (keyboard: arrow right from the first; phone: tap it), then a cleanup run.
-  await choose(p, how, 1);
+  await choose(p, how, 1, problems);
   const pressed = await p.locator('#groups .tile[aria-pressed="true"]').getAttribute("data-i");
   if (pressed !== "1") problems.push(`grid: tile ${pressed} pressed after moving to tile 1`);
   const focusOk = await p.evaluate(() => document.activeElement && document.activeElement.dataset.i);
@@ -97,6 +109,29 @@ async function states(p, { name, shot, problems, dir }) {
   await shot("cleanup", "#clean-fig");
   const cards = await p.locator(".ccard").count();
   if (cards !== t.traces) problems.push(`cleanup cards: ${cards}, ${t.traces} traces loaded`);
+  const rows = await p.locator(".ccards").evaluateAll((els) => els.map((row) => {
+    const cs = [...row.querySelectorAll(".ccard")];
+    const tops = (sel) => cs.map((c) => c.querySelector(sel)).filter(Boolean).map((e) => Math.round(e.getBoundingClientRect().top));
+    return { side: row.scrollWidth > row.clientWidth + 1, tab: row.getAttribute("tabindex"), n: cs.length,
+      back: tops(".cc-back"), foot: tops(".cc-foot"), cols: new Set(cs.map((c) => Math.round(c.getBoundingClientRect().top))).size };
+  }));
+  rows.forEach((r, i) => {
+    if (name === "phone") {
+      if (r.n > 1 && !r.side) problems.push(`cleanup round ${i + 1}: doesn't scroll sideways on a phone`);
+      if (r.side && r.tab !== "0") problems.push(`cleanup round ${i + 1}: scrolls but isn't in the tab order`);
+    } else if (r.cols === 1) {
+      // Cards on one line: their parts line up.
+      if (new Set(r.back).size > 1) problems.push(`cleanup round ${i + 1}: "came back" starts at ${[...new Set(r.back)].join(", ")}`);
+      if (new Set(r.foot).size > 1) problems.push(`cleanup round ${i + 1}: feet at ${[...new Set(r.foot)].join(", ")}`);
+    }
+  });
+  if (name === "phone") {
+    // The first round scrolled to its second card.
+    await p.locator(".ccards").first().evaluate((row) => { row.scrollLeft = row.querySelectorAll(".ccard")[1].offsetLeft - row.offsetLeft; });
+    await wait(p, 200);
+    await shot("cleanup-swiped", "#clean-fig");
+    await p.locator(".ccards").first().evaluate((row) => { row.scrollLeft = 0; });
+  }
   const quoted = await p.locator(".ccard .cc-quote").allTextContents();
   quoted.forEach((q, i) => { if (!t.firstRefusal.some((f) => q.includes(f))) problems.push(`cleanup card ${i + 1} quotes a refusal not in its trace: ${q}`); });
 
@@ -125,6 +160,7 @@ async function exercise(p) {
   await p.keyboard.press("ArrowRight");
   await p.keyboard.press("ArrowDown");
   await p.locator(".ccard").first().scrollIntoViewIfNeeded();
+  await p.locator(".stats").scrollIntoViewIfNeeded();
 }
 
 // A run chosen: the detail panel's new content rising in.

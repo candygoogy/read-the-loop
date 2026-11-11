@@ -4,7 +4,9 @@
 // (site/data/trace-07D-runK.js, trace-07D2-runK.js: the six cleanup runs in full). Each trace file sets
 // window.TRACE; index.html files it under its key straight after loading it. The narration, the labels
 // and the public cases come from window.COPY (copy.en.js); escaping and formatting from window.TraceUI,
-// motion from window.Motion.
+// motion from window.Motion. Punctuation the page adds around copy comes from the copy file too, so each
+// language has its own. Everything the agent wrote or saw is English whatever the page's language, so it is
+// marked lang="en" (REC) for screen readers and for the Chinese page's type settings.
 (() => {
   "use strict";
 
@@ -27,6 +29,7 @@
   // The model's own markdown, inline: **bold** and `code`.
   const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>");
   const ROOT = document.body.dataset.root || "../";
+  const REC = ' lang="en"';
 
   // ---------- the projects (fixtures/ch7/README.md) ----------
   // Which failure each project was built to catch, and its name there. The order of the groups is the
@@ -201,19 +204,30 @@
   // ---------- the four cases ----------
   $("modes").innerHTML = MODES.map((m, i) => {
     const M = C.modes[m];
-    const links = M.links.map((l) => `<a href="${esc(l.href)}">${esc(l.label)}</a>${l.offline ? ` (${esc(C.offline)})` : ""}` +
-      (l.archive ? ` · <a href="${esc(l.archive)}">${esc(C.archive)}</a>` : "")).join("<br>");
+    const links = M.links.map((l) => {
+      const a = `<a href="${esc(l.href)}">${esc(l.label)}</a>`;
+      return (l.offline ? C.offline(a) : a) + (l.archive ? ` · <a href="${esc(l.archive)}">${esc(C.archive)}</a>` : "");
+    }).join("<br>");
     return `<li class="mode" data-mode="${m}">` +
       `<div class="mode-head"><span class="mode-n" aria-hidden="true">${fmt(i + 1)}</span><h3>${esc(M.name)}</h3><p class="mode-what">${esc(M.what)}</p></div>` +
-      `<div class="mode-case"><p>${M.story(d)}</p><blockquote class="case-quote"><p>“${esc(M.quote)}”</p></blockquote>` +
+      `<div class="mode-case"><p>${M.story(d)}</p><blockquote class="case-quote"${REC}><p>“${esc(M.quote)}”</p></blockquote>` +
       (M.after ? `<p>${M.after(d)}</p>` : "") +
       (M.claude ? `<p class="mode-claude">${M.claude(d)}</p>` : "") +
-      `<p class="mode-by">${esc(M.by)}.</p>` +
-      `<p class="mode-src"><span class="src-k">${esc(C.source)}</span> ${links}. ${esc(C.readOn(C.checked))}</p>` +
+      `<p class="mode-by">${esc(C.byLine(M.by))}</p>` +
+      `<p class="mode-src"><span class="src-k">${esc(C.source)}</span> ${C.sourceLine(links, esc(C.checked))}</p>` +
       `<p class="mode-note">${esc(M.note)}</p></div></li>`;
   }).join("");
 
-  $("planted").innerHTML = fixtures.map((f) => `<div><dt><b>${esc(f)}</b> ${esc(FIX[f] ? FIX[f].name : "")}</dt><dd>${C.method.planted[f] || ""}</dd></div>`).join("");
+  // What we planted, grouped by the failure each project was built to catch, in the order of the cases.
+  $("planted").innerHTML = MODES.map((m) => {
+    const fx = fixtures.filter((f) => FIX[f] && FIX[f].mode === m);
+    if (!fx.length) return "";
+    return `<div class="pl-group"><p class="g-title">${esc(C.modes[m].name)}</p><dl>` + fx.map((f) => {
+      const round = runs.find((r) => r.fixture === f).round;
+      return `<div><dt><b>${esc(f)}</b> <span class="pl-name">${esc(FIX[f].name)}</span> <span class="pl-round">${esc(C.grid.round(fmt(round)))}</span></dt>` +
+        `<dd>${C.method.planted[f] || ""}</dd></div>`;
+    }).join("") + `</dl></div>`;
+  }).join("");
 
   // ---------- the grid of runs ----------
   const G = C.grid;
@@ -228,19 +242,24 @@
         const i = ordered.length;
         ordered.push({ r, row, col });
         const st = statusOf(r);
-        const label = G.tileLabel(`${f} ${FIX[f].name}`, fmt(r.run), pl(G.calls, r.model_calls), pl(G.refusedN, r.refused), G.status[st]);
-        return `<button type="button" class="tile st-${st}" data-i="${i}" data-run="${esc(key(r))}" aria-pressed="false" tabindex="-1" aria-controls="detail" aria-label="${esc(label)}">` +
+        // Its name is its visible text, with the project before it and the refusals (drawn as squares) after.
+        return `<button type="button" class="tile st-${st}" data-i="${i}" data-run="${esc(key(r))}" aria-pressed="false" tabindex="-1" aria-controls="detail">` +
+          `<span class="sr-only">${esc(G.tileFx(`${f} ${FIX[f].name}`))}</span>` +
           `<span class="t-run">${esc(G.run(fmt(r.run)))}</span>` +
           `<span class="t-n">${fmt(r.model_calls)}<span class="t-l"> ${esc(pl(G.callsWord, r.model_calls))}</span></span>` +
-          `<span class="t-ref">${"<i></i>".repeat(r.refused)}</span>` +
+          `<span class="t-ref" aria-hidden="true">${"<i></i>".repeat(r.refused)}</span>` +
+          `<span class="sr-only">${esc(G.tileRefused(pl(G.refusedN, r.refused)))}</span>` +
           `<span class="t-st"><i class="dot"></i>${esc(G.statusShort[st])}</span></button>`;
       }).join("");
       return `<div class="fx-row"><p class="fx-label"><b>${esc(f)}</b> <span class="fx-name">${esc(FIX[f].name)}</span> <span class="fx-round">${esc(G.round(fmt(rs[0].round)))}</span></p><div class="tiles">${tiles}</div></div>`;
     }).join("");
-    return `<div class="group" data-mode="${m}"><p class="g-title">${esc(C.modes[m].name)}</p>${rows}</div>`;
+    return `<div class="group" data-mode="${m}" role="group" aria-labelledby="g-${m}"><p class="g-title" id="g-${m}">${esc(C.modes[m].name)}</p>${rows}</div>`;
   }).join("");
   $("groups").innerHTML = groupsHTML;
-  $("grid-legend").innerHTML = [["sw-ref", G.legend.refused], ["sw-pass", G.legend.pass], ["sw-none", G.legend.none]]
+  // The legend lists the marks the grid uses: a failed check or a changed file only if a run had one.
+  const shown = new Set(runs.map(statusOf));
+  $("grid-legend").innerHTML = [["sw-ref", G.legend.refused], ["sw-pass", G.legend.pass],
+    ...["fail", "changed", "none"].filter((k) => shown.has(k)).map((k) => [`sw-${k}`, G.legend[k]])]
     .map(([k, label]) => `<span><i class="sw ${k}" aria-hidden="true"></i>${esc(label)}</span>`).join("");
 
   const tiles = [...document.querySelectorAll("#groups .tile")];
@@ -258,17 +277,17 @@
     let check;
     if (!h) check = `<p>${esc(G.noCheck)}</p>`;
     else if (Array.isArray(h.changed)) check = `<p>${esc(G.sha(fmt(h.files), h.changed.length ? pl(G.shaSome, h.changed.length) : G.shaNone))}</p>`;
-    else check = `<p>${esc(G.checkLast(h.check))}</p><pre class="verdict">${esc(h.verdict)}</pre>`;
+    else check = `<p>${esc(G.checkLast(h.check))}</p><pre class="verdict"${REC}>${esc(h.verdict)}</pre>`;
     const said = r.says_could_not_check && r.says_could_not_check.length
-      ? `<p class="d-k">${esc(G.said)}</p>${r.says_could_not_check.map((s) => `<p class="d-said">“${inline(s)}”</p>`).join("")}` : "";
+      ? `<p class="d-k">${esc(G.said)}</p>${r.says_could_not_check.map((s) => `<p class="d-said"${REC}>“${inline(s)}”</p>`).join("")}` : "";
     const ref = r.refused_commands.length
-      ? `<ol class="ref-list">${r.refused_commands.map((c) => `<li><p class="r-meta">${esc(G.callN(fmt(c.call)))} · ${esc(c.tool)}${c.description ? ` · “${esc(c.description)}”` : ""}</p>` +
-          `<pre class="r-cmd">${firstLines(c.command)}</pre><p class="r-why"><span>${esc(G.reason)}:</span> ${esc(reasonShort(c.reason))}</p></li>`).join("")}</ol>`
+      ? `<ol class="ref-list">${r.refused_commands.map((c) => `<li><p class="r-meta">${esc(G.callN(fmt(c.call)))} · ${esc(c.tool)}${c.description ? ` · <span${REC}>“${esc(c.description)}”</span>` : ""}</p>` +
+          `<pre class="r-cmd"${REC}>${firstLines(c.command)}</pre><p class="r-why"><span class="r-k">${esc(G.reason)}</span> <span${REC}>${esc(reasonShort(c.reason))}</span></p></li>`).join("")}</ol>`
       : `<p>${esc(G.noRefusals)}</p>`;
-    return `<div class="d-head"><p class="d-title"><b>${esc(r.fixture)}</b> ${esc(FIX[r.fixture].name)} · ${esc(G.run(fmt(r.run)))} <span>${esc(G.round(fmt(r.round)))}</span></p>` +
+    return `<div class="d-head"><p class="d-title" id="d-title"><b>${esc(r.fixture)}</b> ${esc(FIX[r.fixture].name)} · ${esc(G.run(fmt(r.run)))} <span>${esc(G.round(fmt(r.round)))}</span></p>` +
       `<p class="d-nums">${esc(G.numbers({ calls: fmt(r.model_calls), tools: fmt(r.tool_requests), refused: fmt(r.refused), secs: dec1.format(r.duration_s), cost: money.format(r.cost_usd) }))}</p></div>` +
       `<div class="d-body">` +
-        `<div class="d-ask"><p class="d-k">${esc(G.asked)}</p><p class="d-prompt">${esc(r.prompt)}</p>` +
+        `<div class="d-ask"><p class="d-k">${esc(G.asked)}</p><p class="d-prompt"${REC}>${esc(r.prompt)}</p>` +
           `<p class="d-k">${esc(G.mode)}</p><p>${code(r.permission_mode)}</p>` +
           `<p class="d-k">${esc(G.trace)}</p><p>${traceLinks(r)}</p></div>` +
         `<div class="d-ref"><p class="d-k">${esc(r.refused ? pl(G.refusedHead, r.refused) : G.refusedNone)}</p>${ref}</div>` +
@@ -279,12 +298,19 @@
   // Where the chosen run's details go: under the whole grid when the groups sit side by side, and on a
   // narrow screen (one column) straight under the chosen run's row, so a tap shows its result in view.
   const narrow = window.matchMedia("(max-width: 48rem)");
-  const legendEl = $("grid-legend");
+  const fig = $("runs-fig");
+  // On a narrow screen, moving the panel from above the chosen row to below it would pull the row up the
+  // screen by the panel's height; the page scrolls back by as much, so the tile stays under the finger.
   function place() {
     const det = $("detail");
     const row = tiles[sel].closest(".fx-row");
-    if (narrow.matches) { if (det.previousElementSibling !== row) row.after(det); }
-    else if (det.parentElement !== legendEl.parentElement) legendEl.parentElement.appendChild(det);
+    if (narrow.matches) {
+      if (det.previousElementSibling === row) return;
+      const top = row.getBoundingClientRect().top;
+      row.after(det);
+      const moved = row.getBoundingClientRect().top - top;
+      if (moved) window.scrollBy(0, moved);
+    } else if (det.parentElement !== fig) fig.appendChild(det);
   }
   if (narrow.addEventListener) narrow.addEventListener("change", place);
   function select(i, { focus = false, animate = true } = {}) {
@@ -327,39 +353,47 @@
   $("clean-prompt").textContent = cleanPrompt.join("\n");
   if (reasons.length) {
     $("reason-card").innerHTML = U.cardHead(`${esc(K.reasonHead)}`, esc(K.reasonMeta(reasons.length === 1, fmt(clean.length)))) +
-      reasons.map((t) => `<pre>${esc(t)}</pre>`).join("");
+      reasons.map((t) => `<pre${REC}>${esc(t)}</pre>`).join("");
   }
   const markRm = (html) => html.replace(/(rm -[a-z]+ [^\n;|&]*)/g, "<mark>$1</mark>");
   const cmdHTML = (cmd) => markRm(esc(cmd).split(" &amp;&amp; ").join(" &amp;&amp;\n  "));
+  // Each card has the same seven parts in the same order, an empty one where a run has nothing for it, so
+  // that on a wide screen the parts line up across the cards of a round (a subgrid, chapter.css).
+  const none = (cls) => `<div class="cc-part ${cls} cc-empty" aria-hidden="true"></div>`;
   function cleanCard(c) {
     const r = c.r;
     const x = c.first;
     const cost = money.format(r.cost_usd);
     const h = r.hidden_check || {};
-    const asked = x ? `<div class="cc-part cc-ask"><p class="cc-k">${esc(K.askedK(fmt(x.call)))}</p><pre>${cmdHTML(x.t.input.command)}</pre>` +
-      (isDelete(x.t.input.command) ? "" : `<p class="cc-aside">${esc(K.notDelete)}</p>`) + `</div>` : "";
+    const asked = x ? `<div class="cc-part cc-ask"><p class="cc-k">${esc(K.askedK(fmt(x.call)))}</p><pre${REC}>${cmdHTML(x.t.input.command)}</pre>` +
+      (isDelete(x.t.input.command) ? "" : `<p class="cc-aside">${esc(K.notDelete)}</p>`) + `</div>` : none("cc-ask");
     const firstSentence = x ? x.t.result.text.split(/(?<=\.)\s/)[0] : "";
-    const back = x ? `<div class="cc-part cc-back"><p class="cc-k">${esc(K.refusedK)}</p><p class="cc-quote">${esc(K.refusedText(firstSentence))}</p>` +
-      (reasons.length === 1 ? `<p class="cc-aside">${esc(K.sameAbove)}</p>` : "") + `</div>` : "";
-    const next = `<div class="cc-part cc-next"><p class="cc-k">${esc(K.nextK)}</p><p class="cc-aside">${esc(c.after ? pl(K.nextSome, c.after) : K.nextNone)}</p><p class="cc-say">“${inline(c.opening)}”</p></div>`;
-    const lose = c.lose ? `<div class="cc-part cc-data"><p class="cc-k">${esc(K.dataK)}</p><p class="cc-say">“${inline(c.lose)}”</p></div>` : "";
-    const claim = c.claim ? `<div class="cc-part cc-claim${c.over ? " is-over" : ""}"><p class="cc-k">${esc(K.claimK)}</p><p class="cc-say">“${inline(c.claim)}”</p>` +
-      `<p class="cc-aside">${c.over ? K.over(list(c.logs.map(code))) : c.negated ? esc(K.notOver) : ""}</p></div>` : "";
+    const back = x ? `<div class="cc-part cc-back"><p class="cc-k">${esc(K.refusedK)}</p><p class="cc-quote"${REC}>${esc(K.refusedText(firstSentence))}</p>` +
+      (reasons.length === 1 ? `<p class="cc-aside">${esc(K.sameAbove)}</p>` : "") + `</div>` : none("cc-back");
+    const next = `<div class="cc-part cc-next"><p class="cc-k">${esc(K.nextK)}</p><p class="cc-aside">${esc(c.after ? pl(K.nextSome, c.after) : K.nextNone)}</p><p class="cc-say"${REC}>“${inline(c.opening)}”</p></div>`;
+    const lose = c.lose ? `<div class="cc-part cc-data"><p class="cc-k">${esc(K.dataK)}</p><p class="cc-say"${REC}>“${inline(c.lose)}”</p></div>` : none("cc-data");
+    const claim = c.claim ? `<div class="cc-part cc-claim${c.over ? " is-over" : ""}"><p class="cc-k">${esc(K.claimK)}</p><p class="cc-say"${REC}>“${inline(c.claim)}”</p>` +
+      `<p class="cc-aside">${c.over ? K.over(list(c.logs.map(code))) : c.negated ? esc(K.notOver) : ""}</p></div>` : none("cc-claim");
     const foot = `<p class="cc-foot"><span>${esc(K.footChanged(fmt(h.files || 0), fmt((h.changed || []).length)))}</span><span>${esc(K.footAimed(fmt(c.aimed.length)))}</span></p>`;
     return `<article class="ccard" aria-label="${esc(K.cardHead(r.fixture, fmt(r.run)))}">` +
       `<div class="card-head"><span>${esc(K.cardHead(r.fixture, fmt(r.run)))}</span><span class="meta">${esc(K.cardMeta(pl(G.calls, r.model_calls), cost))}</span></div>` +
       asked + back + next + lose + claim + foot + `</article>`;
   }
   const rounds = uniq(clean.map((c) => c.r.round));
-  $("clean-rounds").innerHTML = rounds.map((n) => `<div class="cround"><p class="cround-t">${esc(K.rounds[n] || G.round(fmt(n)))}</p>` +
-    `<div class="ccards">${clean.filter((c) => c.r.round === n).map(cleanCard).join("")}</div></div>`).join("");
+  // A round's cards sit side by side; on a narrow screen they scroll sideways (one card and the edge of the next).
+  $("clean-rounds").innerHTML = rounds.map((n) => {
+    const cs = clean.filter((c) => c.r.round === n);
+    return `<div class="cround"><p class="cround-t" id="cround-${n}">${esc(K.rounds[n] || G.round(fmt(n)))}</p>` +
+      (cs.length > 1 ? `<p class="cc-swipe">${esc(K.swipe)}</p>` : "") +
+      `<div class="ccards" role="group" aria-labelledby="cround-${n}">${cs.map(cleanCard).join("")}</div></div>`;
+  }).join("");
   $("clean-readout").innerHTML = K.readout(d);
 
   if (build) {
     const marks = new Set(build.lines.map((l, i) => (/mkdirSync|writeFileSync/.test(l) ? i : -1)).filter((i) => i >= 0));
     const keep = new Set([0, 1, 2, ...marks]);
     $("build-card").innerHTML = U.cardHead(esc(K.excerptHead("build.js")), esc(K.excerptMeta)) +
-      `<pre>${U.excerpt(build.lines, keep, marks, (n) => pl(K.skipped, n))}</pre>`;
+      `<pre${REC}>${U.excerpt(build.lines, keep, marks, (n) => pl(K.skipped, n))}</pre>`;
   } else {
     $("build-card").hidden = true;
   }
@@ -367,17 +401,22 @@
 
   // ---------- A2's answers ----------
   $("said").innerHTML = a2.map((r) => `<div class="card model text">${U.cardHead(esc(C.honest.card(r.fixture, fmt(r.run))), "")}` +
-    r.says_could_not_check.map((s) => `<p class="say">${inline(s)}</p>`).join("") + `</div>`).join("");
+    r.says_could_not_check.map((s) => `<p class="say"${REC}>${inline(s)}</p>`).join("") + `</div>`).join("");
 
   // ---------- the colophon ----------
   $("trace-links").innerHTML = list(cleanRuns.map((r) => `<a href="${ROOT}data/${esc(r.trace)}.js">${esc(C.colophon.link(r.fixture, fmt(r.run)))}</a>`));
 
   // ---------- motion ----------
-  Mo.reveal($("runs-fig"), (el) => Mo.pop([...el.querySelectorAll(".tile")], { spread: 360 }));
-  Mo.reveal([...document.querySelectorAll(".ccard")]);
-  Mo.reveal([...document.querySelectorAll(".mode")]);
+  // The grid: the tiles pop in, then the refused requests land on them, in the grid's order.
+  Mo.reveal($("runs-fig"), (el) => {
+    Mo.pop([...el.querySelectorAll(".tile")], { spread: 360 });
+    Mo.pop([...el.querySelectorAll(".t-ref i")], { delay: 200, spread: 420, duration: 160 });
+  });
+  // A round of cleanup cards rises in, one card after the other.
+  Mo.reveal([...document.querySelectorAll(".ccards")], (el) => Mo.enter([...el.children], { y: 8, stagger: 70, duration: Mo.dur.reveal }));
+  Mo.reveal([...document.querySelectorAll(".mode, .pl-group")]);
   Mo.reveal([$("said"), document.querySelector(".stats")]);
 
   // Any of these that scrolls at the reader's width can be reached and scrolled by keyboard.
-  U.watchScrollBoxes(".card pre, .detail pre, .ccard pre");
+  U.watchScrollBoxes(".card pre, .detail pre, .ccard pre, .ccards");
 })();

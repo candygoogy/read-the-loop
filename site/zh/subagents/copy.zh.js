@@ -51,7 +51,7 @@ window.COPY = {
     note: (d) => `两栏用同一比例：一整栏是 ${d.scaleMax} 个 token。按种类着色时和第二章一样：每一步里模型的部分，是 API 报告的上一次调用写出的量，其余是贴回的结果。`,
     readout: (d) => `子智能体的对话达到了 <b>${d.subPeak}</b> 个 token。报告交回前后，主对话增长了 <b>${d.growth}</b> 个。`,
     // 各行的文字替代。
-    srCall: (lane, n, tokens, did) => `${lane}，第 ${n} 次调用：读了 ${tokens} 个 token，然后${did}。`,
+    srCall: (lane, n, tokens, did, at) => `${lane}，第 ${n} 次调用（${at}）：读了 ${tokens} 个 token，然后${did}。`,
     srSplit: (setup, model, back) => `其中 ${setup} 个是开场设定，${model} 个是模型写的内容，${back} 个是贴回的结果。`,
     srCache: (cached, fresh) => `${cached} 个从缓存读取，${fresh} 个是新增的。`,
     srWrote: (n) => `它写出了 ${n} 个 token：报告。`,
@@ -94,7 +94,7 @@ window.COPY = {
     title: "这次运行说明了什么",
     small: {
       title: "主对话一直很小",
-      text: (d) => `子智能体读了整个 <code>${d.file}</code>，还搜索了其他文件。主对话拿到了 ${d.reportChars} 个字符的报告，增长了 ${d.growth} 个 token。这正是子智能体的用处：为一项旁支任务做的阅读和搜索，都留在一个单独的上下文里。主对话之后的每次调用都要把它重读一遍，而它拿到的只有那份报告。`,
+      text: (d) => `子智能体读了整个 <code>${d.file}</code>，还搜索了其他文件。主对话拿到了 ${d.reportChars} 个字符的报告，增长了 ${d.growth} 个 token。为这项旁支任务做的阅读和搜索，都留在了子智能体自己的上下文里。主对话之后的每次调用都要把它重读一遍，而它拿到的只有那份报告。`,
     },
     trust: {
       title: "没有人看到测试失败",

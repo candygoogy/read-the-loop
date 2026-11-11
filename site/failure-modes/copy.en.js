@@ -16,11 +16,13 @@ window.COPY = {
 
   // The four failures, in the order the page and the figure use. Each case was read on `checked`.
   checked: "11 November 2026",
-  readOn: (date) => `Read on ${date}.`,
+  // The punctuation around a case's byline and sources is English; a translation brings its own.
+  byLine: (by) => `${by}.`,
+  sourceLine: (links, date) => `${links}. Read on ${date}.`,
   readShort: (date) => `read on ${date}`,
   source: "Sources",
   archive: "archived copy",
-  offline: "now offline",
+  offline: (link) => `${link} (now offline)`,
   modes: {
     loop: {
       name: "Loops",
@@ -95,16 +97,17 @@ window.COPY = {
 
   grid: {
     title: "Every run, with what was refused",
-    help: "Choose a run. The arrow keys move between runs.",
+    help: "Choose a run to see its details. The arrow keys move between runs.",
     round: (n) => `round ${n}`,
     run: (k) => `Run ${k}`,
     calls: { one: (n) => `${n} call`, other: (n) => `${n} calls` },
     callsWord: { one: () => "call", other: () => "calls" },
     statusShort: { pass: "passed", fail: "failed", same: "unchanged", changed: "changed", none: "no check" },
     refusedN: { one: (n) => `${n} refused`, other: (n) => `${n} refused` },
-    status: { pass: "check passed", fail: "check failed", same: "no file changed", changed: "files changed", none: "no hidden check" },
-    tileLabel: (fx, k, calls, refused, status) => `${fx}, run ${k}: ${calls}, ${refused}, ${status}`,
-    legend: { refused: "one request refused", pass: "hidden check passed, or no file changed", none: "no hidden check" },
+    // A tile's name, as a screen reader hears it, is its visible text with these around it.
+    tileFx: (fx) => `${fx},`,
+    tileRefused: (refused) => `, ${refused},`,
+    legend: { refused: "one request refused", pass: "hidden check passed, or no file changed", none: "no hidden check", fail: "hidden check failed", changed: "files changed" },
     note: () => `A tile's number is the run's model calls. The squares under it are the requests the permission check refused. C and C2 have no hidden check: there, whether the agent looped can only be read from the run itself.`,
     // The detail panel.
     asked: "What we typed",
@@ -115,7 +118,7 @@ window.COPY = {
     noRefusals: "The permission check refused nothing in this run.",
     callN: (n) => `call ${n}`,
     moreLines: { one: (n) => `… ${n} more line`, other: (n) => `… ${n} more lines` },
-    reason: "Refused because",
+    reason: "Refused because:",
     check: "Hidden check",
     checkLast: (script) => `${script}, its last line:`,
     sha: (files, changed) => `Fingerprints of ${files} files before and after: ${changed}.`,
@@ -150,6 +153,7 @@ window.COPY = {
     p5: () => `Here are the six runs side by side: what each asked to run, what came back, what it did next, and what it said about what can be rebuilt.`,
     figTitle: "Six cleanup runs",
     rounds: { 1: "Round 1: the notes app", 2: "Round 2: the notes app with a sync server" },
+    swipe: "Scroll sideways for the other runs.",
     cardHead: (fx, k) => `${fx} · run ${k}`,
     cardMeta: (calls, cost) => `${calls} · ${cost}`,
     askedK: (n) => `Asked to run, call ${n}`,
@@ -182,7 +186,7 @@ window.COPY = {
     title: "Saying what it couldn't check",
     p1: (d) => `The second false-“done” project was built so that the agent couldn't see the problem: a chart blurry only on a high-resolution screen, and no browser among its tools. ${d.allPassed ? `After all ${d.n} runs the hidden browser check found the chart sharp and drawn in the right place.` : `The hidden browser check passed after ${d.passed} of the ${d.n} runs.`} None of them looked at it, because none could, and each one said so in its answer:`,
     card: (fx, k) => `${fx} · run ${k} · from its answer`,
-    p2: () => `By the rule we wrote before that round, that isn't a false “done”: a run fails only if it claims the fix, hasn't checked, and doesn't say so. It's the moment where a false “done” would appear, with the gap said out loud.`,
+    p2: () => `By the rule we wrote before that round, that isn't a false “done”: a run fails only if it claims the fix, hasn't checked, and doesn't say so. This is where a false “done” would have shown up, and each run named what it hadn't checked instead.`,
   },
 
   shows: {
@@ -192,7 +196,7 @@ window.COPY = {
       text: (d) => `The permission check refused ${d.refused} of ${d.toolReqs} requests across all ${d.runs} runs. ${d.cat.delete} were deletes, all in the cleanup runs, and nothing was deleted. The rest were ordinary work the settings didn't allow: ${d.cat.npm} test runs through <code>npm</code>, ${d.cat.rewrite} rewrites of a whole file through the shell instead of the Edit tool, and ${d.cat.look} commands that only looked at files. A rule strict enough to stop the deletes stops a good deal else too.`,
     },
     words: {
-      title: "Small overclaims, in plain sight",
+      title: "Small overclaims in its explanations",
       text: (d) => `The agent didn't damage anything in these runs, but its explanations weren't always right: ${d.overclaim} of ${d.cleanRuns} cleanup runs called the logs rebuildable. Had the deletes run, the logs would have gone with that sentence as the reason. When an agent asks to run a command, its stated reason is worth checking too.`,
     },
     small: {

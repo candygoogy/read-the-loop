@@ -232,7 +232,8 @@
   // and search engines are asked not to list it.
   function previewNote() {
     if (!here || here.published) return;
-    const note = `<div class="preview band" role="note"><p>${esc(T.preview)}</p></div>`;
+    // An <aside> landmark, so the note isn't content outside every landmark (axe "region").
+    const note = `<aside class="preview band" aria-labelledby="preview-note"><p id="preview-note">${esc(T.preview)}</p></aside>`;
     const head = document.querySelector(".masthead");
     if (head) head.insertAdjacentHTML("beforebegin", note);
     else document.body.insertAdjacentHTML("afterbegin", note);

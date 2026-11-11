@@ -3,7 +3,8 @@
 // the tokens by conversation, the points and the end. Checks that the figure has one row per model call
 // of the run shown (main and subagent), that the colour switch works by keyboard (desk, dark) and by tap
 // (phone), that the report opens and closes by keyboard or tap with aria-expanded kept in step, and
-// that the figure's readout gives the subagent's total and the main conversation's growth from the trace.
+// that the figure's readout gives the subagent's total and the main conversation's growth from the trace,
+// that switching colours doesn't change the figure's height, and that no part holding tokens is under 2px.
 const path = require("path");
 
 const wait = (p, ms) => p.waitForTimeout(ms);
@@ -39,13 +40,20 @@ async function states(p, { name, shot, problems, dir }) {
   const readout = await p.locator("#threads-readout").textContent();
   if (!readout.includes(t.peak) || !readout.includes(t.growth)) problems.push(`readout "${readout}" lacks ${t.peak} or ${t.growth}`);
 
-  // The colour switch: to the cache and back.
+  // The colour switch: to the cache and back. The figure keeps its height, and no part is too thin to see.
+  const figH = () => p.locator("#threads").evaluate((el) => el.offsetHeight);
+  const thin = () => p.locator("#tl").evaluate((el) => [...el.querySelectorAll(".seg:not(.is-zero)")].filter((s) => s.getBoundingClientRect().width < 1.9).length);
+  const h0 = await figH();
+  if (await thin()) problems.push(`${await thin()} parts under 2px wide (kind)`);
   if (how === "tap") await p.locator('#threads-mode .seg-opt:has(input[value="cache"])').tap();
   else { await p.locator('#threads-mode input[value="kind"]').focus(); await p.keyboard.press("ArrowRight"); }
   await wait(p, 150);
   const mode = await p.locator("#tl").getAttribute("data-mode");
   if (mode !== "cache") problems.push(`colour switch: data-mode is ${mode}, expected cache`);
   if (!(await p.locator("#tl .seg.k-cached").count())) problems.push("cache mode draws no cached parts");
+  await settle(p);
+  if ((await figH()) !== h0) problems.push(`figure height ${h0} -> ${await figH()} when the colours switch`);
+  if (await thin()) problems.push(`${await thin()} parts under 2px wide (cache)`);
   await shot("threads-cache", "#threads");
   if (how === "tap") await p.locator('#threads-mode .seg-opt:has(input[value="kind"])').tap();
   else await p.keyboard.press("ArrowLeft");

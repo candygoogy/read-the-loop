@@ -31,6 +31,9 @@
 .fig-readout b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .prose .fig .fig-note { margin-top: 0.6rem; font: 500 0.75rem/1.5 var(--mono); color: var(--ink-2); }
 .fig-legend { margin-top: 1.1rem; }
+#threads-legend { display: grid; }
+#threads-legend > .lg { grid-area: 1 / 1; display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; }
+#threads-legend > .lg.is-off { visibility: hidden; }
 
 /* the colour switch (as chapter 4's before / after switch) */
 fieldset.mode { display: inline-flex; margin: 0; padding: 3px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
@@ -78,6 +81,9 @@ fieldset.mode { display: inline-flex; margin: 0; padding: 3px; border: 1px solid
 .bar-wrap { position: relative; }
 .bar { display: flex; height: var(--bar-h); transform-origin: 0 50%; }
 .seg { display: block; height: 100%; flex: none; }
+/* Every part that holds tokens stays at least 2px wide, so the model's few tokens in a step still
+   show on a phone, where they would be about 1.4px (it adds at most a few pixels to a bar). */
+.seg:not(.is-zero) { min-width: 2px; }
 .seg:first-child { border-radius: 4px 0 0 4px; }
 .seg:last-child { border-radius: 0 4px 4px 0; }
 .seg.k-sys { box-shadow: inset -2px 0 0 var(--card); }
@@ -85,8 +91,11 @@ fieldset.mode { display: inline-flex; margin: 0; padding: 3px; border: 1px solid
 /* What the subagent's last call wrote: after a gap, outlined in ink, since it was written, not read. */
 .seg.is-wrote { margin-left: 3px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px var(--ink); }
 /* The hand-back, wherever the main conversation carries it: outlined, so it can be followed down. */
-.tl[data-mode="kind"] .seg.is-hb { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.seg.is-hb { box-shadow: inset 0 0 0 1.5px var(--ink); }
 .bar-marks { position: relative; height: 1.35rem; }
+.bar-marks.is-off { visibility: hidden; }
+/* While the colours switch: the old parts, fading out on top of the new ones (app.js recolour). */
+.bar-ghost { position: absolute; inset: 0 0 auto; pointer-events: none; }
 .hb-mark {
   position: absolute; top: 0.2rem; display: flex; align-items: flex-start; gap: 0.3rem;
   font: 600 0.7rem/1 var(--mono); color: var(--ink); white-space: nowrap;
@@ -116,7 +125,7 @@ fieldset.mode { display: inline-flex; margin: 0; padding: 3px; border: 1px solid
 /* ---------- the handoff ---------- */
 .handoff { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 0.85rem; align-items: start; margin: 1.5rem 0 1.75rem; }
 .prose .handoff p { margin: 0; }
-.task-k { padding: 0.85rem 1rem 0; font: 600 0.68rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.task-k { padding: 0.85rem 1rem 0; font: 600 0.7rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
 .card .task-k + .say { padding-top: 0.35rem; }
 .task-in { list-style: none; margin: 0; padding: 0.35rem 1rem 1rem; font: 400 0.8rem/1.6 var(--mono); color: var(--ink-2); }
 .task-in code { font-size: 1em; color: var(--ink); }
@@ -175,6 +184,12 @@ fieldset.mode { display: inline-flex; margin: 0; padding: 3px; border: 1px solid
   font-size: 0.74rem; line-height: 1.6; background: var(--paper-2); border-radius: 8px; color: var(--ink);
 }
 
+/* Side by side, the task is much shorter than the report: it stays in view beside it while the
+   report is read. */
+@media (min-width: 48.01rem) {
+  .handoff .task { position: sticky; top: 1.25rem; }
+}
+
 /* ---------- narrower ---------- */
 @media (max-width: 48rem) {
   .handoff { grid-template-columns: minmax(0, 1fr); }
@@ -184,12 +199,13 @@ fieldset.mode { display: inline-flex; margin: 0; padding: 3px; border: 1px solid
   .fig { padding: 0.9rem 0.6rem; }
   .fig-head { flex-direction: column; align-items: flex-start; padding: 0 0.15rem; }
   .seg-opt span { padding: 0 0.8rem; }
-  .lanes-head span { padding: 0.5rem 0.5rem 0.45rem; font-size: 0.66rem; }
+  .lanes-head span { padding: 0.5rem 0.5rem 0.45rem; font-size: 0.7rem; letter-spacing: 0.04em; }
   .slot { padding: 0.5rem 0.5rem 0.55rem; }
   .row-l { font-size: 0.7rem; }
   .prose .row-did { font-size: 0.8rem; }
-  .prose .row-wrote { font-size: 0.66rem; }
-  .hb-mark { font-size: 0.64rem; }
+  .row-did code { font-size: 0.88em; }
+  .prose .row-wrote { font-size: 0.7rem; }
+  .hb-mark { font-size: 0.7rem; }
   .r-arrow { padding: 0.3rem 0.5rem; }
   .prose .arrow { font-size: 0.7rem; }
   .slot.s-main.is-wait::before { left: 0.9rem; }

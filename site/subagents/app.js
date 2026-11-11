@@ -209,24 +209,26 @@
   const sendIdx = rows.findIndex((r) => r.kind === "send"), backIdx = rows.findIndex((r) => r.kind === "back");
 
   const tl = $("tl");
-  tl.setAttribute("aria-labelledby", "threads-title");
   function barHTML(r, mode) {
     const parts = partsOf(r.calls, r.i, mode, r.report, r.lane);
     let at = 0, mark = "";
     const segs = parts.map((p) => {
       const left = at;
       at += p.tokens;
-      if (p.hb && r.i === S.agentAt + 1 && mode === "kind") {
+      if (p.hb && r.i === S.agentAt + 1) {
         const mid = (left + p.tokens) / MAX;
         mark = `<span class="hb-mark${mid > 0.5 ? " end" : ""}" style="${mid > 0.5 ? `right:${(1 - mid) * 100}%` : `left:${(left / MAX) * 100}%`}">${esc(TH.handbackMark)}</span>`;
       }
-      return `<i class="seg ${p.cls}${p.hb ? " is-hb" : ""}${p.wrote ? " is-wrote" : ""}" style="width:${(p.tokens / MAX) * 100}%"></i>`;
+      return `<i class="seg ${p.cls}${p.hb ? " is-hb" : ""}${p.wrote ? " is-wrote" : ""}${p.tokens ? "" : " is-zero"}" style="width:${(p.tokens / MAX) * 100}%"></i>`;
     }).join("");
-    return `<div class="bar" aria-hidden="true">${segs}</div>${mark ? `<div class="bar-marks" aria-hidden="true">${mark}</div>` : ""}`;
+    // The hand-back is drawn only when the bars are coloured by kind, but its row keeps its place in
+    // both modes, so switching colours never moves the rows below it.
+    if (!mark && r.lane === "main" && r.i === S.agentAt + 1) mark = `<span class="hb-mark"></span>`;
+    return `<div class="bar" aria-hidden="true">${segs}</div>${mark ? `<div class="bar-marks${mode === "kind" ? "" : " is-off"}" aria-hidden="true">${mark}</div>` : ""}`;
   }
   function srOf(r, mode) {
     const c = r.calls[r.i];
-    let s = TH.srCall(TH.lanes[r.lane], fmt(r.i + 1), fmt(c.context_tokens), plain(didOf(c, r.lane)));
+    let s = TH.srCall(TH.lanes[r.lane], fmt(r.i + 1), fmt(c.context_tokens), plain(didOf(c, r.lane)), U.clock(c.t_ms));
     if (mode === "cache") s += " " + TH.srCache(fmt(Math.min(c.cached_tokens, c.context_tokens)), fmt(c.context_tokens - Math.min(c.cached_tokens, c.context_tokens)));
     else {
       const parts = partsOf(r.calls, r.i, "kind", false, r.lane);
@@ -237,7 +239,9 @@
   }
   function slotHTML(r, mode) {
     const c = r.calls[r.i];
-    return `<p class="row-l"><span class="row-n">${esc(TH.call(fmt(r.i + 1), fmt(c.context_tokens)))}</span><span class="row-t">${esc(U.clock(c.t_ms))}</span></p>` +
+    // The label breaks only between its halves ("Call 1 ·" / "9,322 tokens"), never inside one.
+    const label = TH.call(fmt(r.i + 1), fmt(c.context_tokens)).split(" · ").map(esc).join(" ·</span> <span class=\"nw\">");
+    return `<p class="row-l" aria-hidden="true"><span class="row-n"><span class="nw">${label}</span></span><span class="row-t">${esc(U.clock(c.t_ms))}</span></p>` +
       `<div class="bar-wrap">${barHTML(r, mode)}</div>` +
       (r.report ? `<p class="row-wrote" aria-hidden="true">${esc(TH.wrote(fmt(c.output_tokens)))}</p>` : "") +
       `<p class="row-did" aria-hidden="true">${didOf(c, r.lane)}</p>` +
@@ -251,7 +255,9 @@
       if (r.kind === "back") return `<li class="row r-arrow to-main"><p class="arrow"><span>${esc(TH.back(d))}</span></p></li>`;
       const waiting = k > sendIdx && k < backIdx;
       const mainSlot = r.lane === "main" ? slotHTML(r, mode)
-        : waiting ? `<span class="wait">${waitShown ? "" : esc(TH.waiting)}</span>` : "";
+        // The "waiting" label is only drawn: read aloud, it would run into the subagent's row beside it,
+        // and the arrows and the paragraph below the figure say that the main conversation waited.
+        : waiting ? `<span class="wait" aria-hidden="true">${waitShown ? "" : esc(TH.waiting)}</span>` : "";
       if (waiting && r.lane === "sub") waitShown = true;
       const subSlot = r.lane === "sub" ? slotHTML(r, mode) : "";
       return `<li class="row r-call" data-lane="${r.lane}"><div class="slot s-main${waiting ? " is-wait" : ""}">${mainSlot}</div><div class="slot s-sub">${subSlot}</div></li>`;
@@ -264,16 +270,38 @@
     tl.querySelectorAll(".r-call").forEach((li, j) => {
       const r = callRows[j];
       const slot = li.querySelector(`.s-${r.lane}`);
-      slot.querySelector(".bar-wrap").innerHTML = barHTML(r, mode);
+      const wrap = slot.querySelector(".bar-wrap");
+      // The old parts stay on top as a copy and fade out over the new ones, row after row: a dissolve
+      // from one colouring to the other, with nothing moving. Under reduced motion the swap is instant.
+      const ghost = Mo.reduced() ? null : document.createElement("div");
+      if (ghost) {
+        ghost.className = "bar-ghost";
+        ghost.setAttribute("aria-hidden", "true");
+        [...wrap.children].filter((el) => !el.classList.contains("bar-ghost")).forEach((el) => ghost.appendChild(el));
+      }
+      wrap.innerHTML = barHTML(r, mode);
       slot.querySelector("[data-sr]").textContent = srOf(r, mode);
-      Mo.play(slot.querySelector(".bar"), [{ opacity: 0.35 }, { opacity: 1 }], { duration: Mo.dur.base, delay: j * 25 });
+      if (!ghost) return;
+      wrap.appendChild(ghost);
+      const a = Mo.play(ghost, [{ opacity: 1 }, { opacity: 0 }], { duration: Mo.dur.slow, delay: j * 30, easing: Mo.ease.inOut, fill: "both" });
+      if (a) a.finished.then(() => ghost.remove(), () => ghost.remove());
+      else ghost.remove();
     });
-    legend(mode);
+    legend(mode, true);
   }
-  function legend(mode) {
-    const L = TH.legend;
-    const items = mode === "cache" ? [["k-cached", L.cached], ["k-fresh", L.fresh], ["k-out", L.out]] : [["k-sys", L.sys], ["k-model", L.model], ["k-back", L.back]];
-    $("threads-legend").innerHTML = items.map(([k, label]) => `<span><i class="sw ${k}" aria-hidden="true"></i>${esc(label)}</span>`).join("");
+  // Both keys are drawn in the same place and only the current one shows, so the figure keeps its
+  // height whichever is longer at the reader's width.
+  const L = TH.legend;
+  const KEYS = { kind: [["k-sys", L.sys], ["k-model", L.model], ["k-back", L.back]], cache: [["k-cached", L.cached], ["k-fresh", L.fresh], ["k-out", L.out]] };
+  $("threads-legend").innerHTML = Object.keys(KEYS).map((m) => `<div class="lg" data-mode="${m}">${KEYS[m].map(([k, label]) =>
+    `<span><i class="sw ${k}" aria-hidden="true"></i>${esc(label)}</span>`).join("")}</div>`).join("");
+  function legend(mode, animate) {
+    $("threads-legend").querySelectorAll(".lg").forEach((g) => {
+      const on = g.dataset.mode === mode;
+      g.classList.toggle("is-off", !on);
+      if (on) g.removeAttribute("aria-hidden"); else g.setAttribute("aria-hidden", "true");
+      if (on && animate) Mo.enter(g, { y: 0, duration: Mo.dur.slow });
+    });
   }
   $("threads-mode").insertAdjacentHTML("beforeend", ["kind", "cache"].map((m, i) =>
     `<label class="seg-opt"><input type="radio" name="threads-mode" value="${m}"${i ? "" : " checked"}><span>${esc(TH.modes[m])}</span></label>`).join(""));
@@ -388,7 +416,11 @@
       Mo.enter([...rest], { y: 2, delay: 220 + k * 70 });
     });
   });
-  Mo.reveal([document.querySelector(".handoff"), $("handback-card"), document.querySelector(".split-wrap"), document.querySelector(".stats")]);
+  Mo.reveal([document.querySelector(".handoff"), $("handback-card"), document.querySelector(".stats")]);
+  // The token table's bars grow from their left edge, row by row, as it comes into view.
+  Mo.reveal(document.querySelector(".split-wrap"), (el) => {
+    el.querySelectorAll("tbody tr").forEach((tr, k) => Mo.grow([...tr.querySelectorAll(".sb i")], { delay: 160 + k * 90, stagger: 50, duration: Mo.dur.reveal }));
+  });
 
   // Any of these that scrolls at the reader's width can be reached and scrolled by keyboard.
   U.watchScrollBoxes(".card pre");
