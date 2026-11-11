@@ -156,7 +156,7 @@ async function states(p, { name, shot, problems, dir }) {
   await p.locator(".embed-note").scrollIntoViewIfNeeded();
   await shot("embed-note", ".embed-note");
   const code = await p.locator("#embed-code").textContent();
-  if (!code.includes("embed.html#opus-bash-rule")) problems.push(`embed snippet doesn't follow the setting: ${code}`);
+  if (!code.includes("/playground/embed#opus-bash-rule")) problems.push(`embed snippet doesn't follow the setting: ${code}`);
 
   // The overview: one row per setting; a row switches the playground.
   await p.locator("#overview").scrollIntoViewIfNeeded();

@@ -22,7 +22,7 @@ const punctuation = (p) => p.evaluate(() => {
 async function states(p, ctx) {
   await en.states(p, ctx);
   const code = await p.locator("#embed-code").textContent();
-  if (!code.includes("/zh/playground/embed.html#")) ctx.problems.push(`embed snippet isn't the Chinese embed: ${code}`);
+  if (!code.includes("/zh/playground/embed#")) ctx.problems.push(`embed snippet isn't the Chinese embed: ${code}`);
   (await punctuation(p)).forEach((b) => ctx.problems.push(`punctuation: ASCII in ${b}`));
 }
 

@@ -76,7 +76,8 @@
 
   // ---------- the playground ----------
   // The embed next to this page, from the site's root (zh/playground/embed.html on the Chinese page).
-  const embedPath = new URL("embed.html", location.href).href.slice(new URL(ROOT, location.href).href.length);
+  // The host serves pages without ".html" (it redirects embed.html to embed), so the snippet skips that hop.
+  const embedPath = new URL("embed.html", location.href).href.slice(new URL(ROOT, location.href).href.length).replace(/\.html$/, "");
   // The height fits the embed with its runs side by side (about 1,920 px at its narrowest, 660 px wide, all
   // steps closed); in a narrower column the runs stack and the frame scrolls inside, as embedNote.p1 says.
   const snippet = (combo) => {
