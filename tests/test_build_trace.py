@@ -349,6 +349,87 @@ class BuildTraceTest(unittest.TestCase):
             self.assertNotEqual(r.returncode, 0)
             self.assertIn("--after needs --session", r.stderr)
 
+    def subagent_args(self, tmp, drop=None):
+        """A run whose main thread hands app.py to a subagent that edits it, then edits it again itself.
+        drop: a message id whose stream event is left out (as without --forward-subagent-text)."""
+        rec, fixture = tmp / "rec", tmp / "fixture"
+        for d in (rec, fixture):
+            d.mkdir(exist_ok=True)
+        (fixture / "app.py").write_bytes(BUGGY)
+        (rec / "app.py").write_bytes(b"def f():\n    return 3\n")
+        raw, session, agent = (write_sample(tmp, rec, DATA / n) for n in
+                               ("subagent-run.jsonl", "subagent-session.jsonl", "subagent-agent-a1.jsonl"))
+        if drop:
+            raw.write_text("".join(l for l in raw.read_text(encoding="utf-8").splitlines(True) if drop not in l),
+                           encoding="utf-8", newline="\n")
+        # Claude Code keeps a subagent's records in <session id>/subagents/agent-<agent id>.jsonl.
+        sub = tmp / "subagent-session" / "subagents"
+        sub.mkdir(parents=True, exist_ok=True)
+        agent.replace(sub / "agent-a1.jsonl")
+        out = tmp / "data" / "trace-sub.json"
+        out.parent.mkdir(exist_ok=True)
+        return out, [raw, out, rec, "--prompt", "Fix it.", "--alias", "~/app", "--session", session,
+                     "--fixture", fixture, "--files-out", tmp / "files"]
+
+    def test_subagent_threads_apart(self):
+        with tmpdir() as t:
+            tmp = pathlib.Path(t)
+            out, args = self.subagent_args(tmp)
+            r = run_builder(*args)
+            # Replay: the main thread's Edit only applies after the subagent's, so the order is kept.
+            self.assertEqual(r.returncode, 0, r.stderr)
+            text = out.read_text(encoding="utf-8")
+            trace = json.loads(text)
+            # calls is the main thread only, with its own deltas.
+            calls = trace["calls"]
+            self.assertEqual([c["context_tokens"] for c in calls], [1003, 1082, 1091])
+            self.assertEqual([c["added_since_previous"] for c in calls], [None, 79, 9])
+            self.assertEqual([c["output_tokens"] for c in calls], [20, 30, 20])
+            self.assertEqual(calls[0]["output"][1]["result"]["text"], "  Fixed the sign in ~/app/app.py.")
+            (sa,) = trace["subagents"]
+            self.assertEqual({k: sa[k] for k in ("tool_use_id", "agent_id", "subagent_type", "description",
+                                                 "prompt", "model", "status", "t_ms", "end_t_ms", "report")},
+                             {"tool_use_id": "tu_agent", "agent_id": "a1", "subagent_type": "general-purpose",
+                              "description": "Fix app.py", "prompt": "In ~/app, fix the sign in app.py.",
+                              "model": "claude-test", "status": "completed", "t_ms": 1100, "end_t_ms": 3100,
+                              "report": "Fixed the sign in ~/app/app.py."})
+            self.assertEqual([(c["context_tokens"], c["added_since_previous"], c["output_tokens"])
+                              for c in sa["calls"]], [(502, None, 50), (541, 39, 40)])
+            self.assertEqual(sa["totals"], {"model_calls": 2, "output_tokens": 90, "cache_read_tokens": 500,
+                                            "cache_write_tokens": 540, "total_tokens": 581, "tool_uses": 1,
+                                            "duration_s": 2.0})
+            # Totals: the whole run, then each side. result.usage is the main thread's alone.
+            self.assertEqual(trace["totals"], {
+                "model_calls": 5, "output_tokens": 160, "cache_read_tokens": 2580, "cache_write_tokens": 1630,
+                "cost_usd": 0.04, "duration_s": 5.0, "ttft_ms": 1000,
+                "main": {"model_calls": 3, "output_tokens": 70, "cache_read_tokens": 2080, "cache_write_tokens": 1090},
+                "subagents": {"model_calls": 2, "output_tokens": 90, "cache_read_tokens": 500,
+                              "cache_write_tokens": 540}})
+            self.assertEqual(trace["tool_aliases"], {"Task": "Agent"})
+            self.assertEqual(trace["subagent_stats"], {"spawned": 1, "completed": 1, "failed": 0, "max_depth": 1,
+                                                       "by_type": {"general-purpose": 1}})
+            # Redacted; the task's output_file (temp folder, session id) and the session files' extras stay out.
+            for s in (getpass.getuser(), str(tmp / "rec"), "sess-0001", "output_file", "Temp", "SECRET", "task_progress"):
+                self.assertNotIn(s, text)
+
+            # Subagent output tokens that don't add up to modelUsage minus the main thread's stop the build.
+            agent = tmp / "subagent-session" / "subagents" / "agent-a1.jsonl"
+            agent.write_text(agent.read_text(encoding="utf-8").replace('"output_tokens":40', '"output_tokens":41'),
+                             encoding="utf-8", newline="\n")
+            r = run_builder(*args)
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("output tokens add up to 91", r.stderr)
+
+    def test_subagent_last_call_missing_fails(self):
+        """Without --forward-subagent-text the subagent's last (text-only) call has no stream event."""
+        with tmpdir() as t:
+            out, args = self.subagent_args(pathlib.Path(t), drop='"id":"msg_s2"')
+            for a in (args, args[:args.index("--session")]):  # with and without the session file
+                r = run_builder(*a)
+                self.assertNotEqual(r.returncode, 0)
+                self.assertIn("--forward-subagent-text", r.stderr)
+                self.assertFalse(out.exists())
+
     def test_committed_traces_keep_existing_fields(self):
         """Rebuilding 01 and 02-run1..3 keeps every field and value; only new fields may appear."""
         bt = load_builder()

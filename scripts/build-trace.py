@@ -27,12 +27,34 @@ Its totals are that run's own (the result's usage and model_usage_since_last_res
 cumulative total_cost_usd. The stream doesn't hold the prompt, so it is read from the session file:
 the user record the run's first model call follows from.
 
+Subagents (the Agent tool; system/init.tools calls it Task, so trace.tool_aliases = {"Task": "Agent"}).
+Every stream event of a subagent carries parent_tool_use_id = the id of the Agent call that started
+it. trace.calls holds the main thread only; each subagent gets an entry in trace.subagents, in the
+order they started, so a page can draw the two threads side by side:
+  {tool_use_id   the Agent step in the thread that started it (its result.text is the hand-back the
+                 main model saw: tools line, frame and the report indented),
+   agent_id, subagent_type, description, prompt (as written by the main model), model, spawn_depth,
+   status, t_ms (task_started), end_t_ms (the hand-back's arrival),
+   calls         same fields as trace.calls; context_tokens and added_since_previous are its own,
+   report        the subagent's last call's text, as it wrote it (not indented),
+   totals        {model_calls, output_tokens, cache_read_tokens, cache_write_tokens: sums of its calls;
+                  total_tokens, tool_uses, duration_s: Claude Code's own figures from the hand-back}}
+trace.totals is then the whole run (model_calls, output_tokens and cache figures from modelUsage,
+cost_usd, duration_s, ttft_ms) plus totals.main (from result.usage, which is the main thread's alone)
+and totals.subagents (modelUsage minus that). The record has no per-thread cost, so there is none
+here. trace.subagent_stats keeps spawned, completed, failed, max_depth and by_type. With --session,
+each subagent's output_tokens come from <session>/subagents/agent-<agent_id>.jsonl, next to the
+session file. The build stops if a subagent's last call is missing from the stream (recorded without
+--forward-subagent-text), if the subagents' per-call input, cache and (with --session) output tokens
+don't add up to modelUsage minus result.usage, or for a background subagent (not supported yet).
+The task_* events' output_file (a temp path with the session id) is never copied.
+
 Timing: t_ms is ms since the start of the session. With --times (written by scripts/record.py) it is
 the moment each line arrived; without it, it comes from the events' own timestamps, and the start is
 the first model event minus the recorded time to first token (ttft_ms).
 
 --fixture copies the fixture to <files-out>/before/, replays the recorded Edit and Write calls (of the
-run, then of the --then and --after segments, in that order) onto <files-out>/after/, and fails unless after/ matches the recording folder byte for byte (so a file
+run's threads and the --then and --after segments, in the order their results arrived) onto <files-out>/after/, and fails unless after/ matches the recording folder byte for byte (so a file
 changed some other way, e.g. by Bash, is caught). node_modules, __pycache__ and dotfiles are ignored.
 
 Before writing, a leak check fails the build if any string in the trace still holds the recording
@@ -116,15 +138,65 @@ def make_clock(events, result, times):
         sys.exit("The result event has no ttft_ms, so the start time can't be worked out. Record with --times.")
     first = next(e for _, e in events if e.get("type") == "assistant")
     start = parse_ts(first["timestamp"]) - datetime.timedelta(milliseconds=result["ttft_ms"])
-    return start, "event_timestamps", lambda i, e: round((parse_ts(e["timestamp"]) - start).total_seconds() * 1000)
+
+    def t(i, e):
+        # System events (task_started) have no timestamp; use the next event that has one.
+        stamped = e if "timestamp" in e else next(x for j, x in events if j >= i and "timestamp" in x)
+        return round((parse_ts(stamped["timestamp"]) - start).total_seconds() * 1000)
+    return start, "event_timestamps", t
 
 
 # --- building ----------------------------------------------------------------------------------
 
 def collect_calls(events, t, result):
     """{message id: call}, one per model call, in order. Keeps the event order (a tool result can
-    arrive before the next tool_use of the same model call). Marks the denied tool steps."""
+    arrive before the next tool_use of the same model call). Marks the denied tool steps.
+    For one thread only: a stream with subagent events goes through collect_threads."""
+    if any(e.get("parent_tool_use_id") for _, e in events):
+        sys.exit("This recording segment has subagent events; only the run itself (not --then/--after) "
+                 "can hold subagents so far.")
     denied = {d["tool_use_id"] for d in result.get("permission_denials") or []}
+    by_id, pending = thread_calls(events, t, denied)
+    check_denials(denied, pending)
+    set_deltas(by_id)
+    return by_id
+
+
+def collect_threads(events, t, result):
+    """(main {message id: call}, {Agent tool_use id: {message id: call}}). Every assistant and user event
+    of a subagent carries parent_tool_use_id = the id of the Agent tool_use that started it; the main
+    thread's have none. Grouped by that id, not by position, so parallel subagents don't mix."""
+    denied = {d["tool_use_id"] for d in result.get("permission_denials") or []}
+    main, subs = [], {}
+    for i, e in events:
+        ptu = e.get("parent_tool_use_id") if e.get("type") in ("assistant", "user") else None
+        (subs.setdefault(ptu, []) if ptu else main).append((i, e))
+    by_id, pending = thread_calls(main, t, denied)
+    set_deltas(by_id)
+    sub_calls = {}
+    for ptu, evs in subs.items():
+        sub_calls[ptu], p = thread_calls(evs, t, denied)
+        set_deltas(sub_calls[ptu])
+        pending |= p
+    check_denials(denied, pending)
+    return by_id, sub_calls
+
+
+def check_denials(denied, pending):
+    # The denial is read from the result's list, never guessed from the error text.
+    unmatched = [d for d in denied if d not in pending or pending[d]["result"] is None]
+    if unmatched:
+        sys.exit(f"permission_denials names tool calls with no tool result in the stream: {unmatched}")
+
+
+def set_deltas(by_id):
+    calls = list(by_id.values())
+    for i, call in enumerate(calls):
+        call["added_since_previous"] = None if i == 0 else call["context_tokens"] - calls[i - 1]["context_tokens"]
+
+
+def thread_calls(events, t, denied):
+    """({message id: call}, {tool_use_id: step}) for the events of one thread."""
     by_id = {}
     pending = {}  # tool_use_id -> step
     for i, e in events:
@@ -162,15 +234,7 @@ def collect_calls(events, t, result):
                                                            "is_error": bool(c.get("is_error")),
                                                            "denied": c["tool_use_id"] in denied,
                                                            "t_ms": t(i, e)}
-    # The denial is read from the result's list, never guessed from the error text.
-    unmatched = [d for d in denied if d not in pending or pending[d]["result"] is None]
-    if unmatched:
-        sys.exit(f"permission_denials names tool calls with no tool result in the stream: {unmatched}")
-
-    calls = list(by_id.values())
-    for i, call in enumerate(calls):
-        call["added_since_previous"] = None if i == 0 else call["context_tokens"] - calls[i - 1]["context_tokens"]
-    return by_id
+    return by_id, pending
 
 
 def final_usage(by_id, session, result, whole=True):
@@ -184,6 +248,14 @@ def final_usage(by_id, session, result, whole=True):
 
 whole=False is for the compaction segment: its summarising call shows no assistant event in the
 stream, so the calls that do can only add up to at most the result's output_tokens."""
+    set_output_tokens(by_id, session)
+    total = sum(c["output_tokens"] for c in by_id.values())
+    if total > result["usage"]["output_tokens"] or (whole and total != result["usage"]["output_tokens"]):
+        sys.exit(f"Per-call output tokens add up to {total}, but the result says {result['usage']['output_tokens']}.")
+
+
+def set_output_tokens(by_id, session):
+    """Copy each call's final output_tokens from the session file's records (see final_usage)."""
     final = {r["message"]["id"]: r["message"]["usage"] for r in session if r.get("type") == "assistant"}
     for mid, call in by_id.items():
         u = final.get(mid)
@@ -196,9 +268,6 @@ stream, so the calls that do can only add up to at most the result's output_toke
                 call["cache_write_5m"], call["cache_write_1h"]):
             sys.exit(f"The session file's usage for {mid} doesn't match the stream's.")
         call["output_tokens"] = u["output_tokens"]
-    total = sum(c["output_tokens"] for c in by_id.values())
-    if total > result["usage"]["output_tokens"] or (whole and total != result["usage"]["output_tokens"]):
-        sys.exit(f"Per-call output tokens add up to {total}, but the result says {result['usage']['output_tokens']}.")
 
 
 def segment_clock(events, times, start):
@@ -331,17 +400,133 @@ def build_after(events, t, session, previous_result):
     }
 
 
-def build(events, prompt, times=None, run=None, session=None, then=None, after=None):
+AGENT_TOOLS = ("Agent", "Task")  # the tool is Agent in the steps, but system/init.tools lists it as Task
+TOKEN_KEYS = ("inputTokens", "outputTokens", "cacheReadInputTokens", "cacheCreationInputTokens")
+NO_FORWARD = " Record with --forward-subagent-text: without it the stream has no event for that call."
+
+
+def build_subagents(events, t, result, main_by_id, sub_by_id, sub_session=None):
+    """(trace.subagents in the order they started, {"main": totals, "subagents": totals}, whole-run sums).
+
+    Each subagent's calls must end with the call whose usage the Agent result reports as the subagent's
+    last (tool_use_result.usage); without --forward-subagent-text that call is missing and the build stops.
+    sub_session(agent_id) gives the records of that subagent's session file, for the final output tokens.
+    The subagents' per-call input and cache figures must add up to the run's modelUsage minus
+    result.usage (which is the main thread's alone); their output tokens too, with the session files."""
+    steps = {s["id"]: s for c in list(main_by_id.values()) + [c for b in sub_by_id.values() for c in b.values()]
+             for s in c["output"] if s["kind"] == "tool"}
+    started = {e["tool_use_id"]: (i, e) for i, e in events
+               if e.get("subtype") == "task_started" and e.get("task_type") == "local_agent"}
+    handback = {}  # Agent tool_use id -> the Agent result's tool_use_result (metadata, not what the model saw)
+    for _, e in events:
+        if e.get("type") == "user" and isinstance(e["message"]["content"], list):
+            for c in e["message"]["content"]:
+                if c.get("type") == "tool_result" and c["tool_use_id"] in sub_by_id:
+                    handback[c["tool_use_id"]] = e.get("tool_use_result")
+
+    out = []
+    for ptu in sorted(sub_by_id, key=lambda p: started[p][0] if p in started else -1):
+        step = steps.get(ptu)
+        if step is None or step["tool"] not in AGENT_TOOLS:
+            sys.exit(f"Subagent events name {ptu}, which is no {'/'.join(AGENT_TOOLS)} tool call in the stream.")
+        if ptu not in started:
+            sys.exit(f"No system/task_started event for the subagent of {ptu}.")
+        i_st, st = started[ptu]
+        if st.get("is_backgrounded"):
+            sys.exit(f"The subagent of {ptu} ran in the background; that isn't supported yet.")
+        hb = handback.get(ptu)
+        if not isinstance(hb, dict) or "usage" not in hb or step["result"] is None:
+            sys.exit(f"The Agent call {ptu} has no hand-back with the subagent's usage (failed or killed?).")
+        if hb.get("agentId", st["task_id"]) != st["task_id"]:
+            sys.exit(f"task_started and the hand-back of {ptu} name different agents.")
+        if st["prompt"] != step["input"].get("prompt"):
+            sys.exit(f"The subagent of {ptu} was started with a prompt other than the one in the Agent call.")
+        by_id = sub_by_id[ptu]
+        calls = list(by_id.values())
+        hu, last = hb["usage"], calls[-1] if calls else None
+        if last is None or (hu["input_tokens"], hu["cache_read_input_tokens"], hu["cache_creation_input_tokens"]) != (
+                last["input_tokens"], last["cached_tokens"], last["new_tokens"] - last["input_tokens"]):
+            sys.exit(f"The last model call of subagent {st['task_id']} isn't in the stream." + NO_FORWARD)
+        report = "\n".join(o["text"] for o in last["output"] if o["kind"] == "text")
+        if not report:
+            sys.exit(f"The last model call of subagent {st['task_id']} holds no text." + NO_FORWARD)
+        if sub_session is not None:
+            records = sub_session(st["task_id"])
+            extra = {r["message"]["id"] for r in records if r.get("type") == "assistant"} - set(by_id)
+            if extra:
+                sys.exit(f"Subagent {st['task_id']}'s session file has model calls the stream lacks: {sorted(extra)}."
+                         + NO_FORWARD)
+            set_output_tokens(by_id, records)
+        out.append({
+            "tool_use_id": ptu,
+            "agent_id": st["task_id"],
+            "subagent_type": st["subagent_type"],
+            "description": st["description"],
+            "prompt": st["prompt"],
+            "model": hb.get("resolvedModel"),
+            "spawn_depth": st.get("spawn_depth"),
+            "status": hb.get("status"),
+            "t_ms": t(i_st, st),
+            "end_t_ms": step["result"]["t_ms"],
+            "calls": calls,
+            "report": report,
+            "totals": {
+                "model_calls": len(calls),
+                "output_tokens": sum(c["output_tokens"] for c in calls) if sub_session is not None else None,
+                "cache_read_tokens": sum(c["cached_tokens"] for c in calls),
+                "cache_write_tokens": sum(c["new_tokens"] - c["input_tokens"] for c in calls),
+                "total_tokens": hb.get("totalTokens"),
+                "tool_uses": hb.get("totalToolUseCount"),
+                "duration_s": round(hb["totalDurationMs"] / 1000, 1) if "totalDurationMs" in hb else None,
+            },
+        })
+
+    mu = result.get("model_usage_since_last_result") or result.get("modelUsage")
+    if not mu:
+        sys.exit("The result has no modelUsage, so the subagents' share can't be checked.")
+    whole = {k: sum(m[k] for m in mu.values()) for k in TOKEN_KEYS}
+    ru = result["usage"]
+    sub_calls = [c for s in out for c in s["calls"]]
+    want = (whole["inputTokens"] - ru["input_tokens"], whole["cacheReadInputTokens"] - ru["cache_read_input_tokens"],
+            whole["cacheCreationInputTokens"] - ru["cache_creation_input_tokens"])
+    got = (sum(c["input_tokens"] for c in sub_calls), sum(c["cached_tokens"] for c in sub_calls),
+           sum(c["new_tokens"] - c["input_tokens"] for c in sub_calls))
+    if got != want:
+        sys.exit(f"The subagents' calls read {got} (input, cache read, cache write), but modelUsage minus the "
+                 f"main thread's usage is {want}. A call is missing, or something else ran.")
+    sub_out = whole["outputTokens"] - ru["output_tokens"]
+    if sub_session is not None and sum(c["output_tokens"] for c in sub_calls) != sub_out:
+        sys.exit(f"The subagents' output tokens add up to {sum(c['output_tokens'] for c in sub_calls)}, "
+                 f"but modelUsage minus the main thread's is {sub_out}.")
+    threads = {
+        "main": {"model_calls": len(main_by_id), "output_tokens": ru["output_tokens"],
+                 "cache_read_tokens": ru["cache_read_input_tokens"],
+                 "cache_write_tokens": ru["cache_creation_input_tokens"]},
+        "subagents": {"model_calls": len(sub_calls), "output_tokens": sub_out,
+                      "cache_read_tokens": want[1], "cache_write_tokens": want[2]},
+    }
+    stats = result.get("subagent_stats")
+    if stats and stats.get("spawned") != len(out):
+        sys.exit(f"subagent_stats says {stats.get('spawned')} subagents were spawned; the stream holds {len(out)}.")
+    return out, threads, whole
+
+
+def build(events, prompt, times=None, run=None, session=None, then=None, after=None, sub_session=None):
     """The trace before redaction. session: the session file's records. then: (events, times) of a
-    manual /compact recorded on the same session. after: (events, times) of a prompt resumed after it."""
+    manual /compact recorded on the same session. after: (events, times) of a prompt resumed after it.
+    sub_session(agent_id): the records of a subagent's session file (with session)."""
     init = next(e for _, e in events if e.get("type") == "system" and e.get("subtype") == "init")
     result = next(e for _, e in events if e.get("type") == "result")
     started_at, time_source, t = make_clock(events, result, times)
 
-    by_id = collect_calls(events, t, result)
+    by_id, sub_by_id = collect_threads(events, t, result)
     if session is not None:
         final_usage(by_id, session, result)
     calls = list(by_id.values())
+    subagents = None
+    if sub_by_id:
+        subagents, threads, whole = build_subagents(events, t, result, by_id, sub_by_id,
+                                                    sub_session if session is not None else None)
 
     trace = {
         "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. "
@@ -355,16 +540,29 @@ def build(events, prompt, times=None, run=None, session=None, then=None, after=N
     }
     if run:
         trace["run"] = {"index": run[0], "of": run[1]}
-    trace |= {
-        "tools_available": init["tools"],
-        "calls": calls,
-        # On a resumed session total_cost_usd adds up the whole conversation; this run's own cost is in
-        # model_usage_since_last_result. For a fresh run the two are the same.
-        "totals": run_totals(calls, result,
-                             sum(m["costUSD"] for m in result["model_usage_since_last_result"].values())
-                             if result.get("model_usage_since_last_result") else result["total_cost_usd"]),
-        "final_answer": result["result"],
-    }
+    trace["tools_available"] = init["tools"]
+    used = {st["tool"] for c in calls + [c for sa in subagents or [] for c in sa["calls"]]
+            for st in c["output"] if st["kind"] == "tool"}
+    if "Agent" in used and "Task" in init["tools"] and "Agent" not in init["tools"]:
+        trace["tool_aliases"] = {"Task": "Agent"}  # init.tools names the Agent tool Task
+    trace["calls"] = calls
+    if subagents:
+        trace["subagents"] = subagents
+    # On a resumed session total_cost_usd adds up the whole conversation; this run's own cost is in
+    # model_usage_since_last_result. For a fresh run the two are the same.
+    totals = run_totals(calls, result,
+                        sum(m["costUSD"] for m in result["model_usage_since_last_result"].values())
+                        if result.get("model_usage_since_last_result") else result["total_cost_usd"])
+    if subagents:
+        # result.usage is the main thread's alone; modelUsage (and the cost) covers every thread.
+        totals |= {"model_calls": threads["main"]["model_calls"] + threads["subagents"]["model_calls"],
+                   "output_tokens": whole["outputTokens"], "cache_read_tokens": whole["cacheReadInputTokens"],
+                   "cache_write_tokens": whole["cacheCreationInputTokens"]} | threads
+    trace["totals"] = totals
+    trace["final_answer"] = result["result"]
+    if subagents and result.get("subagent_stats"):
+        trace["subagent_stats"] = {k: result["subagent_stats"].get(k)
+                                   for k in ("spawned", "completed", "failed", "max_depth", "by_type")}
     previous = result
     if then:
         then_events, then_times = then
@@ -464,9 +662,10 @@ def rel_path(file_path, variants):
 
 
 def segment_calls(trace):
-    """Every model call in the order it happened: the run, the compaction segment, the prompt after it."""
-    return (trace["calls"] + trace.get("compaction", {}).get("calls", [])
-            + trace.get("after_compaction", {}).get("calls", []))
+    """Every model call: the run's main thread and its subagents, the compaction segment, the prompt
+    after it. replay puts their edits in the order they happened."""
+    return (trace["calls"] + [c for s in trace.get("subagents", []) for c in s["calls"]]
+            + trace.get("compaction", {}).get("calls", []) + trace.get("after_compaction", {}).get("calls", []))
 
 
 def replay(calls, fixture, files_out, rec_dir, variants):
@@ -482,6 +681,9 @@ def replay(calls, fixture, files_out, rec_dir, variants):
             shutil.copyfile(src, d / rel)
 
     steps = [s for c in calls for s in c["output"] if s["kind"] == "tool" and s["tool"] in ("Edit", "Write")]
+    # In the order they were applied: an edit's result arrives once it is done. That keeps the true order
+    # across threads (a subagent edits while the main thread waits on its Agent call) and segments.
+    steps.sort(key=lambda s: (s["result"] or {}).get("t_ms", s.get("t_ms", 0)))
     for s in steps:
         if s["result"] and s["result"]["is_error"]:
             continue
@@ -537,7 +739,15 @@ def main(argv=None):
         after_events, after_lines = read_events(a.after)
         after = (after_events, read_times(a.after_times, a.after, after_lines))
     session = [e for _, e in read_events(a.session)[0]] if a.session else None
-    trace = build(events, prompt, times, (a.run, a.runs) if a.run is not None else None, session, then, after)
+
+    def sub_session(agent_id):
+        # Claude Code keeps each subagent's own records next to the session file: <id>/subagents/agent-<agent id>.jsonl
+        path = pathlib.Path(a.session).with_suffix("") / "subagents" / f"agent-{agent_id}.jsonl"
+        if not path.exists():
+            sys.exit(f"No session file for subagent {agent_id}: {path}")
+        return [e for _, e in read_events(path)[0]]
+    trace = build(events, prompt, times, (a.run, a.runs) if a.run is not None else None, session, then, after,
+                  sub_session)
 
     if a.fixture:
         problems = replay(segment_calls(trace), a.fixture, a.files_out, a.rec_dir, variants)
@@ -562,6 +772,13 @@ def main(argv=None):
         f.write("window.TRACE = " + json.dumps(trace, ensure_ascii=False) + ";\n")
     print("calls", len(trace["calls"]), [c["context_tokens"] for c in trace["calls"]])
     print("denied", sum(1 for c in trace["calls"] for s in c["output"] if s["kind"] == "tool" and (s["result"] or {}).get("denied")))
+    for sa in trace.get("subagents", []):
+        print("subagent", sa["subagent_type"], len(sa["calls"]), [c["context_tokens"] for c in sa["calls"]],
+              "output", [c["output_tokens"] for c in sa["calls"]], "report", len(sa["report"]), "chars")
+    if "subagents" in trace:
+        tt = trace["totals"]
+        print("totals: main", tt["main"], "subagents", tt["subagents"], "all calls", tt["model_calls"],
+              "output", tt["output_tokens"], "cost", tt["cost_usd"])
     if "compaction" in trace:
         comp = trace["compaction"]
         print("compaction", comp["pre_tokens"], "->", comp["post_tokens"], "cost", comp["cost_usd"],

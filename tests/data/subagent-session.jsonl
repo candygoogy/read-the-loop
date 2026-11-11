@@ -1,0 +1,4 @@
+{"type":"session-owner","accountUuid":"SECRET-ACCOUNT","sessionId":"sess-0001"}
+{"type":"assistant","message":{"id":"msg_m1","usage":{"input_tokens":3,"cache_read_input_tokens":0,"cache_creation_input_tokens":1000,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":1000},"output_tokens":20}},"isSidechain":false}
+{"type":"assistant","message":{"id":"msg_m2","usage":{"input_tokens":2,"cache_read_input_tokens":1000,"cache_creation_input_tokens":80,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":80},"output_tokens":30}},"isSidechain":false}
+{"type":"assistant","message":{"id":"msg_m3","usage":{"input_tokens":1,"cache_read_input_tokens":1080,"cache_creation_input_tokens":10,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":10},"output_tokens":20}},"isSidechain":false}
