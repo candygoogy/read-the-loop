@@ -1,0 +1,205 @@
+/* Chapter 6: subagents. Builds on ../style.css (tokens, grid, prose, cards, legend, stats, colophon,
+   chapter navigation); only what this chapter adds lives here. The bars use chapter 2's kinds
+   (--sys set-up, --model what the model wrote, --result what came back, hatched) and chapter 3's
+   cache colours. The subagent's column gets no colour of its own: it sits on a faint wash of --sys,
+   the colour of set-up text, so it reads as a second lane without looking like a fifth kind of text.
+   Text on the wash (#edece8 light, #282623 dark): --ink-2 is 8.3:1 and 8.0:1, --model-text 5.0:1
+   and 4.9:1, --result-text 5.2:1 and 6.0:1. */
+:root {
+  --lane-sub: color-mix(in srgb, var(--sys) 9%, var(--card));
+  --lane-gap: clamp(0.75rem, 2.5vw, 1.75rem);
+  --bar-h: 20px;
+}
+
+/* ---------- the prompt ---------- */
+.ask { margin: 1.5rem 0; }
+.ask-head { margin: 0 0 0.4rem; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.ask .prompt { margin: 0; }
+
+/* ---------- a figure panel ---------- */
+.fig {
+  margin: 1.75rem 0 2rem;
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+}
+.fig-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; margin-bottom: 1.1rem; }
+.fig-title { font: 600 1.15rem/1.3 var(--display); color: var(--ink); }
+.prose .fig p { margin: 0; }
+.prose .fig .fig-readout { margin-top: 1rem; font-size: 1.02rem; line-height: 1.5; color: var(--ink-2); text-wrap: pretty; }
+.fig-readout b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.prose .fig .fig-note { margin-top: 0.6rem; font: 500 0.75rem/1.5 var(--mono); color: var(--ink-2); }
+.fig-legend { margin-top: 1.1rem; }
+
+/* the colour switch (as chapter 4's before / after switch) */
+fieldset.mode { display: inline-flex; margin: 0; padding: 3px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
+.seg-opt { position: relative; display: block; }
+.seg-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg-opt span {
+  display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1rem;
+  font: 600 0.82rem/1.2 var(--mono); color: var(--ink-2); border-radius: 7px; cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.seg-opt span:active { transform: scale(0.97); }
+.seg-opt input:checked + span { background: var(--ink); color: var(--card); }
+.seg-opt input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .seg-opt input:not(:checked) + span:hover { color: var(--ink); background: var(--paper-2); }
+}
+
+/* the kinds of part (chapter 2), and the cache (chapter 3) */
+.k-sys { background: var(--sys); }
+.k-model, .k-wrote { background: var(--model); }
+.k-back { background: var(--tex-teal) var(--result); }
+.k-cached { background: var(--tex-cached) var(--c-cached); }
+.k-fresh { background: var(--c-fresh); }
+.k-out { background: var(--c-out); }
+
+/* ---------- the two lanes ---------- */
+.lanes-head, .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--lane-gap); }
+.lanes-head { font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.lanes-head span { padding: 0.55rem 0.75rem 0.5rem; }
+.lh-sub { background: var(--lane-sub); border-radius: 10px 10px 0 0; }
+/* The subagent's lane: one wash down the whole list, behind its rows and the arrows. */
+.tl {
+  list-style: none; margin: 0; padding: 0 0 0.6rem;
+  background: linear-gradient(90deg, transparent calc(50% + var(--lane-gap) / 2), var(--lane-sub) calc(50% + var(--lane-gap) / 2));
+  border-radius: 0 0 10px 10px;
+}
+.slot { min-width: 0; padding: 0.55rem 0.75rem 0.6rem; }
+.row-l { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 0.6rem; margin-bottom: 0.35rem !important; font: 600 0.76rem/1.35 var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+.row-t { font-weight: 500; color: var(--ink-2); }
+.prose .row-did { margin-top: 0.3rem; font-size: 0.88rem; line-height: 1.4; color: var(--ink-2); }
+.row-did code { font-size: 0.82em; }
+.nw { white-space: nowrap; }
+.prose .row-wrote { margin-top: 0.25rem; font: 500 0.72rem/1.35 var(--mono); color: var(--model-text); }
+
+.bar-wrap { position: relative; }
+.bar { display: flex; height: var(--bar-h); transform-origin: 0 50%; }
+.seg { display: block; height: 100%; flex: none; }
+.seg:first-child { border-radius: 4px 0 0 4px; }
+.seg:last-child { border-radius: 0 4px 4px 0; }
+.seg.k-sys { box-shadow: inset -2px 0 0 var(--card); }
+.r-call[data-lane="sub"] .seg.k-sys { box-shadow: inset -2px 0 0 var(--lane-sub); }
+/* What the subagent's last call wrote: after a gap, outlined in ink, since it was written, not read. */
+.seg.is-wrote { margin-left: 3px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px var(--ink); }
+/* The hand-back, wherever the main conversation carries it: outlined, so it can be followed down. */
+.tl[data-mode="kind"] .seg.is-hb { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.bar-marks { position: relative; height: 1.35rem; }
+.hb-mark {
+  position: absolute; top: 0.2rem; display: flex; align-items: flex-start; gap: 0.3rem;
+  font: 600 0.7rem/1 var(--mono); color: var(--ink); white-space: nowrap;
+}
+.hb-mark::before { content: ""; width: 2px; height: 0.75rem; margin-top: -0.2rem; background: var(--ink); flex: none; }
+.hb-mark.end { flex-direction: row-reverse; }
+
+/* While the subagent works, the main lane only waits: a dashed line down it. */
+.slot.s-main.is-wait { position: relative; min-height: 2.75rem; }
+.slot.s-main.is-wait::before { content: ""; position: absolute; left: 1.1rem; top: 0; bottom: 0; border-left: 2px dashed var(--ink-3); }
+.wait { display: block; padding-left: 1.2rem; font: 500 0.72rem/1.35 var(--mono); color: var(--ink-2); font-style: italic; }
+
+/* The request going out and the report coming back: an arrow across both lanes. */
+.r-arrow { display: block; padding: 0.35rem 0.75rem; }
+.prose .arrow { position: relative; margin: 0; padding: 0 0 0.55rem; font: 600 0.74rem/1.4 var(--mono); text-align: center; }
+.arrow span { display: inline-block; max-width: 34rem; padding: 0 0.5rem; text-wrap: balance; }
+.arrow::before { content: ""; position: absolute; left: 0.35rem; right: 0.35rem; bottom: 0.2rem; height: 2px; background: currentColor; }
+.arrow::after {
+  content: ""; position: absolute; bottom: calc(0.2rem - 4px); width: 0; height: 0;
+  border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+}
+.to-sub .arrow { color: var(--model-text); }
+.to-sub .arrow::after { right: 0; border-left: 8px solid currentColor; }
+.to-main .arrow { color: var(--result-text); }
+.to-main .arrow::after { left: 0; border-right: 8px solid currentColor; }
+
+/* ---------- the handoff ---------- */
+.handoff { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 0.85rem; align-items: start; margin: 1.5rem 0 1.75rem; }
+.prose .handoff p { margin: 0; }
+.task-k { padding: 0.85rem 1rem 0; font: 600 0.68rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.card .task-k + .say { padding-top: 0.35rem; }
+.task-in { list-style: none; margin: 0; padding: 0.35rem 1rem 1rem; font: 400 0.8rem/1.6 var(--mono); color: var(--ink-2); }
+.task-in code { font-size: 1em; color: var(--ink); }
+.prose .card .say.d-h { padding-top: 1rem; font: 650 1.02rem/1.35 var(--display); color: var(--ink); }
+.prose .card .say.d-li { position: relative; padding-left: 2rem; padding-top: 0.35rem; }
+.card .say.d-li::before { content: ""; position: absolute; left: 1.15rem; top: calc(0.35rem + 0.7em); width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); }
+.report .report-body > .say:first-child, .report .report-rest > .say:first-child { padding-top: 0.85rem; }
+.report .report-rest > :last-child, .report:not(.is-folded) .report-body > :last-child { margin-bottom: 1rem; }
+.report .report-rest > .say:last-child { padding-bottom: 1rem; }
+.card-foot { padding: 0.75rem 1rem 0.9rem; border-top: 1px dashed var(--rule); }
+.report.is-folded .report-body { padding-bottom: 0.9rem; }
+.btn {
+  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.1rem 0.6rem; min-height: 2.75rem; padding: 0.4rem 1rem;
+  font: 600 0.82rem/1.25 var(--mono); color: var(--ink); text-align: left;
+  background: var(--card); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+}
+.btn:active { transform: scale(0.97); }
+.btn .bn { font-weight: 500; color: var(--ink-2); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { border-color: var(--ink-3); background: var(--paper-2); }
+}
+.handback { margin: 1.25rem 0 1.5rem; }
+.handback pre { max-height: none; }
+
+/* ---------- tokens by conversation ---------- */
+.split-wrap { margin: 1.25rem 0 1.5rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--card); }
+.split { width: 100%; border-collapse: collapse; font: 400 0.84rem/1.4 var(--mono); }
+.split caption { text-align: left; padding: 0.8rem 0.9rem 0.4rem; font: 600 1.02rem/1.35 var(--display); color: var(--ink); }
+.split th, .split td { padding: 0.6rem 0.9rem; border-top: 1px solid var(--rule); text-align: left; vertical-align: top; }
+.split thead th { font-weight: 600; font-size: 0.74rem; color: var(--ink-2); }
+.split thead td { border-top: 1px solid var(--rule); }
+.split tbody th { font: 400 0.95rem/1.4 var(--body); color: var(--ink); width: 40%; }
+.split td { width: 30%; color: var(--ink); font-variant-numeric: tabular-nums; }
+.sv { display: block; font-weight: 600; }
+.sb { display: block; height: 6px; margin-top: 0.35rem; border-radius: 3px; background: var(--paper-2); overflow: hidden; }
+.sb i { display: block; height: 100%; background: var(--ink-2); border-radius: 3px; }
+.split th:last-child, .split td:last-child { background: var(--lane-sub); }
+.split tr:last-child td:last-child { border-bottom-right-radius: 11px; }
+
+/* ---------- what this run shows ---------- */
+.points { list-style: none; margin: 0.75rem 0 0; padding: 0; counter-reset: pt; }
+.points li { position: relative; padding: 1.1rem 0 0.4rem 2.6rem; border-top: 1px solid var(--rule); counter-increment: pt; }
+.points li::before {
+  content: counter(pt); position: absolute; left: 0; top: 1.15rem;
+  width: 1.75rem; height: 1.75rem; display: grid; place-items: center;
+  font: 600 0.82rem/1 var(--mono); color: var(--card); background: var(--ink); border-radius: 50%;
+}
+.prose .points h3 { margin: 0 0 0.4rem; }
+.prose .points p { margin: 0 0 0.8rem; }
+
+/* ---------- colophon ---------- */
+.flags span { white-space: nowrap; }
+.flags {
+  margin: 0 0 0.85rem; padding: 0.75rem 0.9rem; white-space: normal;
+  font-size: 0.74rem; line-height: 1.6; background: var(--paper-2); border-radius: 8px; color: var(--ink);
+}
+
+/* ---------- narrower ---------- */
+@media (max-width: 48rem) {
+  .handoff { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 30rem) {
+  :root { --bar-h: 16px; --lane-gap: 0.5rem; }
+  .fig { padding: 0.9rem 0.6rem; }
+  .fig-head { flex-direction: column; align-items: flex-start; padding: 0 0.15rem; }
+  .seg-opt span { padding: 0 0.8rem; }
+  .lanes-head span { padding: 0.5rem 0.5rem 0.45rem; font-size: 0.66rem; }
+  .slot { padding: 0.5rem 0.5rem 0.55rem; }
+  .row-l { font-size: 0.7rem; }
+  .prose .row-did { font-size: 0.8rem; }
+  .prose .row-wrote { font-size: 0.66rem; }
+  .hb-mark { font-size: 0.64rem; }
+  .r-arrow { padding: 0.3rem 0.5rem; }
+  .prose .arrow { font-size: 0.7rem; }
+  .slot.s-main.is-wait::before { left: 0.9rem; }
+  .split th, .split td { padding: 0.55rem 0.6rem; }
+  .split tbody th { font-size: 0.88rem; }
+  .points li { padding-left: 2.3rem; }
+}
+
+/* Forced colours: the parts keep apart by outlines. */
+@media (forced-colors: active) {
+  .seg { forced-color-adjust: none; border: 1px solid CanvasText; }
+  .arrow::before { background: CanvasText; }
+}

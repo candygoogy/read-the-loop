@@ -131,7 +131,8 @@ const releaseState = (p) => p.evaluate(() => {
   const root = new URL("./", document.querySelector('script[src$="chapters.js"]').src);
   const unpub = C.list.filter((c) => !c.published).map((c) => new URL(`${c.slug}/`, root).href);
   return {
-    badLinks: [...document.querySelectorAll("a[href]")].map((a) => a.href.split("#")[0]).filter((h) => h !== location.href.split("#")[0] && unpub.some((u) => h === u || h === u + "index.html")),
+    // The language switch links a chapter to its own other-language page, which is fine even when unpublished.
+    badLinks: [...document.querySelectorAll("a[href]:not(.lang-switch a)")].map((a) => a.href.split("#")[0]).filter((h) => h !== location.href.split("#")[0] && unpub.some((u) => h === u || h === u + "index.html")),
     pageLinks: [...document.querySelectorAll('a[href^="#"]')].length,
     preview: document.querySelectorAll(".preview").length,
     robots: (document.querySelector('meta[name="robots"]') || {}).content || null,

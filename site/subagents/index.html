@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subagents · Read the Loop</title>
+<meta name="description" content="A coding agent hands a side task to a second conversation with the model, and gets back only a report. Both conversations measured, call by call, from a real recording.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://loop.candygoogy.dev/subagents/">
+<link rel="alternate" hreflang="en" href="https://loop.candygoogy.dev/subagents/">
+<link rel="alternate" hreflang="zh-CN" href="https://loop.candygoogy.dev/zh/subagents/">
+<link rel="alternate" hreflang="x-default" href="https://loop.candygoogy.dev/subagents/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:title" content="Subagents · Read the Loop">
+<meta property="og:description" content="A coding agent hands a side task to a second conversation with the model, and gets back only a report. Both conversations measured, call by call, from a real recording.">
+<meta property="og:url" content="https://loop.candygoogy.dev/subagents/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/subagents.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop, chapter 6: Subagents, with a chart drawn from the recording">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="chapter.css">
+</head>
+<body data-page="subagents">
+
+<a class="skip-link" href="#threads">Skip to the two conversations</a>
+
+<header class="masthead band">
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · Chapter 6 of 8</p>
+  <h1>Subagents</h1>
+  <p class="dek">An agent can hand part of a job to a second conversation with the model, which starts fresh and sends back only a report. Here is chapter 1's bug again, with the search handed off, and both conversations measured call by call.</p>
+</header>
+
+<main class="band">
+
+<section class="prose" aria-labelledby="s-intro">
+  <h2 id="s-intro">The same bug, handed off</h2>
+  <p data-c="intro.p1"></p>
+  <p data-c="intro.p2"></p>
+  <figure class="ask">
+    <figcaption class="ask-head" data-c="intro.promptHead"></figcaption>
+    <blockquote class="prompt" id="prompt"></blockquote>
+  </figure>
+  <p data-c="intro.p3"></p>
+  <p data-c="intro.p4"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-threads">
+  <h2 id="s-threads">Two conversations, side by side</h2>
+  <p data-c="threads.p1"></p>
+
+  <figure class="fig wide" id="threads" tabindex="-1" aria-labelledby="threads-title">
+    <div class="fig-head">
+      <span class="fig-title" id="threads-title" data-c="threads.title"></span>
+      <fieldset class="mode" id="threads-mode">
+        <legend class="sr-only" data-c="threads.mode"></legend>
+      </fieldset>
+    </div>
+    <div class="lanes-head" aria-hidden="true">
+      <span class="lh-main" data-c="threads.lanes.main"></span>
+      <span class="lh-sub" data-c="threads.lanes.sub"></span>
+    </div>
+    <ol class="tl" id="tl"></ol>
+    <div class="legend fig-legend" id="threads-legend"></div>
+    <p class="fig-readout" id="threads-readout"></p>
+    <p class="fig-note" data-c="threads.note"></p>
+  </figure>
+
+  <p data-c="threads.p2"></p>
+  <p data-c="threads.p3"></p>
+  <p data-c="threads.p4"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-words">
+  <h2 id="s-words">The handoff, in the model's words</h2>
+  <p data-c="words.p1"></p>
+  <div class="handoff wide">
+    <div class="card model task" id="task-card"></div>
+    <div class="card model text report" id="report-card"></div>
+  </div>
+  <p data-c="words.p2"></p>
+  <p data-c="words.p3"></p>
+  <p data-c="words.p4"></p>
+  <div class="card result handback" id="handback-card"></div>
+  <p data-c="words.p5"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-cost">
+  <h2 id="s-cost" data-c="cost.title"></h2>
+  <p data-c="cost.p1"></p>
+  <div class="split-wrap">
+    <table class="split" id="split">
+      <caption data-c="cost.caption"></caption>
+    </table>
+  </div>
+  <p data-c="cost.p2"></p>
+  <p data-c="cost.p3" id="cost-p3"></p>
+  <p data-c="cost.p4"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-shows">
+  <h2 id="s-shows" data-c="shows.title"></h2>
+  <ol class="points">
+    <li><h3 data-c="shows.small.title"></h3><p data-c="shows.small.text"></p></li>
+    <li><h3 data-c="shows.trust.title"></h3><p data-c="shows.trust.text"></p></li>
+    <li id="point-tiny"><h3 data-c="shows.tiny.title"></h3><p data-c="shows.tiny.text"></p></li>
+  </ol>
+</section>
+
+<section class="stats" aria-label="The run in numbers">
+  <div><span class="n" data-v="subPeak"></span><span class="l" data-c="stats.peak"></span></div>
+  <div><span class="n" data-v="growth"></span><span class="l" data-c="stats.growth"></span></div>
+  <div><span class="n" data-v="callsBoth"></span><span class="l" data-c="stats.calls"></span></div>
+  <div><span class="n" data-v="cost"></span><span class="l" data-c="stats.cost"></span></div>
+</section>
+
+<section class="prose next" aria-labelledby="next-title">
+  <p class="kicker" data-c="next.kicker"></p>
+  <h2 id="next-title" data-c="next.title"></h2>
+  <p data-c="next.p1"></p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2 data-c="colophon.title"></h2>
+  <p data-c="colophon.model"></p>
+  <pre class="flags" id="flags"></pre>
+  <p data-c="colophon.flags"></p>
+  <p data-c="colophon.runs"></p>
+  <ul class="runs" id="runs"></ul>
+  <p data-c="colophon.cache"></p>
+  <p data-c="colophon.black"></p>
+  <p data-c="colophon.setup"></p>
+  <p data-c="colophon.paths"></p>
+  <p><span data-c="colophon.traces"></span> <span id="trace-links"></span>. <span data-c="colophon.json"></span></p>
+</footer>
+
+<nav class="chapter-nav band" aria-label="Chapters">
+  <div class="cn">
+    <a class="cn-toc" href="../index.html">All chapters</a>
+  </div>
+</nav>
+
+<script>window.TRACES = {};</script>
+<script src="../data/trace-06-run1.js"></script>
+<script>TRACES[TRACE.run.index] = TRACE;</script>
+<script src="../data/trace-06-run3.js"></script>
+<script>TRACES[TRACE.run.index] = TRACE;</script>
+<script src="../data/trace-06-run2.js"></script>
+<script>TRACES[TRACE.run.index] = TRACE;</script>
+<script src="../data/trace-02-run2.js"></script>
+<script>TRACES.ch1 = TRACE;</script>
+<script src="copy.en.js"></script>
+<script src="../lib/trace-ui.js"></script>
+<script src="../lib/motion.js"></script>
+<script src="app.js"></script>
+<script src="../chapters.js"></script>
+<script src="../lib/release.js"></script>
+</body>
+</html>

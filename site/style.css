@@ -1088,6 +1088,17 @@ a.cn-link:active { transform: scale(0.98); }
   }
 }
 
+/* chapter 6: the main conversation's last call above the subagent's peak, to one scale; the hand-back
+   and the report it came from are outlined in ink. The subagent's track wears the chapter's faint --sys wash. */
+.art-sub { flex-direction: column; justify-content: center; gap: 8px; }
+.art-sub .row { display: flex; height: 16px; border-radius: 3px; overflow: hidden; background: repeating-linear-gradient(135deg, var(--paper) 0 4px, var(--paper-2) 4px 8px); }
+.art-sub .r-sub { background: color-mix(in srgb, var(--sys) 12%, var(--card)); }
+.art-sub i { display: block; flex: none; height: 100%; min-width: 1px; }
+.art-sub .s { background: var(--sys); box-shadow: inset -2px 0 0 var(--card); }
+.art-sub .m { background: var(--model); }
+.art-sub .b { background: var(--tex-teal) var(--result); }
+.art-sub .hb { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.art-sub .out { margin-left: 3px; border-radius: 3px; }
 .toc-later-head { grid-column: text-start / wide-end; margin: clamp(2.5rem, 6vw, 3.5rem) 0 1rem; font: 600 0.78rem/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
 .toc-later {
   grid-column: text-start / wide-end;

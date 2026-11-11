@@ -1,6 +1,7 @@
 // The contents page: a small picture of each chapter, drawn from the same recording the chapter uses.
 // Chapter 1: window.TRACES.loop (site/data/trace-02-run2.js). Chapters 2, 3 and 4: window.TRACES.context
-// (site/data/trace-03.js). Chapter 5: window.TOOLS (site/data/tools-05.js). Every number is read from the
+// (site/data/trace-03.js). Chapter 5: window.TOOLS (site/data/tools-05.js). Chapter 6: window.TRACES.sub
+// (site/data/trace-06-run2.js). Every number is read from the
 // data; only the labels below are written here. Without the data (or without JS) the pictures stay empty
 // and are hidden.
 (() => {
@@ -19,6 +20,7 @@
     cache: (d) => `${d.pct} of what ${d.calls} calls read came from the cache`,
     compaction: (d) => `${d.pre} tokens of conversation before compaction, ${d.post} after. Areas to scale.`,
     tools: (d) => `Of the first request's characters: tools ${d.tools}, system ${d.system}, messages ${d.messages}`,
+    subagents: (d) => `The subagent's conversation reached ${d.peak} tokens. The main one grew by ${d.growth} across the hand-back.`,
   };
   const LOCALE = COPY.locale;
   const { fmt } = U.numbers(LOCALE);
@@ -97,5 +99,29 @@
     const html = parts.map((p) => `<span class="part p-${p.k}" style="flex:${p.chars} 1 0">${p.pieces.map((x) => `<i style="flex:${x} 1 0"></i>`).join("")}</span>`).join("");
     const share = Object.fromEntries(parts.map((p) => [p.k, pct1(p.chars / total)]));
     figure("viz-tools", { cls: "art-request", html }, COPY.tools(share));
+  }
+
+  // Chapter 6: the two conversations to one scale, as the chapter draws them. Top, the main
+  // conversation's last call: its set-up, what its first call wrote, the hand-back (outlined) and the
+  // rest. Below, the subagent's peak: its set-up, what it gathered, and the report it wrote (outlined).
+  if (R.sub && R.sub.subagents && R.sub.subagents.length) {
+    const T = R.sub;
+    const S = T.subagents[0];
+    const at = T.calls.findIndex((c) => c.output.some((o) => o.kind === "tool" && o.id === S.tool_use_id));
+    if (at >= 0 && T.calls[at + 1]) {
+      const m = T.calls, sc = S.calls;
+      const mFirst = m[0].context_tokens, mLast = m[m.length - 1].context_tokens;
+      const growth = m[at + 1].added_since_previous;
+      const wrote = Math.min(m[at].output_tokens || 0, growth);
+      const sFirst = sc[0].context_tokens, sLast = sc[sc.length - 1];
+      const peak = S.totals.total_tokens;
+      const max = Math.max(mLast, sLast.context_tokens + sLast.output_tokens);
+      // One part, to scale; nothing for a part with no tokens.
+      const seg = (cls, x) => (x > 0 ? `<i class="${cls}" style="width:${(x / max) * 100}%"></i>` : "");
+      const html =
+        `<span class="row r-main">${seg("s", mFirst)}${seg("b", m[at].context_tokens - mFirst)}${seg("m", wrote)}${seg("b hb", growth - wrote)}${seg("b", mLast - m[at + 1].context_tokens)}</span>` +
+        `<span class="row r-sub">${seg("s", sFirst)}${seg("b", sLast.context_tokens - sFirst)}${seg("m hb out", sLast.output_tokens)}</span>`;
+      figure("viz-subagents", { cls: "art-sub", html }, COPY.subagents({ peak: fmt(peak), growth: fmt(growth) }));
+    }
   }
 })();

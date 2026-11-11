@@ -8,4 +8,5 @@ window.CONTENTS_COPY = {
   cache: (d) => `${d.calls} 次调用读入的内容里，${d.pct} 是从缓存读取的`,
   compaction: (d) => `压缩前对话有 ${d.pre} 个 token，压缩后剩 ${d.post} 个。面积按比例绘制。`,
   tools: (d) => `第一次请求的字符里：工具说明占 ${d.tools}，系统部分占 ${d.system}，消息占 ${d.messages}`,
+  subagents: (d) => `子智能体的对话涨到了 ${d.peak} 个 token；交回报告之后，主对话只多了 ${d.growth} 个。`,
 };

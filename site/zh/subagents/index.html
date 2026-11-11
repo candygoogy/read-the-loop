@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>子智能体 · Read the Loop</title>
+<meta name="description" content="智能体把一项旁支任务交给和模型的第二段对话，最后只拿回一份报告。两段对话都根据一次真实的录制，逐次调用地测量。">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://loop.candygoogy.dev/zh/subagents/">
+<link rel="alternate" hreflang="en" href="https://loop.candygoogy.dev/subagents/">
+<link rel="alternate" hreflang="zh-CN" href="https://loop.candygoogy.dev/zh/subagents/">
+<link rel="alternate" hreflang="x-default" href="https://loop.candygoogy.dev/subagents/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="子智能体 · Read the Loop">
+<meta property="og:description" content="智能体把一项旁支任务交给和模型的第二段对话，最后只拿回一份报告。两段对话都根据一次真实的录制，逐次调用地测量。">
+<meta property="og:url" content="https://loop.candygoogy.dev/zh/subagents/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/subagents.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop 第六章：子智能体，配有一张根据录制记录绘制的图表">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../subagents/chapter.css">
+<!-- Chinese has no capitals or italics: the card heads' uppercase would only shout the tool name ("请求 · AGENT"),
+     the small labels keep only light tracking, and "waiting" loses its slant. -->
+<style>
+  .card-head { text-transform: none; }
+  .ask-head:lang(zh), .lanes-head:lang(zh), .task-k:lang(zh) { letter-spacing: 0.04em; }
+  .wait:lang(zh) { font-style: normal; }
+</style>
+</head>
+<body data-page="subagents" data-root="../../">
+
+<a class="skip-link" href="#threads">跳到两段对话</a>
+
+<header class="masthead band">
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · 第六章（共八章）</p>
+  <h1>子智能体</h1>
+  <p class="dek">智能体可以把一部分工作交给和模型的第二段对话。这段对话从零开始，最后只交回一份报告。这里还是第一章的那个 bug，这次把查找的工作交了出去，两段对话都逐次调用地测量。</p>
+</header>
+
+<main class="band">
+
+<section class="prose" aria-labelledby="s-intro">
+  <h2 id="s-intro">同一个 bug，交出去查</h2>
+  <p data-c="intro.p1"></p>
+  <p data-c="intro.p2"></p>
+  <figure class="ask">
+    <figcaption class="ask-head" data-c="intro.promptHead"></figcaption>
+    <blockquote class="prompt" id="prompt" lang="en"></blockquote>
+  </figure>
+  <p data-c="intro.p3"></p>
+  <p data-c="intro.p4"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-threads">
+  <h2 id="s-threads">两段对话，并排来看</h2>
+  <p data-c="threads.p1"></p>
+
+  <figure class="fig wide" id="threads" tabindex="-1" aria-labelledby="threads-title">
+    <div class="fig-head">
+      <span class="fig-title" id="threads-title" data-c="threads.title"></span>
+      <fieldset class="mode" id="threads-mode">
+        <legend class="sr-only" data-c="threads.mode"></legend>
+      </fieldset>
+    </div>
+    <div class="lanes-head" aria-hidden="true">
+      <span class="lh-main" data-c="threads.lanes.main"></span>
+      <span class="lh-sub" data-c="threads.lanes.sub"></span>
+    </div>
+    <ol class="tl" id="tl"></ol>
+    <div class="legend fig-legend" id="threads-legend"></div>
+    <p class="fig-readout" id="threads-readout"></p>
+    <p class="fig-note" data-c="threads.note"></p>
+  </figure>
+
+  <p data-c="threads.p2"></p>
+  <p data-c="threads.p3"></p>
+  <p data-c="threads.p4"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-words">
+  <h2 id="s-words">交接，用模型自己的话</h2>
+  <p data-c="words.p1"></p>
+  <div class="handoff wide">
+    <div class="card model task" id="task-card"></div>
+    <div class="card model text report" id="report-card"></div>
+  </div>
+  <p data-c="words.p2"></p>
+  <p data-c="words.p3"></p>
+  <p data-c="words.p4"></p>
+  <div class="card result handback" id="handback-card"></div>
+  <p data-c="words.p5"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-cost">
+  <h2 id="s-cost" data-c="cost.title"></h2>
+  <p data-c="cost.p1"></p>
+  <div class="split-wrap">
+    <table class="split" id="split">
+      <caption data-c="cost.caption"></caption>
+    </table>
+  </div>
+  <p data-c="cost.p2"></p>
+  <p data-c="cost.p3" id="cost-p3"></p>
+  <p data-c="cost.p4"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-shows">
+  <h2 id="s-shows" data-c="shows.title"></h2>
+  <ol class="points">
+    <li><h3 data-c="shows.small.title"></h3><p data-c="shows.small.text"></p></li>
+    <li><h3 data-c="shows.trust.title"></h3><p data-c="shows.trust.text"></p></li>
+    <li id="point-tiny"><h3 data-c="shows.tiny.title"></h3><p data-c="shows.tiny.text"></p></li>
+  </ol>
+</section>
+
+<section class="stats" aria-label="这次运行的几个数字">
+  <div><span class="n" data-v="subPeak"></span><span class="l" data-c="stats.peak"></span></div>
+  <div><span class="n" data-v="growth"></span><span class="l" data-c="stats.growth"></span></div>
+  <div><span class="n" data-v="callsBoth"></span><span class="l" data-c="stats.calls"></span></div>
+  <div><span class="n" data-v="cost"></span><span class="l" data-c="stats.cost"></span></div>
+</section>
+
+<section class="prose next" aria-labelledby="next-title">
+  <p class="kicker" data-c="next.kicker"></p>
+  <h2 id="next-title" data-c="next.title"></h2>
+  <p data-c="next.p1"></p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2 data-c="colophon.title"></h2>
+  <p data-c="colophon.model"></p>
+  <pre class="flags" id="flags" lang="en"></pre>
+  <p data-c="colophon.flags"></p>
+  <p data-c="colophon.runs"></p>
+  <ul class="runs" id="runs"></ul>
+  <p data-c="colophon.cache"></p>
+  <p data-c="colophon.black"></p>
+  <p data-c="colophon.setup"></p>
+  <p data-c="colophon.paths"></p>
+  <p><span data-c="colophon.traces"></span><span id="trace-links"></span>。<span data-c="colophon.json"></span></p>
+  <p>中文由 Claude 翻译，<a data-repo="issues" href="https://github.com/candygoogy/read-the-loop/issues">欢迎指正</a>。录制内容保持英文原文。</p>
+</footer>
+
+<nav class="chapter-nav band" aria-label="章节">
+  <div class="cn">
+    <a class="cn-toc" href="../index.html">全部章节</a>
+  </div>
+</nav>
+
+<script>window.TRACES = {};</script>
+<script src="../../data/trace-06-run1.js"></script>
+<script>TRACES[TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-06-run3.js"></script>
+<script>TRACES[TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-06-run2.js"></script>
+<script>TRACES[TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-02-run2.js"></script>
+<script>TRACES.ch1 = TRACE;</script>
+<script src="copy.zh.js"></script>
+<script src="../../lib/trace-ui.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../../subagents/app.js"></script>
+<script src="../../chapters.js"></script>
+<script src="../../lib/release.js"></script>
+</body>
+</html>
