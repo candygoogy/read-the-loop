@@ -21,8 +21,8 @@
   const sum = (a) => a.reduce((x, y) => x + y, 0);
   const uniq = (a) => [...new Set(a)];
   const code = (s) => `<code>${esc(s)}</code>`;
-  const money = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 4 });
-  const cents = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const money = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const cents = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const pct0 = new Intl.NumberFormat(C.locale, { style: "percent", maximumFractionDigits: 0 });
   const dec1 = new Intl.NumberFormat(C.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const dateOf = (iso) => new Date(iso.slice(0, 10) + "T12:00:00Z").toLocaleDateString(C.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });

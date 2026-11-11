@@ -19,7 +19,7 @@
   const plain = (html) => html.replace(/<[^>]+>/g, "");
   const dec1 = new Intl.NumberFormat(C.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   // Costs as recorded (total_cost_usd has four decimals).
-  const money = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const money = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", minimumFractionDigits: 2, maximumFractionDigits: 4 });
   const dateOf = (iso) => new Date(iso.slice(0, 10) + "T12:00:00Z").toLocaleDateString(C.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
   const timeOf = (iso) => new Date(iso).toISOString().slice(11, 19);
   const sum = (a) => a.reduce((x, y) => x + y, 0);
