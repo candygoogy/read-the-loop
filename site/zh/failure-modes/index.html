@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>失败模式 · Read the Loop</title>
+<meta name="description" content="AI 编程智能体常见的四种失败，以及我们为了捕捉它们而录下的运行：发生了什么，权限检查拒绝了什么，智能体又说了什么。">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://loop.candygoogy.dev/zh/failure-modes/">
+<link rel="alternate" hreflang="en" href="https://loop.candygoogy.dev/failure-modes/">
+<link rel="alternate" hreflang="zh-CN" href="https://loop.candygoogy.dev/zh/failure-modes/">
+<link rel="alternate" hreflang="x-default" href="https://loop.candygoogy.dev/failure-modes/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="失败模式 · Read the Loop">
+<meta property="og:description" content="AI 编程智能体常见的四种失败，以及我们为了捕捉它们而录下的运行：发生了什么，权限检查拒绝了什么，智能体又说了什么。">
+<meta property="og:url" content="https://loop.candygoogy.dev/zh/failure-modes/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/failure-modes.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop 第七章：失败模式，配有一张根据录制记录绘制的图表">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../failure-modes/chapter.css">
+<!-- Chinese has no capitals or italics: the small labels' uppercase would only shout the Latin words in them
+     ("结果 · BASH：BUILD.JS"), so they keep only light tracking, and the "… more lines" note loses its slant. -->
+<style>
+  .card-head, .ask-head, .src-k, .t-run, .detail .d-k, .cround-t, .cc-k { text-transform: none; }
+  .ask-head:lang(zh), .src-k:lang(zh), .t-run:lang(zh), .detail .d-k:lang(zh), .cround-t:lang(zh), .cc-k:lang(zh) { letter-spacing: 0.04em; }
+  .r-cmd .more:lang(zh) { font-style: normal; }
+</style>
+</head>
+<body data-page="failure-modes" data-root="../../">
+
+<a class="skip-link" href="#runs-fig">跳到录下的运行</a>
+
+<header class="masthead band">
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · 第七章（共八章）</p>
+  <h1>失败模式</h1>
+  <p class="dek" data-c="dek"></p>
+</header>
+
+<main class="band">
+
+<section class="prose" aria-labelledby="s-known">
+  <h2 id="s-known">四种已知的失败方式</h2>
+  <p data-c="intro.p1"></p>
+  <p data-c="intro.p2"></p>
+  <ol class="modes wide" id="modes"></ol>
+</section>
+
+<section class="prose" aria-labelledby="s-method">
+  <h2 id="s-method">我们想把它们录下来</h2>
+  <p data-c="method.p1"></p>
+  <p data-c="method.p2"></p>
+  <p data-c="method.p3"></p>
+  <p data-c="method.p4"></p>
+  <h3 data-c="method.plantedTitle"></h3>
+  <dl class="planted" id="planted"></dl>
+  <p data-c="method.plantedNote"></p>
+  <p data-c="method.p5"></p>
+
+  <figure class="fig wide" id="runs-fig" tabindex="-1" aria-labelledby="runs-title">
+    <div class="fig-head">
+      <span class="fig-title" id="runs-title" data-c="grid.title"></span>
+    </div>
+    <p class="sr-only" id="grid-help" data-c="grid.help"></p>
+    <div class="groups" id="groups" role="group" aria-labelledby="runs-title" aria-describedby="grid-help"></div>
+    <div class="legend fig-legend" id="grid-legend"></div>
+    <p class="fig-note" data-c="grid.note"></p>
+    <div class="detail" id="detail" aria-live="polite"></div>
+  </figure>
+</section>
+
+<section class="prose" aria-labelledby="s-result">
+  <h2 id="s-result" data-c="result.title"></h2>
+  <p data-c="result.p1"></p>
+  <p data-c="result.p2"></p>
+  <h3 data-c="result.meansTitle"></h3>
+  <p data-c="result.p3"></p>
+  <p data-c="result.p4"></p>
+  <p data-c="result.p5"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-cleanup">
+  <h2 id="s-cleanup" data-c="cleanup.title"></h2>
+  <p data-c="cleanup.p1"></p>
+  <figure class="ask">
+    <figcaption class="ask-head" data-c="cleanup.promptHead"></figcaption>
+    <blockquote class="prompt" id="clean-prompt" lang="en"></blockquote>
+  </figure>
+  <p data-c="cleanup.p2"></p>
+  <p data-c="cleanup.p3"></p>
+  <p data-c="cleanup.p4"></p>
+  <div class="card result reason-card" id="reason-card"></div>
+  <p data-c="cleanup.p5"></p>
+
+  <figure class="fig wide" id="clean-fig" aria-labelledby="clean-title">
+    <div class="fig-head"><span class="fig-title" id="clean-title" data-c="cleanup.figTitle"></span></div>
+    <div id="clean-rounds"></div>
+    <p class="fig-readout" id="clean-readout"></p>
+    <p class="fig-note" data-c="cleanup.note"></p>
+  </figure>
+
+  <h3 data-c="cleanup.rebuiltTitle"></h3>
+  <p data-c="cleanup.p6"></p>
+  <div class="card result excerpt-card" id="build-card"></div>
+  <p data-c="cleanup.p7" id="clean-p7"></p>
+  <p data-c="cleanup.p8"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-honest">
+  <h2 id="s-honest" data-c="honest.title"></h2>
+  <p data-c="honest.p1"></p>
+  <div class="said wide" id="said"></div>
+  <p data-c="honest.p2"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-shows">
+  <h2 id="s-shows" data-c="shows.title"></h2>
+  <ol class="points">
+    <li><h3 data-c="shows.held.title"></h3><p data-c="shows.held.text"></p></li>
+    <li><h3 data-c="shows.words.title"></h3><p data-c="shows.words.text"></p></li>
+    <li><h3 data-c="shows.small.title"></h3><p data-c="shows.small.text"></p></li>
+  </ol>
+</section>
+
+<section class="stats" aria-label="这些运行的几个数字">
+  <div><span class="n" data-v="runs"></span><span class="l" data-c="stats.runs"></span></div>
+  <div><span class="n" data-v="refused"></span><span class="l" data-c="stats.refused"></span></div>
+  <div><span class="n" data-v="rmReqs"></span><span class="l" data-c="stats.deletes"></span></div>
+  <div><span class="n" data-v="changed"></span><span class="l" data-c="stats.changed"></span></div>
+</section>
+
+<section class="prose next" aria-labelledby="next-title">
+  <p class="kicker" data-c="next.kicker"></p>
+  <h2 id="next-title" data-c="next.title"></h2>
+  <p data-c="next.p1"></p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2 data-c="colophon.title"></h2>
+  <p data-c="colophon.model"></p>
+  <pre class="flags" id="flags" lang="en"></pre>
+  <p data-c="colophon.modes"></p>
+  <p data-c="colophon.rounds"></p>
+  <p data-c="colophon.checks"></p>
+  <p data-c="colophon.safety"></p>
+  <p data-c="colophon.cost"></p>
+  <p data-c="colophon.sources"></p>
+  <p data-c="colophon.paths"></p>
+  <p><span data-c="colophon.traces"></span><span id="trace-links"></span>。</p>
+  <p>中文由 Claude 翻译，<a data-repo="issues" href="https://github.com/candygoogy/read-the-loop/issues">欢迎指正</a>。录制内容和引自外部来源的原话保持英文原文。</p>
+</footer>
+
+<nav class="chapter-nav band" aria-label="章节">
+  <div class="cn">
+    <a class="cn-toc" href="../index.html">全部章节</a>
+  </div>
+</nav>
+
+<script src="../../data/runs-07.js"></script>
+<script>window.TRACES = {};</script>
+<script src="../../data/trace-07D-run1.js"></script>
+<script>TRACES["D/" + TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-07D-run2.js"></script>
+<script>TRACES["D/" + TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-07D-run3.js"></script>
+<script>TRACES["D/" + TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-07D2-run1.js"></script>
+<script>TRACES["D2/" + TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-07D2-run2.js"></script>
+<script>TRACES["D2/" + TRACE.run.index] = TRACE;</script>
+<script src="../../data/trace-07D2-run3.js"></script>
+<script>TRACES["D2/" + TRACE.run.index] = TRACE;</script>
+<script src="copy.zh.js"></script>
+<script src="../../lib/trace-ui.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../../failure-modes/app.js"></script>
+<script src="../../chapters.js"></script>
+<script src="../../lib/release.js"></script>
+</body>
+</html>
