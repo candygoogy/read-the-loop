@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>外壳程序实验场（嵌入版） · Read the Loop</title>
+<meta name="description" content="Read the Loop 第八章的外壳程序实验场，单独拿出来供嵌入：三个开关，以及每一种设置下录下的真实 Claude Code 运行。">
+<!-- A fragment of chapter 8 for other pages to embed in an iframe; the chapter is the page to list. -->
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://loop.candygoogy.dev/zh/playground/">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../playground/chapter.css">
+<!-- As on the chapter page: no uppercase or wide tracking on the small Chinese labels. -->
+<style>
+  .card-head, .pg-sw legend, .pg-run .pg-run-title, .pg-root p.pg-k { text-transform: none; }
+  .pg-sw legend:lang(zh), .pg-run .pg-run-title:lang(zh), .pg-root p.pg-k:lang(zh) { letter-spacing: 0.04em; }
+  /* "第 1 次调用" is wider than "Call 1": a wider column beside each call, where it has one (the embed's
+     single-column widths keep theirs). */
+  @media (min-width: 30.01rem) { :where(.pg-call):lang(zh) { grid-template-columns: 4.6rem minmax(0, 1fr); } }
+</style>
+</head>
+<body data-page="playground-embed" class="em" data-root="../../">
+
+<header class="em-head">
+  <h1 class="em-title" data-c="embed.title"></h1>
+  <a class="em-back" id="em-back" href="index.html" target="_blank" rel="noopener" data-c="embed.back"></a>
+</header>
+
+<main class="em-main" aria-labelledby="em-help">
+  <p class="pg-help" id="em-help" data-c="play.help"></p>
+  <div class="pg-root" id="pg"></div>
+</main>
+
+<footer class="em-foot">
+  <p id="em-foot"></p>
+</footer>
+
+<script src="../../data/playground-08.js"></script>
+<script>window.TRACES = {};</script>
+<script src="copy.zh.js"></script>
+<script src="../../lib/trace-ui.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../../playground/playground.js"></script>
+<script>
+  // The embed: the playground alone, its settings in the address (#opus-bash-rule), and a link to the chapter.
+  (() => {
+    "use strict";
+    const C = window.COPY, P = window.PLAYGROUND, U = window.TraceUI;
+    const { fmt, list } = U.numbers(C.locale);
+    const dateOf = (iso) => new Date(iso.slice(0, 10) + "T12:00:00Z").toLocaleDateString(C.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+    const d = { rule: U.esc(P.switches.rule.rule.append_system_prompt) };
+    document.querySelectorAll("[data-c]").forEach((el) => {
+      const fn = el.dataset.c.split(".").reduce((o, k) => (o ? o[k] : undefined), C);
+      el.innerHTML = typeof fn === "function" ? fn(d) : fn;
+    });
+    document.getElementById("em-foot").textContent = C.embed.foot({
+      per: fmt(P.combinations[0].runs.length),
+      date: list([...new Set(P.runs.map((r) => r.date))].map(dateOf)),
+    });
+    // The link back opens the chapter on the same settings. On the server, its address ends at the folder.
+    const back = document.getElementById("em-back");
+    const page = /^https?:$/.test(location.protocol) ? "./" : "index.html";
+    window.Playground.mount(document.getElementById("pg"), { level: 2, hash: true, onChange: (combo) => { back.href = `${page}#${combo}`; } });
+    U.watchScrollBoxes(".card pre");
+  })();
+</script>
+</body>
+</html>

@@ -19,7 +19,7 @@
   const { fmt, pl } = U.numbers(C.locale);
   const ROOT = document.body.dataset.root || "../";
   const TRACES = (window.TRACES = window.TRACES || {});
-  const money = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  const money = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", minimumFractionDigits: 4, maximumFractionDigits: 4 });
   const dec1 = new Intl.NumberFormat(C.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const hhmm = (iso) => new Date(iso).toLocaleTimeString(C.locale, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "UTC" });
 
@@ -93,6 +93,9 @@
 
   // ---------- drawing a run ----------
   const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  // What the agent wrote or ran is marked as English, for screen readers and the Chinese page's type.
+  const REC = ' lang="en"';
+  const mdRec = (s) => U.md(s).replace(/<p class="say">/g, `<p class="say"${REC}>`);
   function arg(t) {
     const i = t.input || {};
     if (t.tool === "Read" || t.tool === "Edit" || t.tool === "Write") return U.base(i.file_path || "");
@@ -134,7 +137,7 @@
     const cls = ["pg-req", x.test ? "is-test" : "", x.edit ? "is-edit" : "", x.missing ? "is-missing" : ""].filter(Boolean).join(" ");
     return `<li><details class="${cls}"><summary>` +
       `<span class="q-tool">${esc(x.t.tool)}</span>` +
-      `<span class="q-arg">${esc(arg(x.t))}</span>` +
+      `<span class="q-arg"${REC}>${esc(arg(x.t))}</span>` +
       (tag ? `<span class="q-tag">${esc(tag)}</span>` : "") +
       `<span class="q-res${r.err ? " is-err" : ""}${r.fail ? " is-fail" : ""}">${r.html}</span>` +
       `</summary><div class="q-open">${opened(x)}</div></details></li>`;
@@ -143,8 +146,8 @@
     const paras = text.split(/\n{2,}/).filter((p) => p.trim());
     const first = paras[0] || "";
     const rest = paras.slice(1).join("\n\n");
-    return `<div class="card model text pg-answer">${U.cardHead(esc(L.answer), "")}${U.md(first)}` +
-      (rest ? `<details class="pg-more"><summary>${esc(pl(L.more, paras.length - 1))}</summary>${U.md(rest)}</details>` : "") + `</div>`;
+    return `<div class="card model text pg-answer">${U.cardHead(esc(L.answer), "")}${mdRec(first)}` +
+      (rest ? `<details class="pg-more"><summary>${esc(pl(L.more, paras.length - 1))}</summary>${mdRec(rest)}</details>` : "") + `</div>`;
   }
   const mark = (yes) => `<i class="mk ${yes ? "mk-yes" : "mk-no"}" aria-hidden="true"></i>`;
   function runHTML(r, T, ids, level) {
@@ -153,7 +156,7 @@
     const call1 = T.calls[0] || { context_tokens: 0 };
     const check = (k, yes, val) => `<li class="ck" data-k="${k}" data-yes="${yes}">${mark(yes)}<span class="ck-l">${esc(L.checks[k])}</span><b class="ck-v">${esc(val)}</b></li>`;
     const callRows = steps.map((s) => {
-      const says = s.last ? "" : s.texts.map((x) => `<p class="pg-say">${inline(x)}</p>`).join("");
+      const says = s.last ? "" : s.texts.map((x) => `<p class="pg-say"${REC}>${inline(x)}</p>`).join("");
       const reqs = s.tools.length ? `<ul class="pg-reqs">${s.tools.map(stepHTML).join("")}</ul>` : "";
       const answer = s.last && T.final_answer ? answerHTML(T.final_answer) : "";
       return `<li class="pg-call${s.last ? " is-last" : ""}"><span class="pg-cn">${esc(L.callN(fmt(s.n)))}</span><div class="pg-cb">${says}${reqs}${answer}</div></li>`;
@@ -207,7 +210,7 @@
     };
     const spoken = (combo) => {
       const s = COMBOS[combo].switches;
-      return KEYS.map((k) => L.spoken[k][s[k]]).join(", ");
+      return KEYS.map((k) => L.spoken[k][s[k]]).join(L.spokenJoin);
     };
 
     // The numbers a run shows, to count from when the settings change.

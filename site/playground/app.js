@@ -19,7 +19,7 @@
   const $ = (id) => document.getElementById(id);
   const uniq = (a) => [...new Set(a)];
   const code = (s) => `<code>${esc(s)}</code>`;
-  const money = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  const money = new Intl.NumberFormat(C.locale, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", minimumFractionDigits: 4, maximumFractionDigits: 4 });
   const dec1 = new Intl.NumberFormat(C.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const dateOf = (iso) => new Date(iso.slice(0, 10) + "T12:00:00Z").toLocaleDateString(C.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
   const hhmm = (ms) => new Date(ms).toLocaleTimeString(C.locale, { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" });
@@ -75,9 +75,11 @@
   if (prompt) $("prompt").textContent = prompt;
 
   // ---------- the playground ----------
+  // The embed next to this page, from the site's root (zh/playground/embed.html on the Chinese page).
+  const embedPath = new URL("embed.html", location.href).href.slice(new URL(ROOT, location.href).href.length);
   const snippet = (combo) => {
     const site = (window.CHAPTERS && window.CHAPTERS.site) || "";
-    return `<iframe src="${site}/playground/embed.html#${combo}"\n  title="${C.embedNote.frameTitle}"\n  width="100%" height="1500" style="border:0" loading="lazy"></iframe>`;
+    return `<iframe src="${site}/${embedPath}#${combo}"\n  title="${C.embedNote.frameTitle}"\n  width="100%" height="1500" style="border:0" loading="lazy"></iframe>`;
   };
   const pg = G.mount($("pg"), {
     level: 3,
@@ -169,7 +171,7 @@
     const sawFail = (r) => beforeResults(r).some((k) => k.fail > 0 || k.failSeen);
     const firstNorm = normRuns.filter((r) => r.tests_before_first_edit);
     const ruleBefore = ruleRuns.filter((r) => r.tests_before_first_edit);
-    const runName = (r) => `${spoken(r.switches)}, ${C.colophon.link(fmt(r.run))}`;
+    const runName = (r) => S.rule.runName(spoken(r.switches), C.colophon.link(fmt(r.run)));
     const ruleText1 = S.rule.text({
       normBefore: fmt(firstNorm.length), normN: fmt(normRuns.length),
       ruleBefore: fmt(ruleBefore.length), ruleN: fmt(ruleRuns.length),
@@ -254,10 +256,10 @@
       `--session-id <id> --max-budget-usd 0.5`,
     ];
     $("flags").innerHTML = FLAGS.map((line) => esc(line)).join("\n");
-    $("trace-links").innerHTML = P.combinations.map((c) => `<li>${esc(spoken(c.switches))}: ${c.runs.map((n) => {
+    $("trace-links").innerHTML = P.combinations.map((c) => `<li>${K.runLine(esc(spoken(c.switches)), c.runs.map((n) => {
       const r = G.RUNS[n];
       return r.site_js ? `<a href="${ROOT}data/${esc(n)}.js">${esc(K.link(fmt(r.run)))}</a>` : esc(K.link(fmt(r.run)));
-    }).join(" · ")}</li>`).join("");
+    }).join(" · "))}</li>`).join("");
     // Links to the repo take its address from chapters.js once release.js has run; these came later.
     if (window.CHAPTERS) document.querySelectorAll("a[data-repo]").forEach((a) => { a.href = window.CHAPTERS.repo + (a.dataset.repo ? `/${a.dataset.repo}` : ""); });
   }, (e) => console.error(e));

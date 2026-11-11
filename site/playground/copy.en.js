@@ -49,6 +49,7 @@ window.COPY = {
       bash: { bash: "Bash on", nobash: "Bash off" },
       rule: { norule: "no test rule", rule: "test rule on" },
     },
+    spokenJoin: ", ",
     status: (setting, runs) => `Showing ${setting}. ${runs}`,
     statusRun: (k, calls, before, after) => `Run ${k}: ${calls}, ${before ? "tested before its edit" : "no test before its edit"}, ${after ? "tested after it" : "no test after it"}.`,
     loading: "Loading the recordings…",
@@ -125,6 +126,7 @@ window.COPY = {
       title: "With Bash on, the rule moved the first test run before the fix",
       text: (d) => `Without the rule, ${d.normBefore} of ${d.normN} runs with Bash ran the tests before changing the code. With it, ${d.ruleBefore} of ${d.ruleN} did${d.sawFail ? ", and each of them saw a test fail because of the bug before it made the fix" : ""}. After the change, every run with Bash ran the tests, rule or no rule (${d.bashAfter} of ${d.bashN}). ${d.haikuFirst}`,
       haikuFirst: (who) => `The one run that tested first without being told was ${who}.`,
+      runName: (setting, run) => `${setting}, ${run}`,
     },
     bash: {
       title: "With Bash off, no run tested, and every answer says so",
@@ -159,6 +161,7 @@ window.COPY = {
     paths: (d) => `The model saw the real folder path. The traces show it as <code>${d.alias}</code> and the local user name as <code>you</code>; nothing else in them is changed. That's why some commands read <code>cd "${d.alias}"</code> in quotes, which a real shell wouldn't expand.`,
     traces: () => `Every run is in the repo's <a data-repo="tree/master/data">data/</a> folder as a trace (<code>trace-08-…json</code>), with the summary of all of them, <code>playground-08.json</code>. On this site:`,
     link: (k) => `run ${k}`,
+    runLine: (setting, links) => `${setting}: ${links}`,
   },
 
   embed: {
