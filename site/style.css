@@ -743,6 +743,15 @@ main.band > .player { max-width: none; margin-inline: 0; }
 .card.result.err .card-head { background: color-mix(in srgb, var(--model) 70%, var(--result)); }
 .card.you .card-head { background: var(--you); color: var(--on-you); }
 .card.sys .card-head { background: var(--sys); }
+@media (prefers-color-scheme: dark) {
+  /* Full-strength fills glare on a dark page: a 30% tint with light text, and the kind's colour as a stripe. */
+  .card .card-head { color: var(--ink); box-shadow: inset 3px 0 0 var(--k, transparent); }
+  .card.model .card-head { --k: var(--model); background: color-mix(in srgb, var(--model) 30%, var(--card)); }
+  .card.result .card-head { --k: var(--result); background: color-mix(in srgb, var(--result) 30%, var(--card)); }
+  .card.result.err .card-head { --k: var(--model); background: color-mix(in srgb, var(--model) 21%, color-mix(in srgb, var(--result) 9%, var(--card))); }
+  .card.you .card-head { --k: var(--you); background: color-mix(in srgb, var(--you) 30%, var(--card)); color: var(--ink); }
+  .card.sys .card-head { --k: var(--sys); background: color-mix(in srgb, var(--sys) 30%, var(--card)); }
+}
 .card pre {
   margin: 0;
   padding: 0.8rem 0.85rem;

@@ -23,8 +23,8 @@ window.CHAPTERS = {
     { n: 3, slug: "cache", title: "Caching", titles: { zh: "缓存" }, published: true, release: null, langs: ["en", "zh"] },
     { n: 4, slug: "compaction", title: "Compaction", titles: { zh: "压缩" }, published: true, release: null, langs: ["en", "zh"] },
     { n: 5, slug: "tools", title: "Tools and permissions", titles: { zh: "工具与权限" }, published: true, release: null, langs: ["en", "zh"] },
-    { n: 6, slug: "subagents", title: "Subagents", titles: { zh: "子智能体" }, published: false, release: null, langs: ["en", "zh"] },
-    { n: 7, slug: "failure-modes", title: "Failure modes", titles: { zh: "失败模式" }, published: false, release: null, langs: ["en", "zh"] },
-    { n: 8, slug: "playground", title: "The harness playground", titles: { zh: "外壳程序实验场" }, published: false, release: null, langs: ["en", "zh"] },
+    { n: 6, slug: "subagents", title: "Subagents", titles: { zh: "子智能体" }, published: true, release: null, langs: ["en", "zh"] },
+    { n: 7, slug: "failure-modes", title: "Failure modes", titles: { zh: "失败模式" }, published: true, release: null, langs: ["en", "zh"] },
+    { n: 8, slug: "playground", title: "The harness playground", titles: { zh: "外壳程序实验场" }, published: true, release: null, langs: ["en", "zh"] },
   ],
 };

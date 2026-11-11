@@ -234,31 +234,37 @@ const tweak = (fn) => `(() => {
     await ctx.close();
     return s;
   }
-  // The next chapter to come out, and the last one already out: the scenarios follow chapters.js as it grows.
-  const nextI = C.list.findIndex((c) => !c.published);
-  const next = C.list[nextI], last = C.list[nextI - 1];
-  const lastFile = `${last.slug}/index.html`;
-  // tweak() sends these to the browser as text, so the index is written into them, not closed over.
-  const dated = new Function("x", `x.list[${nextI}].release = "2026-11-17";`);
-  let s = await scenario("dated", dated, "index.html");
-  console.log(`  ch${next.n} dated 2026-11-17, contents: coming [${s.later.join(", ")}]`);
-  if (!/Tuesday 17 November/i.test(s.later[0])) fail("dated: contents doesn't show the date");
-  s = await scenario("dated", dated, lastFile);
-  console.log(`  ch${next.n} dated, chapter ${last.n}: notice "${s.coming.replace(/\s+/g, " ")}" | nav [${s.nav.join(" | ")}]`);
-  if (!/Coming Tuesday 17 November/i.test(s.coming) || !/Tuesday 17 November/i.test(s.nav.join())) fail(`dated: chapter ${last.n} doesn't show the date`);
+  // The next chapter to come out, and the last one already out. Once every chapter is out there is no
+  // release left to try, and only the language scenario below runs.
+  let s;
+  if (C.list.every((c) => c.published)) console.log("  every chapter is out: no release scenarios left");
+  else {
+    // The next chapter to come out, and the last one already out: the scenarios follow chapters.js as it grows.
+    const nextI = C.list.findIndex((c) => !c.published);
+    const next = C.list[nextI], last = C.list[nextI - 1];
+    const lastFile = `${last.slug}/index.html`;
+    // tweak() sends these to the browser as text, so the index is written into them, not closed over.
+    const dated = new Function("x", `x.list[${nextI}].release = "2026-11-17";`);
+    s = await scenario("dated", dated, "index.html");
+    console.log(`  ch${next.n} dated 2026-11-17, contents: coming [${s.later.join(", ")}]`);
+    if (!/Tuesday 17 November/i.test(s.later[0])) fail("dated: contents doesn't show the date");
+    s = await scenario("dated", dated, lastFile);
+    console.log(`  ch${next.n} dated, chapter ${last.n}: notice "${s.coming.replace(/\s+/g, " ")}" | nav [${s.nav.join(" | ")}]`);
+    if (!/Coming Tuesday 17 November/i.test(s.coming) || !/Tuesday 17 November/i.test(s.nav.join())) fail(`dated: chapter ${last.n} doesn't show the date`);
 
-  const publishNext = new Function("x", `x.list[${nextI}].published = true;`);
-  s = await scenario("next out", publishNext, "index.html");
-  console.log(`  ch${next.n} published, contents: out [${s.toc.join(", ")}] | coming [${s.later.join(", ")}]`);
-  if (String(s.toc) !== C.list.slice(0, nextI + 1).map((c) => `${c.n} linked`).join(",")) fail("next out: contents not updated");
-  s = await scenario("next out", publishNext, lastFile);
-  console.log(`  ch${next.n} published, chapter ${last.n}: nav [${s.nav.join(" | ")}] | notice "${s.coming.replace(/\s+/g, " ")}"`);
-  if (!s.nav.some((n) => /^link: Next/i.test(n)) || !new RegExp(`Chapter ${next.n + 1}`).test(s.coming)) fail(`next out: chapter ${last.n} not updated`);
-  if (fs.existsSync(path.join(site, next.slug, "index.html"))) {
-    s = await scenario("next out", publishNext, `${next.slug}/index.html`);
-    console.log(`  ch${next.n} published, chapter ${next.n}: preview ${s.preview}, robots ${s.robots}, notice ${!!s.coming}, links to unpublished ${s.badLinks.length}`);
-    // A static noindex tag stays in the file until a real release removes it (the published check fails a page that keeps it).
-    if (s.preview || !s.coming || s.badLinks.length) fail(`next out: chapter ${next.n} still a preview`);
+    const publishNext = new Function("x", `x.list[${nextI}].published = true;`);
+    s = await scenario("next out", publishNext, "index.html");
+    console.log(`  ch${next.n} published, contents: out [${s.toc.join(", ")}] | coming [${s.later.join(", ")}]`);
+    if (String(s.toc) !== C.list.slice(0, nextI + 1).map((c) => `${c.n} linked`).join(",")) fail("next out: contents not updated");
+    s = await scenario("next out", publishNext, lastFile);
+    console.log(`  ch${next.n} published, chapter ${last.n}: nav [${s.nav.join(" | ")}] | notice "${s.coming.replace(/\s+/g, " ")}"`);
+    if (!s.nav.some((n) => /^link: Next/i.test(n)) || !new RegExp(`Chapter ${next.n + 1}`).test(s.coming)) fail(`next out: chapter ${last.n} not updated`);
+    if (fs.existsSync(path.join(site, next.slug, "index.html"))) {
+      s = await scenario("next out", publishNext, `${next.slug}/index.html`);
+      console.log(`  ch${next.n} published, chapter ${next.n}: preview ${s.preview}, robots ${s.robots}, notice ${!!s.coming}, links to unpublished ${s.badLinks.length}`);
+      // A static noindex tag stays in the file until a real release removes it (the published check fails a page that keeps it).
+      if (s.preview || !s.coming || s.badLinks.length) fail(`next out: chapter ${next.n} still a preview`);
+    }
   }
 
   // Chapter 3 loses its translation: its switch goes, the zh contents page links the English chapter 3,

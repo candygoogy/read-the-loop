@@ -12,16 +12,18 @@ step through.
 3. [Caching](https://loop.candygoogy.dev/cache/)
 4. [Compaction](https://loop.candygoogy.dev/compaction/)
 5. [Tools and permissions](https://loop.candygoogy.dev/tools/)
+6. [Subagents](https://loop.candygoogy.dev/subagents/)
+7. [Failure modes](https://loop.candygoogy.dev/failure-modes/)
+8. [The harness playground](https://loop.candygoogy.dev/playground/)
 
-All five are also in Chinese: [中文版](https://loop.candygoogy.dev/zh/).
-
-Three more are coming, one at a time: subagents, failure modes, and building your own agent. To hear when one is
-out, choose Watch → Custom → Releases at the top of this page.
+All eight are also in Chinese: [中文版](https://loop.candygoogy.dev/zh/). Chapter 8's playground can be embedded
+in your own page; the chapter shows the snippet.
 
 ## How it's made
 
 Read the Loop was made with Claude Code, and everything it shows comes from recordings of Claude Code. We gave it
-real tasks (a bug in a small game, a bug report filed against [Black](https://github.com/psf/black)), recorded
+real tasks (a bug in a small game, a bug report filed against [black](https://github.com/psf/black), small
+projects built to catch known failures), recorded
 each session as it ran, and built the pages on those recordings.
 
 The rule: every number and every word the agent wrote or saw comes from a recording. Commands, outputs, token

@@ -1,7 +1,7 @@
 # Read the Loop: agent instructions
 
 An interactive, illustrated explainer of how AI coding agents work, built on **real recorded sessions**.
-8 chapters are planned; 1 to 5 are built in `site/`, and `site/chapters.js` says which are published.
+All 8 chapters are built in `site/` (English and Chinese); `site/chapters.js` says which are published.
 Live at https://loop.candygoogy.dev, repo https://github.com/candygoogy/read-the-loop.
 
 ## Hard rules
@@ -37,6 +37,10 @@ Live at https://loop.candygoogy.dev, repo https://github.com/candygoogy/read-the
 | `site/cache/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 3 page (caching), its figures, styles and narration |
 | `site/compaction/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 4 page (compaction), its figures, styles and narration |
 | `site/tools/index.html`, `app.js`, `chapter.css`, `copy.en.js` | Chapter 5 page (tools and permissions), its figures, styles and narration |
+| `site/subagents/` | Chapter 6 page (subagents): the main conversation and the subagent to one scale |
+| `site/failure-modes/` | Chapter 7 page (failure modes): known cases from their sources, all 22 recorded runs, the cleanup runs |
+| `site/playground/` (`index.html`, `embed.html`, `playground.js`) | Chapter 8 page (the harness playground) and its embeddable widget |
+| `site/zh/` | The Chinese pages: the contents page and every chapter, each with its own `copy.zh.js` |
 | `site/harness-step.js`, `.css` | The "you are the harness" widget for round 1 (demo and check in `tests/`) |
 | `site/data/trace-02-runK.js` | Recording 02, runs 1 to 3 (generated); the page shows run 2 and lists all three |
 | `site/game/run2/before/`, `after/` | The game as given to the agent, and with the agent's recorded edits replayed (generated) |
