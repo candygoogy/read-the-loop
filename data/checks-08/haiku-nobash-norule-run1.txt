@@ -1,0 +1,18 @@
+# check: node --test, with fixtures/game/game.test.js
+# run folder: ~/game (haiku-nobash-norule run 1, as the agent left it)
+# changed against fixtures/game: game.js
+# ran: 2026-11-11T18:07:08Z, node v26.13.0
+✔ ball bounces off the left wall (0.4805ms)
+✔ hitting a brick breaks it and scores (0.1214ms)
+✔ ball landing on the middle of the paddle bounces up (0.0799ms)
+✔ ball landing on the right half of the paddle bounces up (0.4086ms)
+✔ a missed ball is served again from the centre (0.0829ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.4541
+# exit code 0

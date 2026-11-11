@@ -1,0 +1,227 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-11",
+  "started_at": "2026-11-11T18:03:32.178Z",
+  "time_source": "arrival",
+  "model": "claude-haiku-5-5",
+  "claude_code_version": "2.1.322",
+  "permission_mode": "acceptEdits",
+  "prompt": "In my game the ball sometimes goes straight through the paddle. Please find the bug and fix it.",
+  "run": {
+    "index": 2,
+    "of": 2
+  },
+  "tools_available": [
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 2285,
+      "context_tokens": 6106,
+      "cached_tokens": 5663,
+      "new_tokens": 443,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 441,
+      "output_tokens": 97,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_011fUcz3nyZs9ZdL9UzHAxfZ",
+          "tool": "Glob",
+          "input": {
+            "pattern": "**/*",
+            "path": "~/game"
+          },
+          "t_ms": 2285,
+          "result": {
+            "text": "game.js\ngame.test.js\nindex.html",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 2339
+          }
+        }
+      ],
+      "added_since_previous": null
+    },
+    {
+      "t_ms": 3929,
+      "context_tokens": 6273,
+      "cached_tokens": 6104,
+      "new_tokens": 169,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 167,
+      "output_tokens": 153,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01GbeoXs3Kp1niSHuQCvu39b",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/game/game.js"
+          },
+          "t_ms": 3929,
+          "result": {
+            "text": "1\tconst WIDTH = 480;\n2\tconst HEIGHT = 320;\n3\t\n4\tconst BALL_RADIUS = 6;\n5\tconst SERVE = { vx: 40, vy: 240 };\n6\tconst PADDLE_SPEED = 360;\n7\tconst MAX_BOUNCE_ANGLE = Math.PI / 3;\n8\t\n9\tconst BRICK_ROWS = 3;\n10\tconst BRICK_COLS = 8;\n11\tconst BRICK_WIDTH = 50;\n12\tconst BRICK_HEIGHT = 14;\n13\tconst BRICK_GAP = 6;\n14\tconst BRICK_TOP = 40;\n15\t\n16\tconst LIGHT = { paper: \"#f3ede2\", ink: \"#1f1b16\", accent: \"#c8432b\", bricks: [\"#2c7a6f\", \"#c4841a\", \"#6b7a8c\"] };\n17\tconst DARK = { paper: \"#17150f\", ink: \"#eee6d6\", accent: \"#ef6a4f\", bricks: [\"#4fb3a4\", \"#e3a640\", \"#93a3b6\"] };\n18\t\n19\tfunction clamp(value, min, max) {\n20\t  return Math.max(min, Math.min(max, value));\n21\t}\n22\t\n23\tfunction makeBricks() {\n24\t  const rowWidth = BRICK_COLS * BRICK_WIDTH + (BRICK_COLS - 1) * BRICK_GAP;\n25\t  const left = (WIDTH - rowWidth) / 2;\n26\t  const bricks = [];\n27\t  for (let row = 0; row < BRICK_ROWS; row++) {\n28\t    for (let col = 0; col < BRICK_COLS; col++) {\n29\t      const x = left + col * (BRICK_WIDTH + BRICK_GAP);\n30\t      const y = BRICK_TOP + row * (BRICK_HEIGHT + BRICK_GAP);\n31\t      bricks.push({ x, y, width: BRICK_WIDTH, height: BRICK_HEIGHT, row, alive: true });\n32\t    }\n33\t  }\n34\t  return bricks;\n35\t}\n36\t\n37\tfunction serve(ball) {\n38\t  ball.x = WIDTH / 2;\n39\t  ball.y = HEIGHT / 2;\n40\t  ball.vx = SERVE.vx;\n41\t  ball.vy = SERVE.vy;\n42\t}\n43\t\n44\tfunction createState() {\n45\t  const ball = { x: 0, y: 0, vx: 0, vy: 0, radius: BALL_RADIUS };\n46\t  serve(ball);\n47\t  const paddle = { x: 0, y: HEIGHT - 24, width: 80, height: 10 };\n48\t  paddle.x = (WIDTH - paddle.width) / 2;\n49\t  return { ball, paddle, bricks: makeBricks(), score: 0 };\n50\t}\n51\t\n52\tfunction setPaddleCentre(state, x) {\n53\t  const paddle = state.paddle;\n54\t  paddle.x = clamp(x - paddle.width / 2, 0, WIDTH - paddle.width);\n55\t}\n56\t\n57\tfunction movePaddle(state, direction, dt) {\n58\t  const paddle = state.paddle;\n59\t  paddle.x = clamp(paddle.x + direction * PADDLE_SPEED * dt, 0, WIDTH - paddle.width);\n60\t}\n61\t\n62\tfunction circleHitsRect(ball, rect) {\n63\t  const nearestX = clamp(ball.x, rect.x, rect.x + rect.width);\n64\t  const nearestY = clamp(ball.y, rect.y, rect.y + rect.height);\n65\t  const dx = ball.x - nearestX;\n66\t  const dy = ball.y - nearestY;\n67\t  return dx * dx + dy * dy < ball.radius * ball.radius;\n68\t}\n69\t\n70\tfunction hitsPaddle(ball, paddle) {\n71\t  if (ball.vy <= 0) return false;\n72\t  const level = ball.y + ball.radius >= paddle.y && ball.y - ball.radius <= paddle.y + paddle.height;\n73\t  return level && Math.abs(ball.x - paddle.x) < paddle.width / 2 + ball.radius;\n74\t}\n75\t\n76\tfunction bounceOffPaddle(ball, paddle) {\n77\t  const centre = paddle.x + paddle.width / 2;\n78\t  const offset = clamp((ball.x - centre) / (paddle.width / 2), -1, 1);\n79\t  const speed = Math.hypot(ball.vx, ball.vy);\n80\t  const angle = offset * MAX_BOUNCE_ANGLE;\n81\t  ball.vx = speed * Math.sin(angle);\n82\t  ball.vy = -speed * Math.cos(angle);\n83\t  ball.y = paddle.y - ball.radius;\n84\t}\n85\t\n86\tfunction bounceOffBrick(ball, brick) {\n87\t  const overlapX = Math.min(ball.x + ball.radius - brick.x, brick.x + brick.width - (ball.x - ball.radius));\n88\t  const overlapY = Math.min(ball.y + ball.radius - brick.y, brick.y + brick.height - (ball.y - ball.radius));\n89\t  if (overlapX < overlapY) ball.vx = -ball.vx;\n90\t  else ball.vy = -ball.vy;\n91\t}\n92\t\n93\tfunction step(state, dt) {\n94\t  const { ball, paddle } = state;\n95\t  ball.x += ball.vx * dt;\n96\t  ball.y += ball.vy * dt;\n97\t\n98\t  if (ball.x - ball.radius < 0) {\n99\t    ball.x = ball.radius;\n100\t    ball.vx = Math.abs(ball.vx);\n101\t  } else if (ball.x + ball.radius > WIDTH) {\n102\t    ball.x = WIDTH - ball.radius;\n103\t    ball.vx = -Math.abs(ball.vx);\n104\t  }\n105\t  if (ball.y - ball.radius < 0) {\n106\t    ball.y = ball.radius;\n107\t    ball.vy = Math.abs(ball.vy);\n108\t  }\n109\t\n110\t  const brick = state.bricks.find((b) => b.alive && circleHitsRect(ball, b));\n111\t  if (brick) {\n112\t    brick.alive = false;\n113\t    state.score += 10;\n114\t    bounceOffBrick(ball, brick);\n115\t    if (state.bricks.every((b) => !b.alive)) state.bricks = makeBricks();\n116\t  }\n117\t\n118\t  if (hitsPaddle(ball, paddle)) bounceOffPaddle(ball, paddle);\n119\t\n120\t  if (ball.y - ball.radius > HEIGHT) serve(ball);\n121\t  return state;\n122\t}\n123\t\n124\tfunction draw(ctx, state, colours) {\n125\t  ctx.fillStyle = colours.paper;\n126\t  ctx.fillRect(0, 0, WIDTH, HEIGHT);\n127\t\n128\t  for (const brick of state.bricks) {\n129\t    if (!brick.alive) continue;\n130\t    ctx.fillStyle = colours.bricks[brick.row % colours.bricks.length];\n131\t    ctx.fillRect(brick.x, brick.y, brick.width, brick.height);\n132\t  }\n133\t\n134\t  const { ball, paddle } = state;\n135\t  ctx.fillStyle = colours.accent;\n136\t  ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);\n137\t  ctx.beginPath();\n138\t  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);\n139\t  ctx.fill();\n140\t\n141\t  ctx.fillStyle = colours.ink;\n142\t  ctx.font = \"14px ui-monospace, Menlo, Consolas, monospace\";\n143\t  ctx.textBaseline = \"top\";\n144\t  ctx.fillText(\"Score \" + state.score, 12, 12);\n145\t}\n146\t\n147\tfunction start(canvas) {\n148\t  const ctx = canvas.getContext(\"2d\");\n149\t  const dpr = window.devicePixelRatio || 1;\n150\t  canvas.width = WIDTH * dpr;\n151\t  canvas.height = HEIGHT * dpr;\n152\t  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n153\t  canvas.style.touchAction = \"none\";\n154\t  if (!canvas.hasAttribute(\"tabindex\")) canvas.tabIndex = 0;\n155\t\n156\t  const darkMode = window.matchMedia(\"(prefers-color-scheme: dark)\");\n157\t  const state = createState();\n158\t  const keys = { left: false, right: false };\n159\t  let last = null;\n160\t  let frame = 0;\n161\t\n162\t  function onPointer(event) {\n163\t    const rect = canvas.getBoundingClientRect();\n164\t    setPaddleCentre(state, ((event.clientX - rect.left) / rect.width) * WIDTH);\n165\t  }\n166\t\n167\t  function onKey(event) {\n168\t    const down = event.type === \"keydown\";\n169\t    const key = event.key.toLowerCase();\n170\t    if (key === \"arrowleft\" || key === \"a\") keys.left = down;\n171\t    else if (key === \"arrowright\" || key === \"d\") keys.right = down;\n172\t    else return;\n173\t    event.preventDefault();\n174\t  }\n175\t\n176\t  function onBlur() {\n177\t    keys.left = keys.right = false;\n178\t  }\n179\t\n180\t  function tick(time) {\n181\t    const dt = last === null ? 0 : Math.min((time - last) / 1000, 1 / 30);\n182\t    last = time;\n183\t    movePaddle(state, (keys.right ? 1 : 0) - (keys.left ? 1 : 0), dt);\n184\t    step(state, dt);\n185\t    draw(ctx, state, darkMode.matches ? DARK : LIGHT);\n186\t    frame = requestAnimationFrame(tick);\n187\t  }\n188\t\n189\t  const listeners = [[\"pointermove\", onPointer], [\"pointerdown\", onPointer], [\"keydown\", onKey], [\"keyup\", onKey], [\"blur\", onBlur]];\n190\t  for (const [type, fn] of listeners) canvas.addEventListener(type, fn);\n191\t  frame = requestAnimationFrame(tick);\n192\t\n193\t  return {\n194\t    stop() {\n195\t      cancelAnimationFrame(frame);\n196\t      for (const [type, fn] of listeners) canvas.removeEventListener(type, fn);\n197\t    },\n198\t  };\n199\t}\n200\t\n201\tif (typeof module !== \"undefined\") {\n202\t  module.exports = { WIDTH, HEIGHT, createState, step, setPaddleCentre, movePaddle, circleHitsRect, hitsPaddle };\n203\t}\n204\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 3951
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01RwLsNLiPa7J4WSoxMyZ1SJ",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/game/game.test.js"
+          },
+          "t_ms": 4094,
+          "result": {
+            "text": "1\tconst test = require(\"node:test\");\n2\tconst assert = require(\"node:assert/strict\");\n3\tconst { HEIGHT, WIDTH, createState, step } = require(\"./game.js\");\n4\t\n5\tconst FRAME = 1 / 60;\n6\t\n7\ttest(\"ball bounces off the left wall\", () => {\n8\t  const state = createState();\n9\t  Object.assign(state.ball, { x: 8, y: 200, vx: -240, vy: 0 });\n10\t  step(state, FRAME);\n11\t  assert.ok(state.ball.vx > 0);\n12\t  assert.ok(state.ball.x >= state.ball.radius);\n13\t});\n14\t\n15\ttest(\"hitting a brick breaks it and scores\", () => {\n16\t  const state = createState();\n17\t  const brick = state.bricks[state.bricks.length - 1];\n18\t  Object.assign(state.ball, {\n19\t    x: brick.x + brick.width / 2,\n20\t    y: brick.y + brick.height + state.ball.radius + 1,\n21\t    vx: 0,\n22\t    vy: -240,\n23\t  });\n24\t  step(state, FRAME);\n25\t  assert.equal(brick.alive, false);\n26\t  assert.equal(state.score, 10);\n27\t  assert.ok(state.ball.vy > 0);\n28\t});\n29\t\n30\tfunction dropOntoPaddle(state, x) {\n31\t  Object.assign(state.ball, { x, y: state.paddle.y - state.ball.radius - 1, vx: 0, vy: 240 });\n32\t  step(state, FRAME);\n33\t}\n34\t\n35\ttest(\"ball landing on the middle of the paddle bounces up\", () => {\n36\t  const state = createState();\n37\t  const { paddle } = state;\n38\t  dropOntoPaddle(state, paddle.x + paddle.width / 2);\n39\t  assert.ok(state.ball.vy < 0);\n40\t});\n41\t\n42\ttest(\"ball landing on the right half of the paddle bounces up\", () => {\n43\t  const state = createState();\n44\t  const { paddle } = state;\n45\t  dropOntoPaddle(state, paddle.x + paddle.width * 0.75);\n46\t  assert.ok(state.ball.vy < 0);\n47\t  assert.ok(state.ball.vx > 0);\n48\t});\n49\t\n50\ttest(\"a missed ball is served again from the centre\", () => {\n51\t  const state = createState();\n52\t  Object.assign(state.ball, { x: 30, y: HEIGHT + 10, vx: 0, vy: 240 });\n53\t  step(state, FRAME);\n54\t  assert.equal(state.ball.x, WIDTH / 2);\n55\t  assert.equal(state.ball.y, HEIGHT / 2);\n56\t  assert.ok(state.ball.vy > 0);\n57\t});\n58\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 4112
+          }
+        }
+      ],
+      "added_since_previous": 167
+    },
+    {
+      "t_ms": 13053,
+      "context_tokens": 11186,
+      "cached_tokens": 6271,
+      "new_tokens": 4915,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 4913,
+      "output_tokens": 1637,
+      "output": [
+        {
+          "kind": "text",
+          "text": "The likely culprit is `hitsPaddle`: it compares the ball's x to `paddle.x`, which is the paddle's left edge, not its centre. I'll run the tests first to get a baseline.",
+          "t_ms": 13378
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01NDKcfhhbu8jYxUMX3YfQ7k",
+          "tool": "Bash",
+          "input": {
+            "command": "cd \"~/game\" && node --test 2>&1 | tail -n 40"
+          },
+          "t_ms": 13583,
+          "result": {
+            "text": "<tool_use_error>Error: No such tool available: Bash. Bash is disabled for this session, in subagents as well as here.</tool_use_error>",
+            "is_error": true,
+            "denied": false,
+            "t_ms": 13583
+          }
+        }
+      ],
+      "added_since_previous": 4913
+    },
+    {
+      "t_ms": 15373,
+      "context_tokens": 12933,
+      "cached_tokens": 11184,
+      "new_tokens": 1749,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1747,
+      "output_tokens": 322,
+      "output": [
+        {
+          "kind": "text",
+          "text": "Bash isn't available in this session, so I can't run the test suite. I'll make the fix and verify it by reading the code.",
+          "t_ms": 15536
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01QUcSTvXYoKNywCEgW7wBFd",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/game/game.js",
+            "old_string": "  return level && Math.abs(ball.x - paddle.x) < paddle.width / 2 + ball.radius;",
+            "new_string": "  const centre = paddle.x + paddle.width / 2;\n  return level && Math.abs(ball.x - centre) < paddle.width / 2 + ball.radius;"
+          },
+          "t_ms": 16068,
+          "result": {
+            "text": "The file ~/game/game.js has been updated successfully. (file state is current in your context — no need to Read it back)",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 16093
+          }
+        }
+      ],
+      "added_since_previous": 1747
+    },
+    {
+      "t_ms": 20078,
+      "context_tokens": 13369,
+      "cached_tokens": 12931,
+      "new_tokens": 438,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 436,
+      "output_tokens": 836,
+      "output": [
+        {
+          "kind": "text",
+          "text": "The fix is in. I'll add a regression test for the far right edge of the paddle, where the bug was most visible.",
+          "t_ms": 20220
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01BkQs2dcc2ShkskTAxG12LS",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/game/game.test.js",
+            "old_string": "test(\"a missed ball is served again from the centre\", () => {",
+            "new_string": "test(\"ball landing near the far right edge of the paddle bounces up\", () => {\n  const state = createState();\n  const { paddle } = state;\n  dropOntoPaddle(state, paddle.x + paddle.width - 2);\n  assert.ok(state.ball.vy < 0);\n  assert.ok(state.ball.vx > 0);\n});\n\ntest(\"a missed ball is served again from the centre\", () => {"
+          },
+          "t_ms": 20907,
+          "result": {
+            "text": "The file ~/game/game.test.js has been updated successfully. (file state is current in your context — no need to Read it back)",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 20929
+          }
+        }
+      ],
+      "added_since_previous": 436
+    },
+    {
+      "t_ms": 24225,
+      "context_tokens": 14325,
+      "cached_tokens": 13367,
+      "new_tokens": 958,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 956,
+      "output_tokens": 441,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I found and fixed the bug in `game.js`, but I couldn't run the tests. Bash is disabled in this session, so the test run is still outstanding.\n\n**The bug:** In `hitsPaddle`, the horizontal check compared the ball's x-position to `paddle.x`, which is the paddle's *left edge*, not its centre. The hit window was therefore centred on the left edge, so a ball landing on the right part of the paddle (more than about 46px right of its left edge) fell through. Because of this, it only happened on some hits.\n\n**The fix** (`game.js`, `hitsPaddle`): the check now measures from the paddle's centre, matching how `bounceOffPaddle` already computes the bounce angle:\n\n```js\nconst centre = paddle.x + paddle.width / 2;\nreturn level && Math.abs(ball.x - centre) < paddle.width / 2 + ball.radius;\n```\n\n**Test added** (`game.test.js`): a regression test drops the ball 2px in from the paddle's right edge and checks that it bounces up. The existing \"right half\" test (at 75% across the paddle) would also have failed before this change, so it covers the same bug.\n\n**Verification:** I checked the new and existing paddle tests by hand against the new code, and they should pass. Please run `node --test` in the project folder to confirm. I didn't touch anything else.",
+          "t_ms": 24225
+        }
+      ],
+      "added_since_previous": 956
+    }
+  ],
+  "totals": {
+    "model_calls": 6,
+    "output_tokens": 3486,
+    "cache_read_tokens": 55520,
+    "cache_write_tokens": 8660,
+    "cost_usd": 0.004,
+    "duration_s": 24.0,
+    "ttft_ms": 2015
+  },
+  "final_answer": "I found and fixed the bug in `game.js`, but I couldn't run the tests. Bash is disabled in this session, so the test run is still outstanding.\n\n**The bug:** In `hitsPaddle`, the horizontal check compared the ball's x-position to `paddle.x`, which is the paddle's *left edge*, not its centre. The hit window was therefore centred on the left edge, so a ball landing on the right part of the paddle (more than about 46px right of its left edge) fell through. Because of this, it only happened on some hits.\n\n**The fix** (`game.js`, `hitsPaddle`): the check now measures from the paddle's centre, matching how `bounceOffPaddle` already computes the bounce angle:\n\n```js\nconst centre = paddle.x + paddle.width / 2;\nreturn level && Math.abs(ball.x - centre) < paddle.width / 2 + ball.radius;\n```\n\n**Test added** (`game.test.js`): a regression test drops the ball 2px in from the paddle's right edge and checks that it bounces up. The existing \"right half\" test (at 75% across the paddle) would also have failed before this change, so it covers the same bug.\n\n**Verification:** I checked the new and existing paddle tests by hand against the new code, and they should pass. Please run `node --test` in the project folder to confirm. I didn't touch anything else."
+}

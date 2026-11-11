@@ -1,0 +1,1191 @@
+{
+  "source": "Chapter 8's playground: real Claude Code sessions recorded with claude -p on chapter 1's game, 2 runs for each of 8 combinations of 3 switches, summarised from their traces (scripts/build-trace.py) and from the fixture's own tests run on each game as the agent left it (scripts/check-playground.py, data/checks-08). Written by scripts/summarize-playground.py.",
+  "switches": {
+    "model": {
+      "opus": {
+        "model": "claude-opus-5-5"
+      },
+      "haiku": {
+        "model": "claude-haiku-5-5"
+      }
+    },
+    "bash": {
+      "bash": {
+        "tools": [
+          "Bash",
+          "Read",
+          "Edit",
+          "Glob",
+          "Grep"
+        ],
+        "allowed_tools": [
+          "Bash(node *)",
+          "Read",
+          "Edit",
+          "Glob",
+          "Grep"
+        ]
+      },
+      "nobash": {
+        "tools": [
+          "Read",
+          "Edit",
+          "Glob",
+          "Grep"
+        ],
+        "allowed_tools": [
+          "Read",
+          "Edit",
+          "Glob",
+          "Grep"
+        ]
+      }
+    },
+    "rule": {
+      "norule": {
+        "append_system_prompt": null
+      },
+      "rule": {
+        "append_system_prompt": "Run the tests before and after any change."
+      }
+    }
+  },
+  "test_command": "\\bnode\\b[^|;&]*?(?:--test\\b|\\.test\\.js\\b)",
+  "totals": {
+    "runs": 16,
+    "model_calls": 76,
+    "tool_requests": 87,
+    "refused": 0,
+    "unavailable": 4,
+    "fixed": 16
+  },
+  "combinations": [
+    {
+      "combo": "opus-bash-norule",
+      "switches": {
+        "model": "opus",
+        "bash": "bash",
+        "rule": "norule"
+      },
+      "runs": [
+        "trace-08-opus-bash-norule-run1",
+        "trace-08-opus-bash-norule-run2"
+      ]
+    },
+    {
+      "combo": "opus-bash-rule",
+      "switches": {
+        "model": "opus",
+        "bash": "bash",
+        "rule": "rule"
+      },
+      "runs": [
+        "trace-08-opus-bash-rule-run1",
+        "trace-08-opus-bash-rule-run2"
+      ]
+    },
+    {
+      "combo": "opus-nobash-norule",
+      "switches": {
+        "model": "opus",
+        "bash": "nobash",
+        "rule": "norule"
+      },
+      "runs": [
+        "trace-08-opus-nobash-norule-run1",
+        "trace-08-opus-nobash-norule-run2"
+      ]
+    },
+    {
+      "combo": "opus-nobash-rule",
+      "switches": {
+        "model": "opus",
+        "bash": "nobash",
+        "rule": "rule"
+      },
+      "runs": [
+        "trace-08-opus-nobash-rule-run1",
+        "trace-08-opus-nobash-rule-run2"
+      ]
+    },
+    {
+      "combo": "haiku-bash-norule",
+      "switches": {
+        "model": "haiku",
+        "bash": "bash",
+        "rule": "norule"
+      },
+      "runs": [
+        "trace-08-haiku-bash-norule-run1",
+        "trace-08-haiku-bash-norule-run2"
+      ]
+    },
+    {
+      "combo": "haiku-bash-rule",
+      "switches": {
+        "model": "haiku",
+        "bash": "bash",
+        "rule": "rule"
+      },
+      "runs": [
+        "trace-08-haiku-bash-rule-run1",
+        "trace-08-haiku-bash-rule-run2"
+      ]
+    },
+    {
+      "combo": "haiku-nobash-norule",
+      "switches": {
+        "model": "haiku",
+        "bash": "nobash",
+        "rule": "norule"
+      },
+      "runs": [
+        "trace-08-haiku-nobash-norule-run1",
+        "trace-08-haiku-nobash-norule-run2"
+      ]
+    },
+    {
+      "combo": "haiku-nobash-rule",
+      "switches": {
+        "model": "haiku",
+        "bash": "nobash",
+        "rule": "rule"
+      },
+      "runs": [
+        "trace-08-haiku-nobash-rule-run1",
+        "trace-08-haiku-nobash-rule-run2"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "combo": "opus-bash-norule",
+      "switches": {
+        "model": "opus",
+        "bash": "bash",
+        "rule": "norule"
+      },
+      "run": 1,
+      "trace": "trace-08-opus-bash-norule-run1",
+      "site_js": true,
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 5,
+      "duration_s": 32.3,
+      "cost_usd": 0.1054,
+      "first_call_cached_tokens": 5049,
+      "tools_available": [
+        "Bash",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Edit": 2,
+        "Bash": 1
+      },
+      "tool_requests": 6,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [
+        {
+          "call": 4,
+          "command": "cd \"~/game\" && node --test game.test.js 2>&1 | tail -n 12"
+        }
+      ],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": true,
+      "edits": [
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        },
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.test.js"
+        }
+      ],
+      "files_changed": [
+        "game.js",
+        "game.test.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/opus-bash-norule-run1.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "opus-bash-norule",
+      "switches": {
+        "model": "opus",
+        "bash": "bash",
+        "rule": "norule"
+      },
+      "run": 2,
+      "trace": "trace-08-opus-bash-norule-run2",
+      "site_js": true,
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 5,
+      "duration_s": 39.5,
+      "cost_usd": 0.096,
+      "first_call_cached_tokens": 6601,
+      "tools_available": [
+        "Bash",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Edit": 2,
+        "Bash": 1
+      },
+      "tool_requests": 6,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [
+        {
+          "call": 4,
+          "command": "cd \"~/game\" && node --test 2>&1 | tail -n 12"
+        }
+      ],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": true,
+      "edits": [
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        },
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.test.js"
+        }
+      ],
+      "files_changed": [
+        "game.js",
+        "game.test.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/opus-bash-norule-run2.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "opus-bash-rule",
+      "switches": {
+        "model": "opus",
+        "bash": "bash",
+        "rule": "rule"
+      },
+      "run": 1,
+      "trace": "trace-08-opus-bash-rule-run1",
+      "site_js": true,
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 6,
+      "duration_s": 34.1,
+      "cost_usd": 0.1567,
+      "first_call_cached_tokens": 0,
+      "tools_available": [
+        "Bash",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Bash": 3,
+        "Read": 2,
+        "Edit": 2
+      },
+      "tool_requests": 7,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [
+        {
+          "call": 3,
+          "command": "cd ~/game && node --test 2>&1 | tail -30"
+        },
+        {
+          "call": 5,
+          "command": "cd ~/game && node --test 2>&1 | tail -12"
+        }
+      ],
+      "tests_before_first_edit": true,
+      "tests_after_last_edit": true,
+      "edits": [
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        },
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.test.js"
+        }
+      ],
+      "files_changed": [
+        "game.js",
+        "game.test.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/opus-bash-rule-run1.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "opus-bash-rule",
+      "switches": {
+        "model": "opus",
+        "bash": "bash",
+        "rule": "rule"
+      },
+      "run": 2,
+      "trace": "trace-08-opus-bash-rule-run2",
+      "site_js": true,
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 5,
+      "duration_s": 28.0,
+      "cost_usd": 0.0899,
+      "first_call_cached_tokens": 6622,
+      "tools_available": [
+        "Bash",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Bash": 3,
+        "Read": 2,
+        "Edit": 1
+      },
+      "tool_requests": 6,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [
+        {
+          "call": 3,
+          "command": "cd ~/game && node --test 2>&1 | tail -20"
+        },
+        {
+          "call": 4,
+          "command": "cd ~/game && node --test 2>&1 | tail -10"
+        }
+      ],
+      "tests_before_first_edit": true,
+      "tests_after_last_edit": true,
+      "edits": [
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/opus-bash-rule-run2.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "opus-nobash-norule",
+      "switches": {
+        "model": "opus",
+        "bash": "nobash",
+        "rule": "norule"
+      },
+      "run": 1,
+      "trace": "trace-08-opus-nobash-norule-run1",
+      "site_js": true,
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 4,
+      "duration_s": 20.0,
+      "cost_usd": 0.0862,
+      "first_call_cached_tokens": 3571,
+      "tools_available": [
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Edit": 1
+      },
+      "tool_requests": 4,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": false,
+      "edits": [
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/opus-nobash-norule-run1.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "opus-nobash-norule",
+      "switches": {
+        "model": "opus",
+        "bash": "nobash",
+        "rule": "norule"
+      },
+      "run": 2,
+      "trace": "trace-08-opus-nobash-norule-run2",
+      "site_js": true,
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 4,
+      "duration_s": 25.3,
+      "cost_usd": 0.0783,
+      "first_call_cached_tokens": 4915,
+      "tools_available": [
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Edit": 1
+      },
+      "tool_requests": 4,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": false,
+      "edits": [
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/opus-nobash-norule-run2.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "opus-nobash-rule",
+      "switches": {
+        "model": "opus",
+        "bash": "nobash",
+        "rule": "rule"
+      },
+      "run": 1,
+      "trace": "trace-08-opus-nobash-rule-run1",
+      "site_js": true,
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 4,
+      "duration_s": 30.4,
+      "cost_usd": 0.0974,
+      "first_call_cached_tokens": 3580,
+      "tools_available": [
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Edit": 2
+      },
+      "tool_requests": 5,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": false,
+      "edits": [
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        },
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.test.js"
+        }
+      ],
+      "files_changed": [
+        "game.js",
+        "game.test.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/opus-nobash-rule-run1.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "opus-nobash-rule",
+      "switches": {
+        "model": "opus",
+        "bash": "nobash",
+        "rule": "rule"
+      },
+      "run": 2,
+      "trace": "trace-08-opus-nobash-rule-run2",
+      "site_js": true,
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 4,
+      "duration_s": 32.6,
+      "cost_usd": 0.0784,
+      "first_call_cached_tokens": 4936,
+      "tools_available": [
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Edit": 1
+      },
+      "tool_requests": 4,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": false,
+      "edits": [
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/opus-nobash-rule-run2.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "haiku-bash-norule",
+      "switches": {
+        "model": "haiku",
+        "bash": "bash",
+        "rule": "norule"
+      },
+      "run": 1,
+      "trace": "trace-08-haiku-bash-norule-run1",
+      "site_js": true,
+      "model": "claude-haiku-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 5,
+      "duration_s": 18.1,
+      "cost_usd": 0.0047,
+      "first_call_cached_tokens": 0,
+      "tools_available": [
+        "Bash",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Bash": 3,
+        "Read": 2,
+        "Edit": 1
+      },
+      "tool_requests": 6,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [
+        {
+          "call": 3,
+          "command": "cd \"~/game\" && node --test 2>&1 | tail -40"
+        },
+        {
+          "call": 4,
+          "command": "cd \"~/game\" && node --test 2>&1 | tail -12"
+        }
+      ],
+      "tests_before_first_edit": true,
+      "tests_after_last_edit": true,
+      "edits": [
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/haiku-bash-norule-run1.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "haiku-bash-norule",
+      "switches": {
+        "model": "haiku",
+        "bash": "bash",
+        "rule": "norule"
+      },
+      "run": 2,
+      "trace": "trace-08-haiku-bash-norule-run2",
+      "site_js": true,
+      "model": "claude-haiku-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 4,
+      "duration_s": 16.2,
+      "cost_usd": 0.0028,
+      "first_call_cached_tokens": 7329,
+      "tools_available": [
+        "Bash",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Bash": 2,
+        "Read": 2,
+        "Edit": 1
+      },
+      "tool_requests": 5,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [
+        {
+          "call": 3,
+          "command": "cd \"~/game\" && node --test game.test.js 2>&1 | tail -40"
+        }
+      ],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": true,
+      "edits": [
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/haiku-bash-norule-run2.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "haiku-bash-rule",
+      "switches": {
+        "model": "haiku",
+        "bash": "bash",
+        "rule": "rule"
+      },
+      "run": 1,
+      "trace": "trace-08-haiku-bash-rule-run1",
+      "site_js": true,
+      "model": "claude-haiku-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 5,
+      "duration_s": 22.7,
+      "cost_usd": 0.0048,
+      "first_call_cached_tokens": 0,
+      "tools_available": [
+        "Bash",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Bash": 3,
+        "Read": 2,
+        "Edit": 1
+      },
+      "tool_requests": 6,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [
+        {
+          "call": 3,
+          "command": "node --test game.test.js 2>&1 | tail -60"
+        },
+        {
+          "call": 4,
+          "command": "node --test game.test.js 2>&1 | tail -12"
+        }
+      ],
+      "tests_before_first_edit": true,
+      "tests_after_last_edit": true,
+      "edits": [
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/haiku-bash-rule-run1.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "haiku-bash-rule",
+      "switches": {
+        "model": "haiku",
+        "bash": "bash",
+        "rule": "rule"
+      },
+      "run": 2,
+      "trace": "trace-08-haiku-bash-rule-run2",
+      "site_js": true,
+      "model": "claude-haiku-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 6,
+      "duration_s": 22.0,
+      "cost_usd": 0.0039,
+      "first_call_cached_tokens": 7350,
+      "tools_available": [
+        "Bash",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Bash": 3,
+        "Grep": 1,
+        "Read": 2,
+        "Edit": 1
+      },
+      "tool_requests": 7,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [],
+      "test_runs": [
+        {
+          "call": 3,
+          "command": "node --version && node --test game.test.js 2>&1 | tail -40"
+        },
+        {
+          "call": 5,
+          "command": "node --test game.test.js 2>&1 | tail -12"
+        }
+      ],
+      "tests_before_first_edit": true,
+      "tests_after_last_edit": true,
+      "edits": [
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/haiku-bash-rule-run2.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "haiku-nobash-norule",
+      "switches": {
+        "model": "haiku",
+        "bash": "nobash",
+        "rule": "norule"
+      },
+      "run": 1,
+      "trace": "trace-08-haiku-nobash-norule-run1",
+      "site_js": true,
+      "model": "claude-haiku-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 4,
+      "duration_s": 15.4,
+      "cost_usd": 0.0032,
+      "first_call_cached_tokens": 3571,
+      "tools_available": [
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Edit": 1,
+        "Bash": 1
+      },
+      "tool_requests": 5,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [
+        {
+          "call": 3,
+          "tool": "Bash",
+          "command": "cd \"~/game\" && node --test game.test.js 2>&1 | tail -n 30",
+          "error": "<tool_use_error>Error: No such tool available: Bash. Bash is disabled for this session, in subagents as well as here.</tool_use_error>"
+        }
+      ],
+      "test_runs": [],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": false,
+      "edits": [
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/haiku-nobash-norule-run1.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "haiku-nobash-norule",
+      "switches": {
+        "model": "haiku",
+        "bash": "nobash",
+        "rule": "norule"
+      },
+      "run": 2,
+      "trace": "trace-08-haiku-nobash-norule-run2",
+      "site_js": true,
+      "model": "claude-haiku-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 4,
+      "duration_s": 16.2,
+      "cost_usd": 0.003,
+      "first_call_cached_tokens": 5642,
+      "tools_available": [
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Edit": 1,
+        "Bash": 1
+      },
+      "tool_requests": 5,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [
+        {
+          "call": 3,
+          "tool": "Bash",
+          "command": "cd \"~/game\" && node --test game.test.js 2>&1 | tail -n 30",
+          "error": "<tool_use_error>Error: No such tool available: Bash. Bash is disabled for this session, in subagents as well as here.</tool_use_error>"
+        }
+      ],
+      "test_runs": [],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": false,
+      "edits": [
+        {
+          "call": 3,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/haiku-nobash-norule-run2.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "haiku-nobash-rule",
+      "switches": {
+        "model": "haiku",
+        "bash": "nobash",
+        "rule": "rule"
+      },
+      "run": 1,
+      "trace": "trace-08-haiku-nobash-rule-run1",
+      "site_js": true,
+      "model": "claude-haiku-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 5,
+      "duration_s": 19.5,
+      "cost_usd": 0.0043,
+      "first_call_cached_tokens": 0,
+      "tools_available": [
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Bash": 1,
+        "Edit": 1
+      },
+      "tool_requests": 5,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [
+        {
+          "call": 3,
+          "tool": "Bash",
+          "command": "cd \"~/game\" && node --test 2>&1 | tail -60",
+          "error": "<tool_use_error>Error: No such tool available: Bash. Bash is disabled for this session, in subagents as well as here.</tool_use_error>"
+        }
+      ],
+      "test_runs": [],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": false,
+      "edits": [
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        }
+      ],
+      "files_changed": [
+        "game.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/haiku-nobash-rule-run1.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    },
+    {
+      "combo": "haiku-nobash-rule",
+      "switches": {
+        "model": "haiku",
+        "bash": "nobash",
+        "rule": "rule"
+      },
+      "run": 2,
+      "trace": "trace-08-haiku-nobash-rule-run2",
+      "site_js": true,
+      "model": "claude-haiku-5-5",
+      "claude_code_version": "2.1.322",
+      "date": "2026-11-11",
+      "permission_mode": "acceptEdits",
+      "model_calls": 6,
+      "duration_s": 24.0,
+      "cost_usd": 0.004,
+      "first_call_cached_tokens": 5663,
+      "tools_available": [
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
+      "tools": {
+        "Glob": 1,
+        "Read": 2,
+        "Bash": 1,
+        "Edit": 2
+      },
+      "tool_requests": 6,
+      "refused": 0,
+      "refused_commands": [],
+      "unavailable": [
+        {
+          "call": 3,
+          "tool": "Bash",
+          "command": "cd \"~/game\" && node --test 2>&1 | tail -n 40",
+          "error": "<tool_use_error>Error: No such tool available: Bash. Bash is disabled for this session, in subagents as well as here.</tool_use_error>"
+        }
+      ],
+      "test_runs": [],
+      "tests_before_first_edit": false,
+      "tests_after_last_edit": false,
+      "edits": [
+        {
+          "call": 4,
+          "tool": "Edit",
+          "file": "~/game/game.js"
+        },
+        {
+          "call": 5,
+          "tool": "Edit",
+          "file": "~/game/game.test.js"
+        }
+      ],
+      "files_changed": [
+        "game.js",
+        "game.test.js"
+      ],
+      "fix": {
+        "check": "node --test, with fixtures/game/game.test.js",
+        "result_file": "data/checks-08/haiku-nobash-rule-run2.txt",
+        "tests": 5,
+        "passed": 5,
+        "failed": 0,
+        "exit_code": 0,
+        "correct": true
+      }
+    }
+  ]
+}
