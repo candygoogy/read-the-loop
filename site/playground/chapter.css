@@ -4,7 +4,8 @@
    words), --result for what the harness pasted back (hatched, as everywhere), --you for what we typed.
    A run as a whole isn't one kind of text, so its card is set in ink. Small text uses the AA text tokens:
    --ink-2 (8:1 or more on --card and --paper in both themes), --model-text and --result-text (4.5:1 or
-   more on every paper, per style.css). Yes and no differ in shape as well as fill: a dot and a ring. */
+   more on every paper, per style.css). Yes and no differ in shape as well as fill: a dot and a ring; an
+   error is a diamond where a result is a hatched square, and a missing tool's tag has a dashed edge. */
 
 /* ---------- the prompt, the three switches ---------- */
 .ask { margin: 1.5rem 0; }
@@ -37,19 +38,36 @@
 .pg-switches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem 1.25rem; margin: 0 0 1.25rem; }
 .pg-sw { margin: 0; padding: 0; border: 0; min-width: 0; }
 .pg-sw legend { padding: 0; margin: 0 0 0.4rem; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
-.seg { display: inline-flex; padding: 3px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
-.seg-opt { position: relative; display: block; }
+/* Each switch: two equal options in a sunken track, and a raised thumb that slides under the chosen one
+   (where :has() is supported; elsewhere the chosen option is filled). The thumb moves on screen, so it
+   takes --ease-in-out; under reduced motion style.css turns the transition off and it simply jumps. */
+.seg {
+  position: relative; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 3px;
+  border: 1px solid var(--rule); border-radius: 10px; background: var(--paper-2);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.seg-thumb { display: none; }
+.seg-opt { position: relative; z-index: 1; display: block; }
 .seg-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
 .seg-opt span {
-  display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; min-width: 4.5rem; padding: 0 1rem;
+  display: flex; align-items: center; justify-content: center; min-height: 2.75rem; min-width: 4.5rem; padding: 0 1rem;
   font: 600 0.85rem/1.2 var(--mono); color: var(--ink-2); border-radius: 7px; cursor: pointer;
   transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 .seg-opt span:active { transform: scale(0.97); }
-.seg-opt input:checked + span { background: var(--ink); color: var(--card); }
+.seg-opt input:checked + span { background: var(--ink); color: var(--card); cursor: default; }
 .seg-opt input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+@supports selector(:has(*)) {
+  .seg-thumb {
+    display: block; position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / 2);
+    border-radius: 7px; background: var(--ink); box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 35%, transparent);
+    transition: transform var(--dur-base) var(--ease-in-out);
+  }
+  .seg:has(> .seg-opt:last-child input:checked) .seg-thumb { transform: translateX(100%); }
+  .seg-opt input:checked + span { background: transparent; }
+}
 @media (hover: hover) and (pointer: fine) {
-  .seg-opt input:not(:checked) + span:hover { color: var(--ink); background: var(--paper-2); }
+  .seg-opt input:not(:checked) + span:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 7%, transparent); }
 }
 .pg-root p.pg-hint { margin: 0.4rem 0 0; font: 500 0.74rem/1.45 var(--mono); color: var(--ink-2); }
 .pg-hint q { quotes: "“" "”"; }
@@ -74,14 +92,29 @@
 }
 
 .pg-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin: 0; padding: 0.85rem 0.85rem 0.2rem; }
-.pg-facts > div { display: flex; flex-direction: column-reverse; justify-content: flex-end; min-width: 0; }
-.pg-facts dt { font: 500 0.72rem/1.3 var(--mono); color: var(--ink-2); margin-top: 0.2rem; }
-.pg-facts dd { margin: 0; font: 700 1.55rem/1.05 var(--display); letter-spacing: -0.01em; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+/* The number, then its label, then (after a switch) what it was: a line kept free from the start, so it
+   never pushes anything down. */
+.pg-facts > div { display: flex; flex-direction: column; min-width: 0; }
+.pg-facts dt { order: 1; font: 500 0.72rem/1.3 var(--mono); color: var(--ink-2); margin-top: 0.2rem; }
+.pg-facts dd { margin: 0; }
+.pg-facts dd[data-f] { order: 0; font: 700 1.55rem/1.05 var(--display); letter-spacing: -0.01em; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.pg-facts dd.pg-was {
+  order: 2; min-height: 1.35em; margin-top: 0.1rem; font: 500 0.7rem/1.35 var(--mono); color: var(--ink);
+  font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pg-facts dd.pg-was.is-same { color: var(--ink-2); }
 .pg-root p.pg-cache { margin: 0.35rem 0.85rem 0.6rem; font: 500 0.72rem/1.45 var(--mono); color: var(--ink-2); }
 
-.pg-checks { list-style: none; margin: 0 0.85rem; padding: 0; border-top: 1px solid var(--rule); }
-.ck { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto; align-items: baseline; gap: 0.5rem; padding: 0.45rem 0; border-bottom: 1px solid var(--rule); font-size: 0.93rem; line-height: 1.35; }
-.ck-v { font: 600 0.8rem/1.3 var(--mono); white-space: nowrap; }
+/* The three rows share their columns (a subgrid), so the answers line up and a label wraps the same
+   whatever the answer says. A changed answer gets a tinted row and its old answer in words. */
+.pg-checks { list-style: none; margin: 0 0.85rem; padding: 0; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto; column-gap: 0.5rem; }
+.ck { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: baseline; padding: 0.45rem 0; border-bottom: 1px solid var(--rule); font-size: 0.93rem; line-height: 1.35; }
+@supports not (grid-template-columns: subgrid) {
+  .ck { grid-template-columns: 1rem minmax(0, 1fr) auto; gap: 0.5rem; }
+}
+.ck.is-changed { margin-inline: -0.4rem; padding-inline: 0.4rem; background: color-mix(in srgb, var(--ink) 6%, transparent); border-radius: 4px; }
+.ck-v { font: 600 0.8rem/1.3 var(--mono); white-space: nowrap; text-align: right; }
+.ck-was { margin-right: 0.15rem; font-weight: 500; color: var(--ink-2); }
 .mk { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; flex: none; }
 .mk-yes { background: var(--ink); }
 .mk-no { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-2); }
@@ -96,34 +129,43 @@
 .pg-reqs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.3rem; }
 .pg-reqs > li { min-width: 0; }
 
-/* One request and what came back, on one line; opened, chapter 1's two cards. */
+/* One request and what came back, on one line; opened, chapter 1's two cards. The tool and the command
+   first; the tag, the result and the arrow as one piece after them, which moves under the command when the
+   line can't hold the whole command too, rather than cutting the command down to its first word. */
 .pg-req > summary {
-  display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0.3rem 0.55rem 0.3rem 0.65rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.5rem; min-height: 2.75rem; padding: 0.35rem 0.55rem 0.35rem 0.65rem;
   list-style: none; cursor: pointer; border: 1px solid var(--rule); border-left: 3px solid var(--model); border-radius: 8px;
   background: var(--card); font: 500 0.76rem/1.3 var(--mono);
   transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
 }
 .pg-req > summary::-webkit-details-marker { display: none; }
-.pg-req > summary::after {
-  content: ""; flex: none; width: 0.4rem; height: 0.4rem; margin-left: 0.15rem;
+.q-end { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: 0.5rem; }
+.q-end::after {
+  content: ""; flex: none; width: 0.4rem; height: 0.4rem; margin: 0 0.1rem 0 0.15rem;
   border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg);
   transition: transform var(--dur-base) var(--ease-out);
 }
-.pg-req[open] > summary::after { transform: rotate(45deg); }
+.pg-req[open] > summary .q-end::after { transform: rotate(45deg); }
 @media (hover: hover) and (pointer: fine) {
   .pg-req > summary:hover { border-color: var(--ink-3); border-left-color: var(--model); }
 }
+.q-head { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.5rem; }
 .q-tool { flex: none; font-weight: 600; color: var(--model-text); }
-.q-arg { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
-.q-tag { flex: none; padding: 0.15rem 0.4rem; border-radius: 5px; font: 600 0.66rem/1.2 var(--mono); letter-spacing: 0.02em; color: var(--ink); background: var(--paper-2); }
-.is-test .q-tag { color: var(--result-text); background: color-mix(in srgb, var(--result) 13%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--result) 45%, transparent); }
-.is-missing .q-tag { color: var(--model-text); background: color-mix(in srgb, var(--model) 10%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--model) 45%, transparent); }
+.q-arg { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+/* Tags differ by their words, and by their edge: none (edit), solid (runs the tests), dashed (not available). */
+.q-tag { flex: none; padding: 0.1rem 0.35rem; border: 1px solid transparent; border-radius: 5px; font: 600 0.68rem/1.2 var(--mono); letter-spacing: 0.02em; color: var(--ink); background: var(--paper-2); }
+.is-test .q-tag { color: var(--result-text); background: color-mix(in srgb, var(--result) 13%, var(--card)); border-color: color-mix(in srgb, var(--result) 50%, transparent); }
+.is-missing .q-tag { color: var(--model-text); background: color-mix(in srgb, var(--model) 10%, var(--card)); border: 1px dashed color-mix(in srgb, var(--model) 75%, transparent); }
 .q-res { flex: none; display: inline-flex; align-items: center; gap: 0.35rem; color: var(--result-text); white-space: nowrap; }
-.q-res::before { content: ""; width: 0.6rem; height: 0.6rem; border-radius: 2px; background: var(--tex-teal) var(--result); }
+.q-res::before { content: ""; flex: none; width: 0.6rem; height: 0.6rem; border-radius: 2px; background: var(--tex-teal) var(--result); }
 .q-res.is-err, .q-res.is-fail { color: var(--model-text); }
-.q-res.is-err::before { background: color-mix(in srgb, var(--model) 70%, var(--result)); }
+/* An error is a solid diamond, not the hatched square of a result. */
+.q-res.is-err::before { width: 0.5rem; height: 0.5rem; margin-inline: 0.05rem; border-radius: 1px; background: var(--model); transform: rotate(45deg); }
 .q-open { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding: 0.5rem 0 0.25rem; }
 .q-open .card pre { max-height: 16rem; }
+/* An opened step's card heads: the description goes under the label when the two don't fit on a line. */
+.q-open .card-head { flex-wrap: wrap; row-gap: 0.15rem; }
+.q-open .card-head .meta { margin-left: auto; }
 
 /* The final answer: its first paragraph, the rest folded. */
 .pg-answer { margin-top: 0.35rem; }
@@ -214,13 +256,11 @@ body.em { min-height: 0; }
   .points li { padding-left: 2.3rem; }
   .pg-call { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
   .pg-cn { padding-top: 0.15rem; }
-  .pg-facts dd { font-size: 1.35rem; }
-  /* A command keeps a line of its own; its tag and result wrap under it. */
-  .pg-req > summary { flex-wrap: wrap; row-gap: 0.15rem; padding-block: 0.4rem; }
-  .q-arg { flex: 1 1 9rem; }
+  .pg-facts dd[data-f] { font-size: 1.35rem; }
   .ov th, .ov td { padding-inline: 0.35rem; }
-  .ov thead th { font-size: 0.62rem; letter-spacing: 0.02em; }
-  .ov .num { font-size: 0.76rem; }
+  /* The column heads in sentence case at a readable size: in capitals they'd have to shrink to fit. */
+  .ov thead th { font-size: 0.7rem; letter-spacing: 0; text-transform: none; line-height: 1.25; }
+  .ov .num { font-size: 0.78rem; }
 }
 
 /* The embed has no page margins, so its runs stay side by side down to a blog post's column. */
@@ -228,12 +268,14 @@ body.em { min-height: 0; }
   .em .pg-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: normal; }
   .em .pg-call { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
   .em .pg-cn { padding-top: 0.15rem; }
-  .em .pg-facts dd { font-size: 1.3rem; }
+  .em .pg-facts dd[data-f] { font-size: 1.3rem; }
 }
 
 /* Forced colours: the marks keep apart by outlines. */
 @media (forced-colors: active) {
   .mk, .q-res::before { forced-color-adjust: none; border: 1px solid CanvasText; }
-  .mk-yes { background: CanvasText; }
+  .mk-yes, .q-res.is-err::before { background: CanvasText; }
+  .seg-thumb { display: none; }
   .seg-opt input:checked + span { outline: 3px solid Highlight; }
+  .ck.is-changed { outline: 1px dashed CanvasText; }
 }

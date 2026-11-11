@@ -3,8 +3,11 @@
 // the address), a step and the rest of an answer opened, the overview, the points and the end.
 // Checks, from PLAYGROUND and the traces (not from the page's own code): each run shows one row per model
 // call and the right test marks; switching changes the address; the switches and the pair don't move or
-// change height when the setting changes; the runs without Bash that asked for it show it; a row of the
-// overview switches the playground; and the opened step and answer close again.
+// change height when the setting changes; after a switch every number says what it was and exactly the
+// checks whose answer changed (per the data) say their old answer; each switch's thumb sits under the
+// chosen option; a step's tool and command share a line and its result never sticks out of it; the runs
+// without Bash that asked for it show it; a row of the overview switches the playground; and the opened
+// step and answer close again.
 const path = require("path");
 
 const wait = (p, ms) => p.waitForTimeout(ms);
@@ -34,9 +37,31 @@ const shown = (p) => p.evaluate(() => {
       before: (a.querySelector('.ck[data-k="before"]') || {}).dataset?.yes,
       after: (a.querySelector('.ck[data-k="after"]') || {}).dataset?.yes,
       missing: a.querySelectorAll(".pg-req.is-missing").length,
+      was: [...a.querySelectorAll(".pg-was")].map((e) => e.textContent.trim()),
+      changed: [...a.querySelectorAll(".ck.is-changed")].map((li) => li.dataset.k).join(),
     })),
   };
 });
+
+// The switches' thumbs (where drawn) under the chosen options; each step's tool and command on one line, and
+// its tag, result and arrow inside its box.
+const layout = (p, root = "#playground") => p.evaluate((root) => {
+  const bad = [];
+  document.querySelectorAll(`${root} .seg`).forEach((seg) => {
+    const th = seg.querySelector(".seg-thumb");
+    if (!th || getComputedStyle(th).display === "none") return;
+    // The option's label, not its text box, which shrinks a little while pressed.
+    const a = th.getBoundingClientRect(), b = seg.querySelector("input:checked").closest(".seg-opt").getBoundingClientRect();
+    if (Math.abs(a.left - b.left) > 2 || Math.abs(a.width - b.width) > 2) bad.push(`thumb of ${seg.closest(".pg-sw").dataset.k} at ${Math.round(a.left)}, its option at ${Math.round(b.left)}`);
+  });
+  document.querySelectorAll(`${root} .pg-pair > .pg-run .pg-req > summary`).forEach((sm, i) => {
+    const t = sm.querySelector(".q-tool").getBoundingClientRect(), g = sm.querySelector(".q-arg").getBoundingClientRect();
+    const e = sm.querySelector(".q-end").getBoundingClientRect(), b = sm.getBoundingClientRect();
+    if (Math.abs(t.top - g.top) > 4) bad.push(`step ${i + 1}: its command is on another line than its tool`);
+    if (e.right > b.right + 1 || e.left < b.left - 1) bad.push(`step ${i + 1}: its result sticks out of its box`);
+  });
+  return bad;
+}, root);
 
 async function expectCombo(p, combo, problems, label) {
   await p.waitForFunction((c) => document.querySelector("#playground .pg-pair").dataset.combo === c, combo, { timeout: 3000 }).catch(() => {});
@@ -78,16 +103,27 @@ async function states(p, { name, shot, problems, dir }) {
   const first = await p.evaluate(() => window.PLAYGROUND.combinations[0].combo);
   const s0 = await expectCombo(p, first, problems, "start");
   if (s0.hash) problems.push(`the address got ${s0.hash} before any switch`);
+  if (s0.runs.some((r) => r.was.some(Boolean) || r.changed)) problems.push("start: a number or check says what it was before any switch");
+  (await layout(p)).forEach((b) => problems.push(`start: ${b}`));
   await shot(`play-${first}`, "#playground");
 
   // Three switches, one at a time, then a setting through the address. The pair keeps its height.
   const steps = [["model", "haiku"], ["bash", "nobash"], ["rule", "rule"]];
   let want = first.split("-");
   for (const [k, v] of steps) {
+    const was = await truth(p, want.join("-"));
     await flip(p, k, v, how);
     want = want.map((x, i) => (i === ["model", "bash", "rule"].indexOf(k) ? v : x));
     const combo = want.join("-");
     const s = await expectCombo(p, combo, problems, `${how} ${k}`);
+    const now = await truth(p, combo);
+    now.forEach((r, i) => {
+      const got = s.runs[i] || { was: [] };
+      const exp = ["before", "after"].filter((c) => r[c] !== was[i][c]).join();
+      if (got.changed !== exp) problems.push(`after ${k}: run ${i + 1} marks [${got.changed}] as changed, the data says [${exp}]`);
+      if (got.was.length !== 3 || !got.was.every(Boolean)) problems.push(`after ${k}: run ${i + 1}'s numbers don't all say what they were: ${JSON.stringify(got.was)}`);
+    });
+    (await layout(p)).forEach((b) => problems.push(`after ${k}: ${b}`));
     if (s.hash !== `#${combo}`) problems.push(`after ${k}: address ${s.hash}, expected #${combo}`);
     if (s.height !== s0.height) problems.push(`after ${k}: the pair is ${s.height}px tall, was ${s0.height}px`);
     if (s.switchesTop !== s0.switchesTop) problems.push(`after ${k}: the switches moved from ${s0.switchesTop} to ${s.switchesTop}`);
@@ -169,4 +205,4 @@ async function motion(p, capture) {
   await capture("ch8-switch", "#playground", () => p.locator('#playground .pg-sw[data-k="model"] input[value="haiku"] + span').click());
 }
 
-module.exports = { name: "playground", file: "playground/index.html", sizes: ["desk", "phone", "dark"], states, exercise, motion };
+module.exports = { layout, name: "playground", file: "playground/index.html", sizes: ["desk", "phone", "dark"], states, exercise, motion };

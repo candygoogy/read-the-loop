@@ -77,9 +77,11 @@
   // ---------- the playground ----------
   // The embed next to this page, from the site's root (zh/playground/embed.html on the Chinese page).
   const embedPath = new URL("embed.html", location.href).href.slice(new URL(ROOT, location.href).href.length);
+  // The height fits the embed with its runs side by side (about 1,920 px at its narrowest, 660 px wide, all
+  // steps closed); in a narrower column the runs stack and the frame scrolls inside, as embedNote.p1 says.
   const snippet = (combo) => {
     const site = (window.CHAPTERS && window.CHAPTERS.site) || "";
-    return `<iframe src="${site}/${embedPath}#${combo}"\n  title="${C.embedNote.frameTitle}"\n  width="100%" height="1500" style="border:0" loading="lazy"></iframe>`;
+    return `<iframe src="${site}/${embedPath}#${combo}"\n  title="${C.embedNote.frameTitle}"\n  width="100%" height="2000" style="border:0" loading="lazy"></iframe>`;
   };
   const pg = G.mount($("pg"), {
     level: 3,

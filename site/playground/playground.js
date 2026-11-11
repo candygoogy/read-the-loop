@@ -135,12 +135,15 @@
     const r = resShort(x);
     const tag = x.missing ? L.tag.missing : x.test ? L.tag.test : x.edit ? L.tag.edit : "";
     const cls = ["pg-req", x.test ? "is-test" : "", x.edit ? "is-edit" : "", x.missing ? "is-missing" : ""].filter(Boolean).join(" ");
+    // Two pieces: the tool and its command, then the tag, the result and the arrow. Where the line can't hold
+    // both, the second moves under the first, and only then is a long command cut short (chapter.css).
     return `<li><details class="${cls}"><summary>` +
-      `<span class="q-tool">${esc(x.t.tool)}</span>` +
-      `<span class="q-arg"${REC}>${esc(arg(x.t))}</span>` +
-      (tag ? `<span class="q-tag">${esc(tag)}</span>` : "") +
-      `<span class="q-res${r.err ? " is-err" : ""}${r.fail ? " is-fail" : ""}">${r.html}</span>` +
-      `</summary><div class="q-open">${opened(x)}</div></details></li>`;
+      `<span class="q-head"><span class="q-tool">${esc(x.t.tool)}</span>` +
+      `<span class="q-arg"${REC}>${esc(arg(x.t))}</span></span>` +
+      `<span class="q-end">` +
+        (tag ? `<span class="q-tag">${esc(tag)}</span>` : "") +
+        `<span class="q-res${r.err ? " is-err" : ""}${r.fail ? " is-fail" : ""}">${r.html}</span>` +
+      `</span></summary><div class="q-open">${opened(x)}</div></details></li>`;
   }
   function answerHTML(text) {
     const paras = text.split(/\n{2,}/).filter((p) => p.trim());
@@ -150,29 +153,45 @@
       (rest ? `<details class="pg-more"><summary>${esc(pl(L.more, paras.length - 1))}</summary>${mdRec(rest)}</details>` : "") + `</div>`;
   }
   const mark = (yes) => `<i class="mk ${yes ? "mk-yes" : "mk-no"}" aria-hidden="true"></i>`;
-  function runHTML(r, T, ids, level) {
+  // What a call shows, as one short string: equal for two runs exactly when the call reads the same in both.
+  function sigOf(s) {
+    const str = JSON.stringify([s.last ? "" : s.texts, s.tools.map((x) => [x.t.tool, arg(x.t), resShort(x).html, x.missing])]);
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (Math.imul(h, 31) + str.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+  // A run's numbers and checks, formatted as the card shows them.
+  const factsOf = (r) => ({ calls: fmt(r.model_calls), time: dec1.format(r.duration_s), cost: money.format(r.cost_usd) });
+  const checksOf = (r) => ({
+    before: { yes: !!r.tests_before_first_edit, val: r.tests_before_first_edit ? L.checks.yes : L.checks.no },
+    after: { yes: !!r.tests_after_last_edit, val: r.tests_after_last_edit ? L.checks.yes : L.checks.no },
+    fixed: { yes: !!r.fix.correct, val: L.checks.pass(fmt(r.fix.passed), fmt(r.fix.tests)) },
+  });
+  // prev: the run this card showed before the settings changed (the same run number), or null. With it, each
+  // number says what it was, and each check whose answer changed says its old answer.
+  function runHTML(r, T, ids, level, prev) {
     const steps = stepsOf(r, T);
     const h = `h${level}`;
     const call1 = T.calls[0] || { context_tokens: 0 };
-    const check = (k, yes, val) => `<li class="ck" data-k="${k}" data-yes="${yes}">${mark(yes)}<span class="ck-l">${esc(L.checks[k])}</span><b class="ck-v">${esc(val)}</b></li>`;
+    const now = factsOf(r), was = prev ? factsOf(prev) : null;
+    const cks = checksOf(r), oldCks = prev ? checksOf(prev) : null;
+    const fact = (k) => `<div><dt>${esc(L.facts[k])}</dt><dd data-f="${k}">${now[k]}</dd>` +
+      (was ? `<dd class="pg-was${was[k] === now[k] ? " is-same" : ""}">${esc(was[k] === now[k] ? L.same : L.was(was[k]))}</dd>` : `<dd class="pg-was" aria-hidden="true"></dd>`) + `</div>`;
+    const check = (k) => {
+      const c = cks[k], o = oldCks && oldCks[k].val !== c.val ? oldCks[k] : null;
+      return `<li class="ck${o ? " is-changed" : ""}" data-k="${k}" data-yes="${c.yes}">${mark(c.yes)}<span class="ck-l">${esc(L.checks[k])}</span>` +
+        `<b class="ck-v">${o ? `<span class="ck-was">${esc(L.was(o.val))}</span><span class="sr-only">${esc(L.nowSr)}</span> ` : ""}${esc(c.val)}</b></li>`;
+    };
     const callRows = steps.map((s) => {
       const says = s.last ? "" : s.texts.map((x) => `<p class="pg-say"${REC}>${inline(x)}</p>`).join("");
       const reqs = s.tools.length ? `<ul class="pg-reqs">${s.tools.map(stepHTML).join("")}</ul>` : "";
       const answer = s.last && T.final_answer ? answerHTML(T.final_answer) : "";
-      return `<li class="pg-call${s.last ? " is-last" : ""}"><span class="pg-cn">${esc(L.callN(fmt(s.n)))}</span><div class="pg-cb">${says}${reqs}${answer}</div></li>`;
+      return `<li class="pg-call${s.last ? " is-last" : ""}" data-sig="${sigOf(s)}"><span class="pg-cn">${esc(L.callN(fmt(s.n)))}</span><div class="pg-cb">${says}${reqs}${answer}</div></li>`;
     }).join("");
     return `<div class="pg-run-head"><${h} class="pg-run-title" id="${ids}-t">${esc(L.run(fmt(r.run)))}</${h}><span class="meta">${esc(L.runMeta(r.model, hhmm(T.started_at)))}</span></div>` +
-      `<dl class="pg-facts">` +
-        `<div><dt>${esc(L.facts.calls)}</dt><dd data-f="calls">${fmt(r.model_calls)}</dd></div>` +
-        `<div><dt>${esc(L.facts.time)}</dt><dd data-f="time">${dec1.format(r.duration_s)}</dd></div>` +
-        `<div><dt>${esc(L.facts.cost)}</dt><dd data-f="cost">${money.format(r.cost_usd)}</dd></div>` +
-      `</dl>` +
+      `<dl class="pg-facts">${fact("calls")}${fact("time")}${fact("cost")}</dl>` +
       `<p class="pg-cache">${esc(L.facts.cached(fmt(r.first_call_cached_tokens), fmt(call1.context_tokens)))}</p>` +
-      `<ul class="pg-checks">` +
-        check("before", r.tests_before_first_edit, r.tests_before_first_edit ? L.checks.yes : L.checks.no) +
-        check("after", !!r.tests_after_last_edit, r.tests_after_last_edit ? L.checks.yes : L.checks.no) +
-        check("fixed", r.fix.correct, L.checks.pass(fmt(r.fix.passed), fmt(r.fix.tests))) +
-      `</ul>` +
+      `<ul class="pg-checks">${check("before")}${check("after")}${check("fixed")}</ul>` +
       `<p class="pg-k" id="${ids}-s">${esc(L.stepsHead)}</p>` +
       `<ol class="pg-steps" aria-labelledby="${ids}-s">${callRows}</ol>`;
   }
@@ -188,11 +207,12 @@
     let current = null;
     let shown = null;
 
+    // Each switch is a pair of radio buttons in a track, with a thumb that slides to the chosen one (chapter.css).
     const switches = KEYS.map((k) => {
       const opts = VALUES[k].map((v) =>
         `<label class="seg-opt"><input type="radio" name="${id}-${k}" value="${esc(v)}"><span>${esc(L.value[k][v])}</span></label>`).join("");
       return `<fieldset class="pg-sw" data-k="${k}" aria-describedby="${id}-h-${k}"><legend>${esc(L.legend[k])}</legend>` +
-        `<div class="seg">${opts}</div><p class="pg-hint" id="${id}-h-${k}">${L.hint[k](d)}</p></fieldset>`;
+        `<div class="seg"><span class="seg-thumb" aria-hidden="true"></span>${opts}</div><p class="pg-hint" id="${id}-h-${k}">${L.hint[k](d)}</p></fieldset>`;
     }).join("");
     root.innerHTML =
       `<div class="pg-switches" role="group" aria-label="${esc(L.group)}">${switches}</div>` +
@@ -221,10 +241,12 @@
     function draw(combo, Ts, animate) {
       const c = COMBOS[combo];
       const runs = c.runs.map((name) => RUNS[name]);
-      const before = shown ? COMBOS[shown].runs.map((name) => RUNS[name]) : null;
+      const before = shown && shown !== combo ? COMBOS[shown].runs.map((name) => RUNS[name]) : null;
       const oldChecks = slots.map((el) => Object.fromEntries([...el.querySelectorAll(".ck")].map((li) => [li.dataset.k, li.dataset.yes])));
+      const oldSigs = slots.map((el) => [...el.querySelectorAll(".pg-call")].map((li) => li.dataset.sig));
+      const oldCache = slots.map((el) => (el.querySelector(".pg-cache") || {}).textContent);
       runs.forEach((r, i) => {
-        slots[i].innerHTML = runHTML(r, Ts[i], `${id}-r${i + 1}`, level);
+        slots[i].innerHTML = runHTML(r, Ts[i], `${id}-r${i + 1}`, level, before ? before[i] : null);
         slots[i].dataset.run = r.trace;
       });
       pair.dataset.combo = combo;
@@ -237,12 +259,16 @@
           const from = numbers(before[i]), to = numbers(r);
           el.querySelectorAll("[data-f]").forEach((dd) => {
             const k = dd.dataset.f;
-            Mo.count(dd, to[k], { from: from[k], format: FORMAT[k], round: ROUND[k], duration: Mo.dur.slow });
+            Mo.count(dd, to[k], { from: from[k], format: FORMAT[k], round: ROUND[k], duration: Mo.dur.base });
           });
         }
-        // A check whose answer changed lands again; the steps come in one after the other.
+        // A check whose answer changed lands again. Only what differs comes in: a call that reads the same as
+        // the call in the same place before stays still, so the eye goes to what the switch changed.
         el.querySelectorAll(".ck").forEach((li) => { if (oldChecks[i][li.dataset.k] !== li.dataset.yes) Mo.pop(li.querySelector(".mk"), { duration: 240 }); });
-        Mo.enter([...el.querySelectorAll(".pg-cache, .pg-call")], { y: 6, stagger: 35, delay: i * 40, duration: Mo.dur.base });
+        const fresh = [...el.querySelectorAll(".pg-call")].filter((li, j) => oldSigs[i][j] !== li.dataset.sig);
+        const cache = el.querySelector(".pg-cache");
+        if (cache && cache.textContent !== oldCache[i]) fresh.unshift(cache);
+        Mo.enter(fresh, { y: 4, stagger: 30, delay: i * 30, duration: Mo.dur.base });
       });
     }
 
@@ -282,7 +308,10 @@
 
     // Keep the pair as tall as the tallest combination at this width (all steps closed), so switching never
     // moves what comes after it. Measured on a hidden copy once every trace is in, and again when the width
-    // or the fonts change.
+    // or the fonts change. Each combination is measured as it looks after a switch: every number saying what
+    // it was, and both test checks changed (the widest the checks get).
+    const unlike = (r) => ({ ...r, model_calls: r.model_calls + 1, duration_s: r.duration_s + 1, cost_usd: r.cost_usd * 2,
+      tests_before_first_edit: !r.tests_before_first_edit, tests_after_last_edit: !r.tests_after_last_edit });
     let sizer = null;
     function reserve() {
       if (!P.runs.every((r) => TRACES[r.trace])) return;
@@ -298,16 +327,22 @@
       const arts = [...sizer.children];
       let max = 0;
       P.combinations.forEach((c) => {
-        c.runs.forEach((name, i) => { arts[i].innerHTML = runHTML(RUNS[name], TRACES[name], `${id}-z${i}`, level); });
+        c.runs.forEach((name, i) => { arts[i].innerHTML = runHTML(RUNS[name], TRACES[name], `${id}-z${i}`, level, unlike(RUNS[name])); });
         max = Math.max(max, sizer.getBoundingClientRect().height);
       });
       arts.forEach((a) => { a.innerHTML = ""; });
       pair.style.minHeight = `${Math.ceil(max)}px`;
     }
-    let lastW = 0;
+    // The new height can bring or take away the page's scroll bar, and so change the width again: measuring in
+    // the next frame, not in the observer's callback, keeps that from becoming a ResizeObserver loop.
+    let lastW = 0, queued = 0;
     const ro = window.ResizeObserver ? new ResizeObserver(() => {
-      const w = Math.round(pair.getBoundingClientRect().width);
-      if (w !== lastW) { lastW = w; reserve(); }
+      if (queued) return;
+      queued = requestAnimationFrame(() => {
+        queued = 0;
+        const w = Math.round(pair.getBoundingClientRect().width);
+        if (w !== lastW) { lastW = w; reserve(); }
+      });
     }) : null;
 
     const start = parse(location.hash) || opts.initial || P.combinations[0].combo;

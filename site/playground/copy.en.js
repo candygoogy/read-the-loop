@@ -30,7 +30,7 @@ window.COPY = {
 
   play: {
     title: "The harness playground",
-    help: "Pick a setting for each switch. The two runs recorded with those settings appear side by side.",
+    help: "Pick a setting for each switch. The two runs recorded with those settings appear side by side, and a number or an answer that changed says what it was.",
     group: "Harness settings",
     legend: { model: "Model", bash: "Bash", rule: "Test rule" },
     hint: {
@@ -65,13 +65,17 @@ window.COPY = {
       cached: (n, total) => `Call 1 read ${n} of its ${total} tokens from the cache.`,
     },
     checks: {
-      before: "Ran the tests before its first edit",
-      after: "Ran the tests after its last edit",
+      before: "Tested before its first edit",
+      after: "Tested after its last edit",
       fixed: "The game's own tests, run by us afterwards",
       yes: "Yes",
       no: "No",
-      pass: (p, t) => `${p} of ${t} pass`,
+      pass: (p, t) => `${p}/${t} pass`,
     },
+    // After a switch: what a number or a check was with the settings before.
+    was: (v) => `was ${v}`,
+    same: "unchanged",
+    nowSr: ", now",
     stepsHead: "What it did, call by call",
     callN: (n) => `Call ${n}`,
     answer: "The model writes · final answer",
@@ -155,7 +159,7 @@ window.COPY = {
     flags: (d) => `The parts in angle brackets are the switches. The model and the tool list are in each recording, and the build checks them against the run's name. The allow list (<code>--allowedTools</code>) and the rule (<code>--append-system-prompt</code>) are not, so they're as we typed them, the same as in <a data-repo="blob/master/scripts/summarize-playground.py">scripts/summarize-playground.py</a>. Every run started in permission mode <code>${d.mode}</code>, so file edits went ahead without asking.`,
     order: (d) => `The order was fixed before the first run: run 1 of all ${d.combos} settings, then run 2 of all ${d.combos}, in the same order both times, one straight after another. So the two runs of a setting were always ${d.combos} runs apart. Nothing was redone or left out: every run we recorded is on this page.`,
     fixed: (d) => `How we checked the fix: after the recordings, we ran the game's own ${d.tests} tests on each game as the agent left it, with the original test file put back, since ${d.addedTests} runs had added tests of their own to it. All ${d.tests} passed for ${d.fixed} of ${d.runs} runs. The game as we handed it over passes ${d.origPass} and fails ${d.origFail}${d.origFrom ? `, as the runs that tested first saw` : ""}. The saved results are in <a data-repo="tree/master/data/checks-08">data/checks-08</a>.`,
-    tested: () => `“Ran the tests” means a Bash step that ran <code>node --test</code> or a test file, before the first edit or after the last one, whether the tests passed or not.`,
+    tested: () => `“Tested” means a Bash step that ran <code>node --test</code> or a test file, before the first edit or after the last one, whether the tests passed or not.`,
     missing: (d) => `The calls for a missing tool: in the ${d.n} ${d.model} runs without Bash, the model asked for <code>Bash</code> anyway, with the command <code>${d.command}</code>. The recording marks Claude Code's answer as an error, and the permission check's list of refused requests is empty in every run. ${d.allSaid ? "Each of those runs then said in its answer that it couldn't run the tests." : ""}`,
     cost: () => `Costs are Claude Code's own figure for each run, rounded to four decimal places. Each run 2 read part of its first call from the cache its run 1 had left a few minutes earlier, the only earlier run with the same model, tools and set-up text, so run 2 costs are lower partly for that reason. Some run 1s also read from the cache, left by an earlier session the recording doesn't name.`,
     paths: (d) => `The model saw the real folder path. The traces show it as <code>${d.alias}</code> and the local user name as <code>you</code>; nothing else in them is changed. That's why some commands read <code>cd "${d.alias}"</code> in quotes, which a real shell wouldn't expand.`,

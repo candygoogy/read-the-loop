@@ -1,8 +1,11 @@
 // Chapter 8's embed (site/playground/embed.html) for scripts/screenshot.js: the playground on its own, as
 // another page would show it in an iframe. Checks that it opens on the setting in its address, that a switch
 // changes the address and the link back to the chapter, that each run shows one row per model call (from
-// PLAYGROUND), and that nothing overflows at the narrow widths an iframe in a blog post might have.
+// PLAYGROUND), that after the switch every number says what it was, that the switches' thumbs and the steps'
+// lines are drawn right (playground.js's layout check), and that nothing overflows at the narrow widths an
+// iframe in a blog post might have.
 const path = require("path");
+const { layout } = require("./playground.js");
 
 const wait = (p, ms) => p.waitForTimeout(ms);
 const settle = (p) => p.evaluate(() => window.Motion && window.Motion.settle());
@@ -40,6 +43,9 @@ async function states(p, { name, shot, problems, dir }) {
   await check(p, combo, problems, "switch");
   if ((await p.evaluate(() => location.hash)) !== `#${combo}`) problems.push("switch didn't set the address");
   await settle(p);
+  const was = await p.evaluate(() => [...document.querySelectorAll(".pg-pair:not(.pg-sizer) .pg-was")].map((e) => e.textContent.trim()));
+  if (was.length !== 6 || !was.every(Boolean)) problems.push(`switch: the numbers don't all say what they were: ${JSON.stringify(was)}`);
+  (await layout(p, "body")).forEach((b) => problems.push(`switch: ${b}`));
   await p.screenshot({ path: path.join(dir, `${name}-full.png`), fullPage: true });
 
   // Opened on a setting from the address, as an iframe's src would give it.
@@ -59,6 +65,7 @@ async function states(p, { name, shot, problems, dir }) {
       await settle(p);
       const over = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
       if (over > 0) problems.push(`overflow ${over}px at ${w}px wide`);
+      (await layout(p, "body")).forEach((b) => problems.push(`${w}px wide: ${b}`));
       await p.screenshot({ path: path.join(dir, `${name}-w${w}.png`), fullPage: true });
     }
     await p.setViewportSize(vp);
