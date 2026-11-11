@@ -585,6 +585,8 @@ def dir_variants(rec_dir):
     rec_dir = rec_dir.rstrip("/\\")
     v = {rec_dir, rec_dir.replace("\\", "/"), rec_dir.replace("/", "\\")}
     v |= {x.replace("\\\\", "\\") for x in list(v)}
+    # Escaped form, as Node prints paths inside error objects: D:\\x\\y.
+    v |= {x.replace("\\", "\\\\") for x in list(v) if "\\" in x and "\\\\" not in x}
     m = re.match(r"([A-Za-z]):[\\/]+(.*)", rec_dir)
     if m:
         v.add("/" + m[1].lower() + "/" + m[2].replace("\\", "/"))
@@ -606,7 +608,7 @@ def make_redact(variants, alias, user, session_ids=()):
             s = re.sub(re.escape(v), lambda _m: alias, s, flags=re.I)
         for v in projects:
             s = re.sub(re.escape(v), project_folder(alias), s, flags=re.I)
-        s = s.replace(alias + "\\", alias + "/")
+        s = s.replace(alias + "\\\\", alias + "/").replace(alias + "\\", alias + "/")
         s = re.sub(rf"\b{re.escape(user)}\b", "you", s, flags=re.I)
         # Windows also writes home folders in 8.3 short form (C:\Users\JOHNDO~1); that's the user name too.
         s = SHORT_HOME.sub(r"\1you", s)

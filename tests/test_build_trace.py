@@ -217,6 +217,15 @@ class BuildTraceTest(unittest.TestCase):
         self.assertEqual(out, r"see C:\Users\you\AppData\Local\Temp\blk_1.log")
         self.assertEqual(bt.find_leaks({"t": out}, set(), "someone"), [])
 
+    def test_escaped_backslash_form_is_redacted(self):
+        # Node prints paths inside error objects with doubled backslashes: requireStack: [ 'D:\\x\\y' ].
+        bt = load_builder()
+        rec = r"D:\Scratch\rec-07"
+        variants = bt.dir_variants(rec)
+        out = bt.make_redact(variants, "~/proj", "someone")(r"requireStack: [ 'D:\\Scratch\\rec-07\\test\\a.js' ]")
+        self.assertEqual(out, r"requireStack: [ '~/proj/test\\a.js' ]")
+        self.assertEqual(bt.find_leaks({"t": out}, variants, "someone"), [])
+
     def test_record_drops_claude_env_for_the_child_only(self):
         TMP_BASE.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=TMP_BASE) as d:
