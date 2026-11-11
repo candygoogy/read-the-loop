@@ -1,7 +1,7 @@
 // The contents page: a small picture of each chapter, drawn from the same recording the chapter uses.
 // Chapter 1: window.TRACES.loop (site/data/trace-02-run2.js). Chapters 2, 3 and 4: window.TRACES.context
 // (site/data/trace-03.js). Chapter 5: window.TOOLS (site/data/tools-05.js). Chapter 6: window.TRACES.sub
-// (site/data/trace-06-run2.js). Every number is read from the
+// (site/data/trace-06-run2.js). Chapter 7: window.RUNS07 (site/data/runs-07.js). Every number is read from the
 // data; only the labels below are written here. Without the data (or without JS) the pictures stay empty
 // and are hidden.
 (() => {
@@ -21,6 +21,7 @@
     compaction: (d) => `${d.pre} tokens of conversation before compaction, ${d.post} after. Areas to scale.`,
     tools: (d) => `Of the first request's characters: tools ${d.tools}, system ${d.system}, messages ${d.messages}`,
     subagents: (d) => `The subagent's conversation reached ${d.peak} tokens. The main one grew by ${d.growth} across the hand-back.`,
+    failure: (d) => `${d.runs} runs, one column each, one block per request the model made: ${d.refused} of ${d.requests} refused (hatched)`,
   };
   const LOCALE = COPY.locale;
   const { fmt } = U.numbers(LOCALE);
@@ -123,5 +124,24 @@
         `<span class="row r-sub">${seg("s", sFirst)}${seg("b", sLast.context_tokens - sFirst)}${seg("m hb out", sLast.output_tokens)}</span>`;
       figure("viz-subagents", { cls: "art-sub", html }, COPY.subagents({ peak: fmt(peak), growth: fmt(growth) }));
     }
+  }
+
+  // Chapter 7: every test run as a column, grouped by project, one block per tool request the model
+  // made, the refused ones (hatched, the harness's answer) on top. One block is the same height in
+  // every column. Drawn with inline styles from the site's colour tokens.
+  const RU = window.RUNS07;
+  if (RU && RU.runs && RU.runs.length) {
+    const runs = RU.runs;
+    const max = Math.max(...runs.map((r) => r.tool_requests));
+    const fixtures = [...new Set(runs.map((r) => r.fixture))];
+    const brick = (bg) => `<i style="display:block;flex:none;height:calc((100% - ${max - 1}px) / ${max});background:${bg};border-radius:1px"></i>`;
+    const col = (r) => `<span style="flex:1 1 0;min-width:0;display:flex;flex-direction:column-reverse;gap:1px;height:100%">` +
+      brick("var(--model)").repeat(r.tool_requests - r.refused) + brick("var(--tex-teal) var(--result)").repeat(r.refused) + `</span>`;
+    const html = `<span style="display:flex;align-items:flex-end;gap:5px;width:100%;height:100%">` +
+      fixtures.map((f) => {
+        const rs = runs.filter((r) => r.fixture === f);
+        return `<span style="display:flex;gap:2px;flex:${rs.length} 1 0;min-width:0;height:100%">${rs.map(col).join("")}</span>`;
+      }).join("") + `</span>`;
+    figure("viz-failure-modes", { cls: "art-runs", html }, COPY.failure({ runs: fmt(RU.totals.runs), refused: fmt(RU.totals.refused), requests: fmt(RU.totals.tool_requests) }));
   }
 })();

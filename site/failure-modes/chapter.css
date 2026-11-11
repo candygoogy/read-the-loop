@@ -1,0 +1,208 @@
+/* Chapter 7: failure modes. Builds on ../style.css (tokens, grid, prose, cards, legend, stats, colophon,
+   chapter navigation); only what this chapter adds lives here. The conversation's colours keep their
+   meaning: --model for what the model wrote (its requests, its words), --result for what the harness
+   pasted back (here, mostly refusals, hatched as everywhere), --you for what we typed. The public cases
+   at the top aren't part of any recorded conversation, so they're set in ink with a plain rule.
+   Small text uses the AA text tokens: --ink-2 (8:1 or more on --card and --paper in both themes),
+   --model-text and --result-text (4.5:1 or more on every paper, per style.css). */
+:root {
+  --tile-w: 6.25rem;
+}
+
+/* ---------- the prompt ---------- */
+.ask { margin: 1.5rem 0; }
+.ask-head { margin: 0 0 0.4rem; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.ask .prompt { margin: 0; }
+
+/* ---------- the four cases ---------- */
+.modes { list-style: none; margin: 1.75rem 0 0.5rem; padding: 0; display: grid; gap: 0; }
+.mode {
+  display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 0.5rem clamp(1.25rem, 3.5vw, 2.75rem);
+  padding: 1.5rem 0 1.6rem; border-top: 1px solid var(--rule);
+}
+.mode:last-child { border-bottom: 1px solid var(--rule); }
+.mode-head { position: relative; padding-left: 2.6rem; }
+.mode-n {
+  position: absolute; left: 0; top: 0.1rem; width: 1.75rem; height: 1.75rem; display: grid; place-items: center;
+  font: 600 0.82rem/1 var(--mono); color: var(--card); background: var(--ink); border-radius: 50%;
+}
+.prose .mode h3 { margin: 0 0 0.5rem; font-size: 1.45rem; }
+.prose .mode-what { margin: 0; color: var(--ink-2); font-size: 1.02rem; line-height: 1.55; }
+.prose .mode-case p { margin: 0 0 0.8rem; }
+.prose .mode-case p:last-child { margin-bottom: 0; }
+.case-quote {
+  margin: 0.2rem 0 0.95rem; padding: 0.15rem 0 0.15rem 1rem; border-left: 3px solid var(--ink-3);
+}
+.prose .case-quote p { margin: 0; font: 500 1.16rem/1.45 var(--display); font-variation-settings: "opsz" 30; color: var(--ink); text-wrap: pretty; }
+.prose .mode-claude { padding: 0.55rem 0.75rem; background: var(--paper-2); border-radius: 8px; font-size: 1rem; }
+.prose .mode-by, .prose .mode-src, .prose .mode-note { font-size: 0.92rem; line-height: 1.55; color: var(--ink-2); }
+.prose .mode-by { margin-bottom: 0.35rem; }
+.mode-src a { padding-block: 0.2rem; }
+.src-k { display: block; font: 600 0.7rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.15rem; }
+
+/* ---------- what we planted ---------- */
+.planted { margin: 0.5rem 0 1.25rem; display: grid; gap: 0; }
+.planted > div { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 0.25rem 1rem; padding: 0.7rem 0; border-top: 1px solid var(--rule); }
+.planted > div:last-child { border-bottom: 1px solid var(--rule); }
+.planted dt { font: 500 0.82rem/1.5 var(--mono); color: var(--ink-2); }
+.planted dt b { color: var(--ink); font-weight: 600; margin-right: 0.25rem; }
+.planted dd { margin: 0; font-size: 1rem; line-height: 1.55; }
+
+/* ---------- a figure panel (as chapter 6) ---------- */
+.fig {
+  margin: 1.75rem 0 2rem;
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+}
+.fig-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; margin-bottom: 1.1rem; }
+.fig-title { font: 600 1.15rem/1.3 var(--display); color: var(--ink); }
+.prose .fig p { margin: 0; }
+.prose .fig .fig-readout { margin-top: 1.1rem; font-size: 1.02rem; line-height: 1.55; color: var(--ink-2); text-wrap: pretty; }
+.prose .fig .fig-note { margin-top: 0.6rem; font: 500 0.75rem/1.5 var(--mono); color: var(--ink-2); }
+.fig-legend { margin-top: 1.1rem; }
+
+/* ---------- the grid of runs ---------- */
+.groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem clamp(1.25rem, 3vw, 2.5rem); }
+.group { min-width: 0; }
+.prose .g-title { margin: 0 0 0.55rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--rule); font: 600 1.02rem/1.3 var(--display); color: var(--ink); }
+.fx-row { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.4rem 0.75rem; align-items: start; padding: 0.35rem 0; }
+.prose .fx-label { margin: 0; padding-top: 0.35rem; font: 500 0.76rem/1.35 var(--mono); color: var(--ink-2); }
+.fx-label b { display: block; font: 650 1.05rem/1.2 var(--display); color: var(--ink); }
+.fx-round { display: block; }
+.tiles { display: grid; grid-template-columns: repeat(3, var(--tile-w)); gap: 0.45rem; }
+
+.tile {
+  position: relative; display: grid; grid-template-rows: auto auto 1fr auto; align-items: start; gap: 0.2rem;
+  width: 100%; min-width: 0; min-height: 7rem; padding: 0.5rem 0.55rem 0.55rem;
+  font: inherit; color: var(--ink); text-align: left;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+}
+.tile:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover { border-color: var(--ink-3); background: var(--card); }
+}
+.tile[aria-pressed="true"] { background: var(--card); border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.t-run { font: 600 0.68rem/1.2 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-2); }
+.t-n { font: 700 1.6rem/1 var(--display); font-variant-numeric: lining-nums tabular-nums; }
+.t-l { font: 500 0.7rem/1 var(--mono); color: var(--ink-2); }
+.t-ref { display: flex; flex-wrap: wrap; gap: 3px; min-height: 9px; align-content: flex-start; }
+.t-ref i, .sw-ref { display: block; width: 9px; height: 9px; border-radius: 2px; background: var(--tex-teal) var(--result); }
+.t-st { display: flex; align-items: center; gap: 0.3rem; font: 500 0.68rem/1.2 var(--mono); color: var(--ink-2); }
+.dot, .legend i.sw-pass, .legend i.sw-none { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: none; }
+.st-pass .dot, .st-same .dot, .legend i.sw-pass { background: var(--ink); }
+.st-none .dot, .legend i.sw-none { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-2); }
+.st-fail .dot, .st-changed .dot { background: var(--model); }
+.legend i.sw-ref { width: 0.7rem; height: 0.7rem; }
+
+/* the run chosen */
+.detail { margin-top: 1.25rem; padding-top: 1.1rem; border-top: 1px dashed var(--rule); }
+.d-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.3rem 1rem; margin-bottom: 0.85rem; }
+.prose .detail .d-title { font: 600 1.15rem/1.3 var(--display); }
+.d-title span { font: 500 0.75rem/1 var(--mono); color: var(--ink-2); margin-left: 0.35rem; }
+.prose .detail .d-nums { font: 500 0.78rem/1.4 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.d-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 1rem clamp(1rem, 2.5vw, 1.75rem); align-items: start; }
+.prose .detail p { font-size: 0.95rem; line-height: 1.5; }
+.prose .detail .d-k { margin: 0 0 0.35rem; font: 600 0.68rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.prose .detail .d-k:not(:first-child) { margin-top: 0.9rem; }
+.prose .detail .d-prompt {
+  padding: 0.55rem 0.75rem; border-left: 3px solid var(--you); border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--you) 10%, var(--card)); font: 500 1rem/1.42 var(--display);
+}
+.ref-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+.prose .detail .r-meta { font: 500 0.72rem/1.35 var(--mono); color: var(--model-text); }
+.r-cmd, .detail .verdict {
+  margin: 0.25rem 0 0; padding: 0.5rem 0.65rem; font-size: 0.74rem; line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word; max-height: 9rem; overflow: auto;
+  background: var(--paper); border-left: 3px solid var(--model); border-radius: 0 6px 6px 0;
+}
+.r-cmd .more { color: var(--ink-3); font-style: italic; }
+.detail .verdict { border-left-color: var(--ink); font-weight: 600; }
+.prose .detail .r-why { margin-top: 0.3rem; font-size: 0.9rem; padding-left: 0.65rem; border-left: 3px solid var(--result); color: var(--ink); }
+.r-why span { font: 600 0.7rem/1.3 var(--mono); color: var(--result-text); }
+.prose .detail .d-said { margin: 0 0 0.45rem; padding-left: 0.65rem; border-left: 3px solid var(--model); }
+
+/* ---------- the refusal, the build script ---------- */
+.reason-card, .excerpt-card { margin: 1.25rem 0 1.5rem; }
+.reason-card pre, .excerpt-card pre { max-height: none; }
+
+/* ---------- the six cleanup runs ---------- */
+.cround + .cround { margin-top: 1.5rem; }
+.prose .cround-t { margin: 0 0 0.6rem; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.ccards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; align-items: stretch; }
+.ccard { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); overflow: hidden; }
+.ccard .card-head { background: var(--ink); color: var(--card); }
+.cc-part { padding: 0.75rem 0.85rem 0; }
+.prose .cc-part p { margin: 0 0 0.35rem; font-size: 0.93rem; line-height: 1.5; }
+.prose .cc-part .cc-k { margin: 0 0 0.35rem; font: 600 0.66rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.prose .cc-part .cc-aside { color: var(--ink-2); font-size: 0.86rem; }
+.cc-ask pre {
+  margin: 0 0 0.35rem; padding: 0.5rem 0.6rem; font-size: 0.72rem; line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word; overflow: auto; max-height: 12rem;
+  background: var(--card); border-left: 3px solid var(--model); border-radius: 0 6px 6px 0;
+}
+.cc-ask mark { background: color-mix(in srgb, var(--model) 20%, transparent); color: inherit; border-radius: 3px; padding: 0 2px; }
+.prose .cc-part.cc-back .cc-quote { padding-left: 0.6rem; border-left: 3px solid var(--result); }
+.prose .cc-part .cc-say { padding-left: 0.6rem; border-left: 3px solid var(--model); color: var(--say, var(--ink)); }
+.cc-say code { font-size: 0.84em; }
+.cc-claim.is-over .cc-say { background: color-mix(in srgb, var(--model) 8%, transparent); border-radius: 0 6px 6px 0; padding-block: 0.2rem; }
+.prose .cc-foot {
+  display: flex; flex-direction: column; gap: 0.15rem; margin: auto 0 0; padding: 0.7rem 0.85rem 0.8rem;
+  border-top: 1px dashed var(--rule); font: 500 0.72rem/1.4 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums;
+}
+.cc-part:last-of-type { padding-bottom: 0.65rem; }
+
+/* ---------- A2's words ---------- */
+.said { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; margin: 1.25rem 0 1.5rem; align-items: start; }
+.prose .said p { margin: 0; }
+
+/* ---------- what these runs show (as chapter 6) ---------- */
+.points { list-style: none; margin: 0.75rem 0 0; padding: 0; counter-reset: pt; }
+.points li { position: relative; padding: 1.1rem 0 0.4rem 2.6rem; border-top: 1px solid var(--rule); counter-increment: pt; }
+.points li::before {
+  content: counter(pt); position: absolute; left: 0; top: 1.15rem;
+  width: 1.75rem; height: 1.75rem; display: grid; place-items: center;
+  font: 600 0.82rem/1 var(--mono); color: var(--card); background: var(--ink); border-radius: 50%;
+}
+.prose .points h3 { margin: 0 0 0.4rem; }
+.prose .points p { margin: 0 0 0.8rem; }
+
+/* ---------- colophon ---------- */
+.flags span { white-space: nowrap; }
+.flags {
+  margin: 0 0 0.85rem; padding: 0.75rem 0.9rem; white-space: pre-line;
+  font-size: 0.74rem; line-height: 1.6; background: var(--paper-2); border-radius: 8px; color: var(--ink);
+}
+
+/* ---------- narrower ---------- */
+@media (max-width: 62rem) {
+  .ccards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .d-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .d-check { grid-column: 1 / -1; }
+}
+@media (max-width: 48rem) {
+  .mode { grid-template-columns: minmax(0, 1fr); }
+  .groups { grid-template-columns: minmax(0, 1fr); }
+  .ccards, .said { grid-template-columns: minmax(0, 1fr); }
+  .d-body { grid-template-columns: minmax(0, 1fr); }
+  .planted > div { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 30rem) {
+  .fig { padding: 0.9rem 0.6rem; }
+  .fx-row { grid-template-columns: minmax(0, 1fr); gap: 0.3rem; }
+  .fx-label b { display: inline; margin-right: 0.3rem; }
+  .fx-round { display: inline; }
+  .fx-round::before { content: "· "; }
+  .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tile { min-height: 6.5rem; }
+  .points li { padding-left: 2.3rem; }
+  .mode-head { padding-left: 2.3rem; }
+}
+
+/* Forced colours: the marks keep apart by outlines. */
+@media (forced-colors: active) {
+  .t-ref i, .dot, .legend i { forced-color-adjust: none; border: 1px solid CanvasText; }
+  .tile[aria-pressed="true"] { outline: 3px solid Highlight; }
+}
