@@ -1,7 +1,8 @@
 // The contents page: a small picture of each chapter, drawn from the same recording the chapter uses.
 // Chapter 1: window.TRACES.loop (site/data/trace-02-run2.js). Chapters 2, 3 and 4: window.TRACES.context
 // (site/data/trace-03.js). Chapter 5: window.TOOLS (site/data/tools-05.js). Chapter 6: window.TRACES.sub
-// (site/data/trace-06-run2.js). Chapter 7: window.RUNS07 (site/data/runs-07.js). Every number is read from the
+// (site/data/trace-06-run2.js). Chapter 7: window.RUNS07 (site/data/runs-07.js). Chapter 8: window.PLAYGROUND
+// (site/data/playground-08.js). Every number is read from the
 // data; only the labels below are written here. Without the data (or without JS) the pictures stay empty
 // and are hidden.
 (() => {
@@ -22,6 +23,7 @@
     tools: (d) => `Of the first request's characters: tools ${d.tools}, system ${d.system}, messages ${d.messages}`,
     subagents: (d) => `The subagent's conversation reached ${d.peak} tokens. The main one grew by ${d.growth} across the hand-back.`,
     failure: (d) => `${d.runs} runs, one column each, one block per request the model made: ${d.refused} of ${d.requests} refused (hatched)`,
+    playground: (d) => `${d.runs} runs, ${d.per} for each of ${d.combos} settings. Filled where a run ran the tests before its edit (top row: ${d.before}) and after it (bottom row: ${d.after}).`,
   };
   const LOCALE = COPY.locale;
   const { fmt } = U.numbers(LOCALE);
@@ -143,5 +145,22 @@
         return `<span style="display:flex;gap:2px;flex:${rs.length} 1 0;min-width:0;height:100%">${rs.map(col).join("")}</span>`;
       }).join("") + `</span>`;
     figure("viz-failure-modes", { cls: "art-runs", html }, COPY.failure({ runs: fmt(RU.totals.runs), refused: fmt(RU.totals.refused), requests: fmt(RU.totals.tool_requests) }));
+  }
+
+  // Chapter 8: every run of the playground as a column of two marks, grouped by setting in the chapter's
+  // order: on top, whether it ran the tests before its first edit; below, after its last edit. A filled
+  // dot is yes, a ring no (shape as well as fill). Drawn with inline styles from the site's colour tokens.
+  const PG = window.PLAYGROUND;
+  if (PG && PG.combinations && PG.runs) {
+    const byTrace = Object.fromEntries(PG.runs.map((r) => [r.trace, r]));
+    const dot = (yes) => `<i style="display:block;width:100%;max-width:19px;aspect-ratio:1;border-radius:50%;${yes ? "background:var(--tex-teal) var(--result)" : "box-shadow:inset 0 0 0 2px var(--ink-3)"}"></i>`;
+    const col = (r) => `<span style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:12px">${dot(r.tests_before_first_edit)}${dot(!!r.tests_after_last_edit)}</span>`;
+    const html = `<span style="display:flex;align-items:center;gap:12px;width:100%;height:100%">` +
+      PG.combinations.map((c) => `<span style="display:flex;gap:4px;flex:${c.runs.length} 1 0;min-width:0;padding:8px 3px;border-radius:6px;background:color-mix(in srgb, var(--paper-2) 70%, transparent)">${c.runs.map((n) => col(byTrace[n])).join("")}</span>`).join("") +
+      `</span>`;
+    figure("viz-playground", { cls: "art-play", html }, COPY.playground({
+      runs: fmt(PG.totals.runs), per: fmt(PG.combinations[0].runs.length), combos: fmt(PG.combinations.length),
+      before: fmt(PG.runs.filter((r) => r.tests_before_first_edit).length), after: fmt(PG.runs.filter((r) => r.tests_after_last_edit).length),
+    }));
   }
 })();

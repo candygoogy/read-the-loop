@@ -214,8 +214,8 @@ window.COPY = {
 
   next: {
     kicker: "Coming next",
-    title: "Chapter 8: Build your own agent",
-    p1: () => `Every guard rail in these runs was a setting chosen before the run started: a permission mode and an allow list. In chapter 8 you build a small agent and its harness yourself, and choose those settings.`,
+    title: "Chapter 8: The harness playground",
+    p1: () => `Every guard rail in these runs was a setting chosen before the run started: a permission mode and an allow list. In chapter 8 you flip the harness's settings yourself and watch recorded runs of the same task change.`,
   },
 
   colophon: {

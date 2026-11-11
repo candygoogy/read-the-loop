@@ -25,6 +25,6 @@ window.CHAPTERS = {
     { n: 5, slug: "tools", title: "Tools and permissions", titles: { zh: "工具与权限" }, published: true, release: null, langs: ["en", "zh"] },
     { n: 6, slug: "subagents", title: "Subagents", titles: { zh: "子智能体" }, published: false, release: null, langs: ["en", "zh"] },
     { n: 7, slug: "failure-modes", title: "Failure modes", titles: { zh: "失败模式" }, published: false, release: null, langs: ["en", "zh"] },
-    { n: 8, slug: "build-your-own", title: "Build your own agent", titles: { zh: "自己动手做一个智能体" }, published: false, release: null, langs: ["en"] },
+    { n: 8, slug: "playground", title: "The harness playground", titles: { zh: "外壳程序实验场" }, published: false, release: null, langs: ["en"] },
   ],
 };

@@ -1,0 +1,239 @@
+/* Chapter 8: the harness playground, and its embed (embed.html). Builds on ../style.css (tokens, grid,
+   prose, cards, legend, stats, colophon, chapter navigation); only what this chapter adds lives here.
+   The conversation's colours keep their meaning: --model for what the model wrote (its requests, its
+   words), --result for what the harness pasted back (hatched, as everywhere), --you for what we typed.
+   A run as a whole isn't one kind of text, so its card is set in ink. Small text uses the AA text tokens:
+   --ink-2 (8:1 or more on --card and --paper in both themes), --model-text and --result-text (4.5:1 or
+   more on every paper, per style.css). Yes and no differ in shape as well as fill: a dot and a ring. */
+
+/* ---------- the prompt, the three switches ---------- */
+.ask { margin: 1.5rem 0; }
+.ask-head { margin: 0 0 0.4rem; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.ask .prompt { margin: 0; }
+
+.sw-list { margin: 0.25rem 0 1.5rem; }
+.sw-list > div { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 0.25rem 1.25rem; padding: 0.95rem 0 1rem; border-top: 1px solid var(--rule); }
+.sw-list > div:last-child { border-bottom: 1px solid var(--rule); }
+.sw-list dt { font: 650 1.12rem/1.3 var(--display); color: var(--ink); }
+.sw-list dd { margin: 0; text-wrap: pretty; }
+.sw-list q { font-style: italic; }
+
+/* ---------- a figure panel (as chapters 6 and 7) ---------- */
+.fig {
+  margin: 1.75rem 0 2rem;
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+}
+.fig-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; margin-bottom: 0.4rem; }
+.fig-title { font: 600 1.15rem/1.3 var(--display); color: var(--ink); }
+.prose .fig p { margin: 0; }
+.prose .fig .fig-readout { max-width: 46rem; margin-top: 1.1rem; font-size: 1.02rem; line-height: 1.55; color: var(--ink-2); text-wrap: pretty; }
+.pg-fig p.pg-help, .pg-help { margin: 0 0 1.1rem; font-size: 1rem; line-height: 1.5; color: var(--ink-2); }
+
+/* ---------- the switches ---------- */
+.pg-root { position: relative; }
+.pg-switches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem 1.25rem; margin: 0 0 1.25rem; }
+.pg-sw { margin: 0; padding: 0; border: 0; min-width: 0; }
+.pg-sw legend { padding: 0; margin: 0 0 0.4rem; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.seg { display: inline-flex; padding: 3px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
+.seg-opt { position: relative; display: block; }
+.seg-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.seg-opt span {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; min-width: 4.5rem; padding: 0 1rem;
+  font: 600 0.85rem/1.2 var(--mono); color: var(--ink-2); border-radius: 7px; cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.seg-opt span:active { transform: scale(0.97); }
+.seg-opt input:checked + span { background: var(--ink); color: var(--card); }
+.seg-opt input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .seg-opt input:not(:checked) + span:hover { color: var(--ink); background: var(--paper-2); }
+}
+.pg-root p.pg-hint { margin: 0.4rem 0 0; font: 500 0.74rem/1.45 var(--mono); color: var(--ink-2); }
+.pg-hint q { quotes: "“" "”"; }
+
+/* ---------- the two runs ---------- */
+/* Side by side as equals; app.js keeps the pair as tall as the tallest setting, so nothing below moves. */
+.pg-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
+.pg-sizer { position: absolute; top: 0; left: 0; visibility: hidden; pointer-events: none; z-index: -1; }
+.pg-run {
+  display: flex; flex-direction: column; min-width: 0;
+  border: 1px solid var(--rule); border-radius: 12px; background: var(--paper); overflow: hidden;
+}
+.pg-root p.pg-wait { margin: 0; padding: 1rem; font: 500 0.8rem/1.4 var(--mono); color: var(--ink-2); }
+.pg-run-head {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.2rem 0.75rem;
+  padding: 0.55rem 0.85rem; background: var(--ink); color: var(--card);
+}
+.pg-run .pg-run-title { margin: 0; font: 600 0.78rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: inherit; }
+.pg-run-head .meta { font: 500 0.72rem/1.3 var(--mono); }
+@media (prefers-color-scheme: dark) {
+  .pg-run-head { background: var(--paper-2); color: var(--ink); box-shadow: inset 0 -1px 0 var(--rule); }
+}
+
+.pg-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin: 0; padding: 0.85rem 0.85rem 0.2rem; }
+.pg-facts > div { display: flex; flex-direction: column-reverse; justify-content: flex-end; min-width: 0; }
+.pg-facts dt { font: 500 0.72rem/1.3 var(--mono); color: var(--ink-2); margin-top: 0.2rem; }
+.pg-facts dd { margin: 0; font: 700 1.55rem/1.05 var(--display); letter-spacing: -0.01em; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.pg-root p.pg-cache { margin: 0.35rem 0.85rem 0.6rem; font: 500 0.72rem/1.45 var(--mono); color: var(--ink-2); }
+
+.pg-checks { list-style: none; margin: 0 0.85rem; padding: 0; border-top: 1px solid var(--rule); }
+.ck { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto; align-items: baseline; gap: 0.5rem; padding: 0.45rem 0; border-bottom: 1px solid var(--rule); font-size: 0.93rem; line-height: 1.35; }
+.ck-v { font: 600 0.8rem/1.3 var(--mono); white-space: nowrap; }
+.mk { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; flex: none; }
+.mk-yes { background: var(--ink); }
+.mk-no { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-2); }
+
+.pg-root p.pg-k { margin: 0.9rem 0.85rem 0.3rem; font: 600 0.68rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.pg-steps { list-style: none; margin: 0 0.85rem 0.85rem; padding: 0; }
+.pg-call { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 0.5rem; padding: 0.5rem 0; border-top: 1px dashed var(--rule); }
+.pg-cn { padding-top: 0.75rem; font: 600 0.7rem/1.2 var(--mono); color: var(--ink-2); white-space: nowrap; }
+.pg-cb { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+.pg-root p.pg-say { margin: 0.35rem 0 0.1rem; padding-left: 0.6rem; border-left: 3px solid var(--model); font: 400 0.95rem/1.5 var(--body); color: var(--say, var(--ink)); text-wrap: pretty; }
+.pg-say code { font-size: 0.84em; }
+.pg-reqs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.3rem; }
+.pg-reqs > li { min-width: 0; }
+
+/* One request and what came back, on one line; opened, chapter 1's two cards. */
+.pg-req > summary {
+  display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0.3rem 0.55rem 0.3rem 0.65rem;
+  list-style: none; cursor: pointer; border: 1px solid var(--rule); border-left: 3px solid var(--model); border-radius: 8px;
+  background: var(--card); font: 500 0.76rem/1.3 var(--mono);
+  transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+}
+.pg-req > summary::-webkit-details-marker { display: none; }
+.pg-req > summary::after {
+  content: ""; flex: none; width: 0.4rem; height: 0.4rem; margin-left: 0.15rem;
+  border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.pg-req[open] > summary::after { transform: rotate(45deg); }
+@media (hover: hover) and (pointer: fine) {
+  .pg-req > summary:hover { border-color: var(--ink-3); border-left-color: var(--model); }
+}
+.q-tool { flex: none; font-weight: 600; color: var(--model-text); }
+.q-arg { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.q-tag { flex: none; padding: 0.15rem 0.4rem; border-radius: 5px; font: 600 0.66rem/1.2 var(--mono); letter-spacing: 0.02em; color: var(--ink); background: var(--paper-2); }
+.is-test .q-tag { color: var(--result-text); background: color-mix(in srgb, var(--result) 13%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--result) 45%, transparent); }
+.is-missing .q-tag { color: var(--model-text); background: color-mix(in srgb, var(--model) 10%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--model) 45%, transparent); }
+.q-res { flex: none; display: inline-flex; align-items: center; gap: 0.35rem; color: var(--result-text); white-space: nowrap; }
+.q-res::before { content: ""; width: 0.6rem; height: 0.6rem; border-radius: 2px; background: var(--tex-teal) var(--result); }
+.q-res.is-err, .q-res.is-fail { color: var(--model-text); }
+.q-res.is-err::before { background: color-mix(in srgb, var(--model) 70%, var(--result)); }
+.q-open { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding: 0.5rem 0 0.25rem; }
+.q-open .card pre { max-height: 16rem; }
+
+/* The final answer: its first paragraph, the rest folded. */
+.pg-answer { margin-top: 0.35rem; }
+.pg-answer .say { font-size: 0.95rem; }
+.pg-root .pg-answer p.say { padding: 0.75rem 1rem 0; }
+.pg-root .pg-answer p.say:last-child { padding-bottom: 0.85rem; }
+.pg-more > summary {
+  display: inline-flex; align-items: center; min-height: 2.75rem; margin: 0.15rem 1rem 0.35rem; cursor: pointer;
+  font: 600 0.76rem/1.3 var(--mono); color: var(--model-text); text-decoration: underline; text-underline-offset: 0.2em;
+}
+.pg-more[open] > summary { margin-bottom: 0; }
+
+/* ---------- put this on your page ---------- */
+.embed-note { margin: 0 0 0.5rem; padding: 1.1rem 1.25rem 0.4rem; border: 1px dashed var(--ink-3); border-radius: 12px; }
+.prose .embed-note h3 { margin: 0 0 0.5rem; }
+.prose .embed-note p { margin: 0 0 0.75rem; }
+.embed-code {
+  margin: 0 0 0.75rem; padding: 0.75rem 0.9rem; font-size: 0.74rem; line-height: 1.6; color: var(--ink);
+  white-space: pre-wrap; word-break: break-all; background: var(--paper-2); border-radius: 8px; user-select: all;
+}
+#embed-open { display: inline-block; padding-block: 0.6rem; }
+
+/* ---------- all eight settings ---------- */
+.ov-wrap { margin: 1rem 0 0.5rem; overflow-x: auto; }
+.ov { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.ov caption { caption-side: bottom; text-align: left; padding-top: 0.6rem; font: 500 0.75rem/1.5 var(--mono); color: var(--ink-2); }
+.ov th, .ov td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: middle; }
+.ov thead th { font: 600 0.68rem/1.3 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-2); vertical-align: bottom; }
+.ov .num { text-align: right; font-family: var(--mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ov tbody th { font-weight: 400; padding-left: 0; }
+.ov tbody th a { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 0.4rem; min-height: 2.75rem; color: var(--ink); text-decoration-color: color-mix(in srgb, var(--ink) 35%, transparent); }
+.ov-s { font: 500 0.82rem/1.35 var(--mono); white-space: nowrap; }
+.ov thead th.num { white-space: normal; }
+.ov-s + .ov-s::before { content: "·"; margin-right: 0.4rem; color: var(--ink-3); }
+.ov-mk { display: inline-flex; padding: 0 0.2rem; }
+.ov-mk + .ov-mk { margin-left: 0.3rem; }
+.ov-cost { display: block; }
+.ov tr.is-current th, .ov tr.is-current td { background: var(--paper-2); }
+.ov tr.is-current th { box-shadow: inset 3px 0 0 var(--ink); }
+.ov tr.is-current th a { font-weight: 600; padding-left: 0.6rem; }
+.ov tbody th a { padding-left: 0.6rem; }
+
+/* ---------- what the switches did (as chapters 6 and 7) ---------- */
+.points { list-style: none; margin: 0.75rem 0 1.5rem; padding: 0; counter-reset: pt; }
+.points li { position: relative; padding: 1.1rem 0 0.4rem 2.6rem; border-top: 1px solid var(--rule); counter-increment: pt; }
+.points li::before {
+  content: counter(pt); position: absolute; left: 0; top: 1.15rem;
+  width: 1.75rem; height: 1.75rem; display: grid; place-items: center;
+  font: 600 0.82rem/1 var(--mono); color: var(--card); background: var(--ink); border-radius: 50%;
+}
+.prose .points h3 { margin: 0 0 0.4rem; }
+.prose .points p { margin: 0 0 0.8rem; }
+
+/* ---------- colophon ---------- */
+.flags {
+  margin: 0 0 0.85rem; padding: 0.75rem 0.9rem; white-space: pre-wrap; word-break: break-word;
+  font-size: 0.74rem; line-height: 1.6; background: var(--paper-2); border-radius: 8px; color: var(--ink);
+}
+
+/* ---------- the embed ---------- */
+body.em { min-height: 0; }
+.em-head, .em-main, .em-foot { padding-inline: clamp(0.75rem, 3vw, 1.5rem); }
+.em-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.25rem 1rem; padding-top: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--rule); }
+.em-title { margin: 0; font: 650 1.3rem/1.2 var(--display); letter-spacing: -0.01em; }
+.em-back { display: inline-flex; align-items: center; min-height: 2.75rem; font: 600 0.78rem/1.3 var(--mono); color: var(--model-text); }
+.em-main { padding-top: 0.9rem; }
+.em .pg-help { font-size: 0.95rem; }
+.em-foot p { margin: 0; padding: 0.9rem 0 1.1rem; font: 500 0.72rem/1.5 var(--mono); color: var(--ink-2); }
+
+/* ---------- narrower ---------- */
+@media (max-width: 48rem) {
+  /* Stacked, the reserved height goes after run 2, not into both cards. */
+  .pg-pair { grid-template-columns: minmax(0, 1fr); align-content: start; }
+  .sw-list > div { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 40rem) {
+  .pg-switches { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
+  .pg-sw { display: grid; grid-template-columns: 5.5rem auto; align-items: center; column-gap: 0.75rem; }
+  .pg-sw legend { float: left; margin: 0; }
+  .pg-sw .seg { grid-column: 2; justify-self: start; }
+  .pg-sw .pg-hint { grid-column: 1 / -1; margin-top: 0.2rem; }
+  .ov-s { display: block; }
+  .ov-s + .ov-s::before { content: none; }
+  .ov tbody th a { flex-direction: column; align-items: flex-start; padding-block: 0.3rem; }
+}
+@media (max-width: 30rem) {
+  .fig { padding: 0.9rem 0.6rem; }
+  .points li { padding-left: 2.3rem; }
+  .pg-call { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+  .pg-cn { padding-top: 0.15rem; }
+  .pg-facts dd { font-size: 1.35rem; }
+  /* A command keeps a line of its own; its tag and result wrap under it. */
+  .pg-req > summary { flex-wrap: wrap; row-gap: 0.15rem; padding-block: 0.4rem; }
+  .q-arg { flex: 1 1 9rem; }
+  .ov th, .ov td { padding-inline: 0.35rem; }
+  .ov thead th { font-size: 0.62rem; letter-spacing: 0.02em; }
+  .ov .num { font-size: 0.76rem; }
+}
+
+/* The embed has no page margins, so its runs stay side by side down to a blog post's column. */
+@media (max-width: 48rem) and (min-width: 40.01rem) {
+  .em .pg-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: normal; }
+  .em .pg-call { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+  .em .pg-cn { padding-top: 0.15rem; }
+  .em .pg-facts dd { font-size: 1.3rem; }
+}
+
+/* Forced colours: the marks keep apart by outlines. */
+@media (forced-colors: active) {
+  .mk, .q-res::before { forced-color-adjust: none; border: 1px solid CanvasText; }
+  .mk-yes { background: CanvasText; }
+  .seg-opt input:checked + span { outline: 3px solid Highlight; }
+}

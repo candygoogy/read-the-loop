@@ -10,4 +10,5 @@ window.CONTENTS_COPY = {
   tools: (d) => `第一次请求的字符里：工具说明占 ${d.tools}，系统部分占 ${d.system}，消息占 ${d.messages}`,
   subagents: (d) => `子智能体的对话涨到了 ${d.peak} 个 token；交回报告之后，主对话只多了 ${d.growth} 个。`,
   failure: (d) => `${d.runs} 次运行，每次一列，模型发出的每个请求是一块：${d.requests} 个请求中有 ${d.refused} 个被权限检查拒绝（斜纹）`,
+  playground: (d) => `${d.runs} 次运行，${d.combos} 种设置各 ${d.per} 次。实心表示跑了测试：上排是修改前（${d.before} 次），下排是修改后（${d.after} 次）。`,
 };

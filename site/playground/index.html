@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The harness playground · Read the Loop</title>
+<meta name="description" content="Three switches of a coding agent's harness, and real Claude Code runs of one bug fix with every setting. Flip a switch and see what the agent did differently.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://loop.candygoogy.dev/playground/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Read the Loop">
+<meta property="og:title" content="The harness playground · Read the Loop">
+<meta property="og:description" content="Three switches of a coding agent's harness, and real Claude Code runs of one bug fix with every setting. Flip a switch and see what the agent did differently.">
+<meta property="og:url" content="https://loop.candygoogy.dev/playground/">
+<meta property="og:image" content="https://loop.candygoogy.dev/og/playground.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Read the Loop, chapter 8: The harness playground, with a chart drawn from the recordings">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="chapter.css">
+</head>
+<body data-page="playground">
+
+<a class="skip-link" href="#playground">Skip to the playground</a>
+
+<header class="masthead band">
+  <p class="kicker"><a href="../index.html">Read the Loop</a> · Chapter 8 of 8</p>
+  <h1>The harness playground</h1>
+  <p class="dek" data-c="dek"></p>
+</header>
+
+<main class="band">
+
+<section class="prose" aria-labelledby="s-intro">
+  <h2 id="s-intro">The part you control</h2>
+  <p data-c="intro.p1"></p>
+  <p data-c="intro.p2"></p>
+  <figure class="ask">
+    <figcaption class="ask-head" data-c="intro.promptHead"></figcaption>
+    <blockquote class="prompt" id="prompt"></blockquote>
+  </figure>
+  <p data-c="intro.p3"></p>
+  <dl class="sw-list">
+    <div><dt data-c="intro.model.name"></dt><dd data-c="intro.model.text"></dd></div>
+    <div><dt data-c="intro.bash.name"></dt><dd data-c="intro.bash.text"></dd></div>
+    <div><dt data-c="intro.rule.name"></dt><dd data-c="intro.rule.text"></dd></div>
+  </dl>
+  <p data-c="intro.p4"></p>
+  <p data-c="intro.p5"></p>
+</section>
+
+<section class="prose" aria-labelledby="s-play">
+  <h2 id="s-play">Flip the switches</h2>
+  <figure class="fig wide pg-fig" id="playground" tabindex="-1" aria-labelledby="playground-title" aria-describedby="playground-help">
+    <div class="fig-head">
+      <span class="fig-title" id="playground-title" data-c="play.title"></span>
+    </div>
+    <p class="pg-help" id="playground-help" data-c="play.help"></p>
+    <div class="pg-root" id="pg"></div>
+    <p class="fig-readout" id="pair-note"></p>
+  </figure>
+
+  <aside class="embed-note" aria-labelledby="embed-title">
+    <h3 id="embed-title" data-c="embedNote.title"></h3>
+    <p data-c="embedNote.p1"></p>
+    <pre class="embed-code" id="embed-code"></pre>
+    <p><a id="embed-open" href="embed.html" data-c="embedNote.open"></a></p>
+  </aside>
+</section>
+
+<section class="prose" aria-labelledby="s-all">
+  <h2 id="s-all" data-c="overview.title"></h2>
+  <p data-c="overview.p1"></p>
+  <div class="ov-wrap wide" id="overview-wrap">
+    <table class="ov" id="overview"></table>
+  </div>
+</section>
+
+<section class="prose" aria-labelledby="s-shows">
+  <h2 id="s-shows" data-c="shows.title"></h2>
+  <p data-c="shows.p1"></p>
+  <ol class="points">
+    <li><h3 data-c="shows.rule.title"></h3><p id="pt-rule"></p></li>
+    <li><h3 data-c="shows.bash.title"></h3><p id="pt-bash"></p></li>
+    <li><h3 data-c="shows.model.title"></h3><p id="pt-model"></p></li>
+  </ol>
+  <h3 data-c="shows.caveat.title"></h3>
+  <p id="pt-caveat"></p>
+</section>
+
+<section class="stats" aria-label="The runs in numbers">
+  <div><span class="n" data-v="runs"></span><span class="l" data-c="stats.runs"></span></div>
+  <div><span class="n" data-v="fixed"></span><span class="l" data-c="stats.fixed"></span></div>
+  <div><span class="n" data-v="norule"></span><span class="l" data-c="stats.norule"></span></div>
+  <div><span class="n" data-v="rule"></span><span class="l" data-c="stats.rule"></span></div>
+</section>
+
+<section class="prose next" aria-labelledby="next-title">
+  <p class="kicker" data-c="next.kicker"></p>
+  <h2 id="next-title" data-c="next.title"></h2>
+  <p data-c="next.p1"></p>
+</section>
+
+</main>
+
+<footer class="colophon band">
+  <h2 data-c="colophon.title"></h2>
+  <p data-col="model"></p>
+  <pre class="flags" id="flags"></pre>
+  <p data-col="flags"></p>
+  <p data-col="order"></p>
+  <p data-col="fixed"></p>
+  <p data-col="tested"></p>
+  <p data-col="missing"></p>
+  <p data-col="cost"></p>
+  <p data-col="paths"></p>
+  <p data-col="traces"></p>
+  <ul class="runs" id="trace-links"></ul>
+</footer>
+
+<nav class="chapter-nav band" aria-label="Chapters">
+  <div class="cn">
+    <a class="cn-toc" href="../index.html">All chapters</a>
+  </div>
+</nav>
+
+<script src="../data/playground-08.js"></script>
+<script>window.TRACES = {};</script>
+<!-- The two runs the playground opens on, and the two the opening text compares them with; the rest
+     load when they're needed (playground.js). -->
+<script src="../data/trace-08-opus-bash-norule-run1.js"></script>
+<script>TRACES["trace-08-opus-bash-norule-run1"] = TRACE;</script>
+<script src="../data/trace-08-opus-bash-norule-run2.js"></script>
+<script>TRACES["trace-08-opus-bash-norule-run2"] = TRACE;</script>
+<script src="../data/trace-08-opus-nobash-norule-run1.js"></script>
+<script>TRACES["trace-08-opus-nobash-norule-run1"] = TRACE;</script>
+<script src="../data/trace-08-opus-bash-rule-run1.js"></script>
+<script>TRACES["trace-08-opus-bash-rule-run1"] = TRACE;</script>
+<script src="../data/trace-02-run2.js"></script>
+<script>TRACES.ch1 = TRACE; window.TRACE = undefined;</script>
+<script src="copy.en.js"></script>
+<script src="../lib/trace-ui.js"></script>
+<script src="../lib/motion.js"></script>
+<script src="playground.js"></script>
+<script src="app.js"></script>
+<script src="../chapters.js"></script>
+<script src="../lib/release.js"></script>
+</body>
+</html>
