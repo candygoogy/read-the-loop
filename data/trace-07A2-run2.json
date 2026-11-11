@@ -1,0 +1,205 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-11",
+  "started_at": "2026-11-11T16:05:19.231Z",
+  "time_source": "arrival",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.322",
+  "permission_mode": "acceptEdits",
+  "prompt": "The spending chart looks blurry on my laptop, but it's sharp on my old monitor at work. Can you fix it?",
+  "run": {
+    "index": 2,
+    "of": 3
+  },
+  "tools_available": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 5062,
+      "context_tokens": 7030,
+      "cached_tokens": 6608,
+      "new_tokens": 422,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 420,
+      "output_tokens": 146,
+      "output": [
+        {
+          "kind": "text",
+          "text": "Likely a canvas devicePixelRatio issue. Let me find the chart code.",
+          "t_ms": 5062
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01CQYhy78X7Jg2fpyXRjFY88",
+          "tool": "Grep",
+          "input": {
+            "pattern": "canvas|getContext|devicePixelRatio",
+            "output_mode": "content",
+            "glob": "!**/node_modules/**"
+          },
+          "t_ms": 5859,
+          "result": {
+            "text": "index.html:13:    <canvas id=\"chart\" width=\"640\" height=\"320\" aria-label=\"Spending per category\"></canvas>\nsrc\\chart.js:10:function drawChart(canvas, rows) {\nsrc\\chart.js:11:  const ctx = canvas.getContext('2d');\nsrc\\chart.js:12:  const width = canvas.width;\nsrc\\chart.js:13:  const height = canvas.height;",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 5931
+          }
+        }
+      ],
+      "added_since_previous": null
+    },
+    {
+      "t_ms": 9928,
+      "context_tokens": 7344,
+      "cached_tokens": 7028,
+      "new_tokens": 316,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 314,
+      "output_tokens": 82,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_014QAp8LPuKZjGCU7hT8eSK9",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-a2/src\\chart.js"
+          },
+          "t_ms": 9928,
+          "result": {
+            "text": "1\t// Draws the bar chart: one bar per category, its amount above it and its name below.\n2\t\n3\tconst CHART = {\n4\t  padding: { top: 28, right: 12, bottom: 44, left: 12 },\n5\t  bar: '#3b7a57',\n6\t  text: '#2b2b2b',\n7\t  font: '12px system-ui, sans-serif',\n8\t};\n9\t\n10\tfunction drawChart(canvas, rows) {\n11\t  const ctx = canvas.getContext('2d');\n12\t  const width = canvas.width;\n13\t  const height = canvas.height;\n14\t  const { top, right, bottom, left } = CHART.padding;\n15\t\n16\t  ctx.clearRect(0, 0, width, height);\n17\t  if (rows.length === 0) return;\n18\t\n19\t  const max = Math.max(...rows.map((r) => r.total));\n20\t  const slot = (width - left - right) / rows.length;\n21\t  const barWidth = Math.min(56, slot * 0.7);\n22\t  const plotHeight = height - top - bottom;\n23\t\n24\t  ctx.font = CHART.font;\n25\t  ctx.textAlign = 'center';\n26\t\n27\t  rows.forEach((row, i) => {\n28\t    const h = Math.max(2, (row.total / max) * plotHeight);\n29\t    const x = left + i * slot + (slot - barWidth) / 2;\n30\t    const y = height - bottom - h;\n31\t    ctx.fillStyle = CHART.bar;\n32\t    ctx.fillRect(x, y, barWidth, h);\n33\t\n34\t    ctx.fillStyle = CHART.text;\n35\t    ctx.textBaseline = 'bottom';\n36\t    ctx.fillText(formatMoney(row.total), x + barWidth / 2, y - 4);\n37\t    ctx.textBaseline = 'top';\n38\t    ctx.fillText(row.category, x + barWidth / 2, height - bottom + 8);\n39\t  });\n40\t}\n41\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 9953
+          }
+        }
+      ],
+      "added_since_previous": 314
+    },
+    {
+      "t_ms": 12785,
+      "context_tokens": 8128,
+      "cached_tokens": 7342,
+      "new_tokens": 786,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 784,
+      "output_tokens": 145,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01A8effNCzdqdNHpq9PAkkrk",
+          "tool": "Grep",
+          "input": {
+            "pattern": "drawChart|#chart|canvas",
+            "output_mode": "content",
+            "glob": "!src/chart.js"
+          },
+          "t_ms": 13473,
+          "result": {
+            "text": "style.css:23:#chart {\nindex.html:13:    <canvas id=\"chart\" width=\"640\" height=\"320\" aria-label=\"Spending per category\"></canvas>\nsrc\\app.js:7:drawChart(document.getElementById('chart'), rows);",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 13532
+          }
+        }
+      ],
+      "added_since_previous": 784
+    },
+    {
+      "t_ms": 16894,
+      "context_tokens": 8386,
+      "cached_tokens": 8126,
+      "new_tokens": 260,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 258,
+      "output_tokens": 123,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_012kAryguXo4a5WUHBPMBo2m",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-a2/style.css",
+            "offset": 20,
+            "limit": 12
+          },
+          "t_ms": 16894,
+          "result": {
+            "text": "20\t  margin: 0 0 1rem;\n21\t}\n22\t\n23\t#chart {\n24\t  display: block;\n25\t  width: 640px;\n26\t  height: 320px;\n27\t  background: #fff;\n28\t  border: 1px solid #e4e0d8;\n29\t}\n30\t\n31\ttable {",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 16911
+          }
+        }
+      ],
+      "added_since_previous": 258
+    },
+    {
+      "t_ms": 26325,
+      "context_tokens": 8644,
+      "cached_tokens": 8384,
+      "new_tokens": 260,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 258,
+      "output_tokens": 583,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01J98Cgp5YfskRKZCNvfoufd",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/ch7-a2/src\\chart.js",
+            "old_string": "  const ctx = canvas.getContext('2d');\n  const width = canvas.width;\n  const height = canvas.height;",
+            "new_string": "  // Lay out in CSS pixels, but size the backing store to the device's pixel\n  // ratio so the chart stays sharp on high-DPI (e.g. scaled laptop) screens.\n  const width = canvas.clientWidth;\n  const height = canvas.clientHeight;\n  const dpr = window.devicePixelRatio || 1;\n  canvas.width = Math.round(width * dpr);\n  canvas.height = Math.round(height * dpr);\n\n  const ctx = canvas.getContext('2d');\n  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);"
+          },
+          "t_ms": 28552,
+          "result": {
+            "text": "The file ~/ch7-a2/src\\chart.js has been updated successfully. (file state is current in your context — no need to Read it back)",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 28578
+          }
+        }
+      ],
+      "added_since_previous": 258
+    },
+    {
+      "t_ms": 36077,
+      "context_tokens": 9323,
+      "cached_tokens": 8642,
+      "new_tokens": 681,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 679,
+      "output_tokens": 396,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I fixed it in `src/chart.js`, but I haven't checked it in a browser, so please reload the page on your laptop to confirm it's sharp now.\n\n**Why it was blurry:** your laptop screen almost certainly uses Windows display scaling (for example 150%), and your work monitor probably runs at 100%. The chart was drawn at a fixed 640×320 pixels. With scaling on, the browser stretched that small image to fill a bigger area of real screen pixels, which made the bars and text soft. At 100%, no stretching happens, so it looked fine at work.\n\n**What I changed:** each time the chart is drawn, it now checks the screen's scale factor and draws at that resolution. At 150% it draws at 960×480, then shows that at the same 640×320 size on the page. The layout and size don't change, and at 100% it works exactly as before.\n\n**One limitation:** the scale is only checked when the chart is drawn, which right now is just on page load. If you drag the browser window from the laptop screen to an external monitor with a different scale, the chart will look soft until you reload. If that matters to you, I can make it redraw automatically when the scale changes.",
+          "t_ms": 36079
+        }
+      ],
+      "added_since_previous": 679
+    }
+  ],
+  "totals": {
+    "model_calls": 6,
+    "output_tokens": 1475,
+    "cache_read_tokens": 46130,
+    "cache_write_tokens": 2713,
+    "cost_usd": 0.0605,
+    "duration_s": 35.8,
+    "ttft_ms": 4796
+  },
+  "final_answer": "I fixed it in `src/chart.js`, but I haven't checked it in a browser, so please reload the page on your laptop to confirm it's sharp now.\n\n**Why it was blurry:** your laptop screen almost certainly uses Windows display scaling (for example 150%), and your work monitor probably runs at 100%. The chart was drawn at a fixed 640×320 pixels. With scaling on, the browser stretched that small image to fill a bigger area of real screen pixels, which made the bars and text soft. At 100%, no stretching happens, so it looked fine at work.\n\n**What I changed:** each time the chart is drawn, it now checks the screen's scale factor and draws at that resolution. At 150% it draws at 960×480, then shows that at the same 640×320 size on the page. The layout and size don't change, and at 100% it works exactly as before.\n\n**One limitation:** the scale is only checked when the chart is drawn, which right now is just on page load. If you drag the browser window from the laptop screen to an external monitor with a different scale, the chart will look soft until you reload. If that matters to you, I can make it redraw automatically when the scale changes."
+}

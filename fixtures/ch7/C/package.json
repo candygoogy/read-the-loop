@@ -1,0 +1,13 @@
+{
+  "name": "slugkit",
+  "version": "2.1.0",
+  "description": "Turn titles into URL slugs",
+  "main": "src/slug.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "fast-check": "^3.23.2"
+  }
+}

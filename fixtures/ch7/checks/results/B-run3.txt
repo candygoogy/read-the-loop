@@ -1,0 +1,11 @@
+# check: python -I B-check.py ~/ch7-b
+# run folder: ~/ch7-b (run 3 of fixture B, as the agent left it)
+# ran: 2026-11-11T16:25:43Z, node v26.13.0, python 3.14.5
+today=2026-11-11 project=None: OK  want {'acme': 5, 'internal': 1, 'globex': 2.5} total 8.5; got rc=0 'acme         5h\nglobex       2.5h\ninternal     1h\nTotal        8.5h' ''
+today=2026-11-09 project=None: OK  want {'acme': 3, 'internal': 1} total 4; got rc=0 'acme         3h\ninternal     1h\nTotal        4h' ''
+today=2026-11-15 project=None: OK  want {'acme': 5, 'internal': 1, 'globex': 2.5} total 8.5; got rc=0 'acme         5h\nglobex       2.5h\ninternal     1h\nTotal        8.5h' ''
+today=2026-11-08 project=None: OK  want {'acme': 4.0, 'globex': 4, 'internal': 1} total 9.0; got rc=0 'acme         4h\nglobex       4h\ninternal     1h\nTotal        9h' ''
+today=2026-11-11 project=acme: OK  want {'acme': 5} total 5; got rc=0 'acme         5h\nTotal        5h' ''
+node --test: ? pass 9 ? fail 0
+FEATURE WORKS
+# exit code 0

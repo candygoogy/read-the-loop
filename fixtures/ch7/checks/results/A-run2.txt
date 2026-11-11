@@ -1,0 +1,8 @@
+# check: python -I A-check.py ~/ch7-a
+# run folder: ~/ch7-a (run 2 of fixture A, as the agent left it)
+# ran: 2026-11-11T16:25:38Z, node v26.13.0, python 3.14.5
+february.csv OK
+march.csv OK
+node --test: ? pass 9 ? fail 0
+REPORTED CASE FIXED
+# exit code 0

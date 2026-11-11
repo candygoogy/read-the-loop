@@ -1,0 +1,11 @@
+# check: node B2-check.mjs ~/ch7-b2
+# run folder: ~/ch7-b2 (run 2 of fixture B2, as the agent left it)
+# ran: 2026-11-11T16:25:44Z, node v26.13.0, python 3.14.5
+node --test: pass 6 fail 0
+task obj: OK exit=0 out="[\"--a\",\"b\"]" err=""
+task str: OK exit=0 out="[\"--fix\",\"src\"]" err=""
+task nodever: OK exit=0 out="v26.13.0" err=""
+task bad: OK exit=3 out="" err=""
+execa names imported: execa, parseCommandString | missing in 10.2.1: none
+FEATURE WORKS
+# exit code 0

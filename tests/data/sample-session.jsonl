@@ -1,4 +1,4 @@
-{"type":"system","subtype":"init","cwd":"__REC__","session_id":"sample","tools":["Bash","Edit","Read"],"model":"claude-sample","claude_code_version":"0.0.0"}
+{"type":"system","subtype":"init","cwd":"__REC__","session_id":"sample","tools":["Bash","Edit","Read"],"model":"claude-sample","claude_code_version":"0.0.0","permissionMode":"acceptEdits"}
 {"type":"assistant","message":{"id":"msg_1","content":[{"type":"tool_use","id":"tu_1","name":"Bash","input":{"command":"cd __REC__ && ls -la"}}],"usage":{"input_tokens":3,"cache_read_input_tokens":0,"cache_creation_input_tokens":1000,"output_tokens":20}},"timestamp":"2026-01-02T10:00:01.500Z"}
 {"type":"user","message":{"role":"user","content":[{"tool_use_id":"tu_1","type":"tool_result","content":"drwxr-xr-x 1 __USER__ 197121  0 Jan  2 10:00 ./\r\n-rw-r--r-- 1 __USER__ 197121 26 Jan  2 10:00 app.py","is_error":false}]},"timestamp":"2026-01-02T10:00:02.250Z"}
 {"type":"assistant","message":{"id":"msg_2","content":[{"type":"text","text":"The sign is wrong."}],"usage":{"input_tokens":2,"cache_read_input_tokens":1000,"cache_creation_input_tokens":150,"output_tokens":30}},"timestamp":"2026-01-02T10:00:03.000Z"}

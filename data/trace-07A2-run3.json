@@ -1,0 +1,219 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-11",
+  "started_at": "2026-11-11T16:05:57.130Z",
+  "time_source": "arrival",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.322",
+  "permission_mode": "acceptEdits",
+  "prompt": "The spending chart looks blurry on my laptop, but it's sharp on my old monitor at work. Can you fix it?",
+  "run": {
+    "index": 3,
+    "of": 3
+  },
+  "tools_available": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 6459,
+      "context_tokens": 7030,
+      "cached_tokens": 6608,
+      "new_tokens": 422,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 420,
+      "output_tokens": 169,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_013ME5GgP6Mr8byHrs8PM9Qs",
+          "tool": "Grep",
+          "input": {
+            "pattern": "canvas|getContext|devicePixelRatio",
+            "-i": true,
+            "output_mode": "content",
+            "glob": "!**/node_modules/**"
+          },
+          "t_ms": 7388,
+          "result": {
+            "text": "index.html:13:    <canvas id=\"chart\" width=\"640\" height=\"320\" aria-label=\"Spending per category\"></canvas>\nsrc\\chart.js:10:function drawChart(canvas, rows) {\nsrc\\chart.js:11:  const ctx = canvas.getContext('2d');\nsrc\\chart.js:12:  const width = canvas.width;\nsrc\\chart.js:13:  const height = canvas.height;",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 7457
+          }
+        }
+      ],
+      "added_since_previous": null
+    },
+    {
+      "t_ms": 10958,
+      "context_tokens": 7364,
+      "cached_tokens": 7028,
+      "new_tokens": 336,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 334,
+      "output_tokens": 158,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01Nxzc6QhdUU8SEHrNtPDJ7T",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-a2/src\\chart.js"
+          },
+          "t_ms": 10958,
+          "result": {
+            "text": "1\t// Draws the bar chart: one bar per category, its amount above it and its name below.\n2\t\n3\tconst CHART = {\n4\t  padding: { top: 28, right: 12, bottom: 44, left: 12 },\n5\t  bar: '#3b7a57',\n6\t  text: '#2b2b2b',\n7\t  font: '12px system-ui, sans-serif',\n8\t};\n9\t\n10\tfunction drawChart(canvas, rows) {\n11\t  const ctx = canvas.getContext('2d');\n12\t  const width = canvas.width;\n13\t  const height = canvas.height;\n14\t  const { top, right, bottom, left } = CHART.padding;\n15\t\n16\t  ctx.clearRect(0, 0, width, height);\n17\t  if (rows.length === 0) return;\n18\t\n19\t  const max = Math.max(...rows.map((r) => r.total));\n20\t  const slot = (width - left - right) / rows.length;\n21\t  const barWidth = Math.min(56, slot * 0.7);\n22\t  const plotHeight = height - top - bottom;\n23\t\n24\t  ctx.font = CHART.font;\n25\t  ctx.textAlign = 'center';\n26\t\n27\t  rows.forEach((row, i) => {\n28\t    const h = Math.max(2, (row.total / max) * plotHeight);\n29\t    const x = left + i * slot + (slot - barWidth) / 2;\n30\t    const y = height - bottom - h;\n31\t    ctx.fillStyle = CHART.bar;\n32\t    ctx.fillRect(x, y, barWidth, h);\n33\t\n34\t    ctx.fillStyle = CHART.text;\n35\t    ctx.textBaseline = 'bottom';\n36\t    ctx.fillText(formatMoney(row.total), x + barWidth / 2, y - 4);\n37\t    ctx.textBaseline = 'top';\n38\t    ctx.fillText(row.category, x + barWidth / 2, height - bottom + 8);\n39\t  });\n40\t}\n41\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 10978
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01KPV4hZQDKaKLoXqPFKivry",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-a2/index.html"
+          },
+          "t_ms": 11322,
+          "result": {
+            "text": "1\t<!doctype html>\n2\t<html lang=\"en\">\n3\t<head>\n4\t  <meta charset=\"utf-8\">\n5\t  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6\t  <title>Spending, March 2026</title>\n7\t  <link rel=\"stylesheet\" href=\"style.css\">\n8\t</head>\n9\t<body>\n10\t  <main>\n11\t    <h1>Spending, March 2026</h1>\n12\t    <p class=\"total\">Total <strong id=\"total\"></strong></p>\n13\t    <canvas id=\"chart\" width=\"640\" height=\"320\" aria-label=\"Spending per category\"></canvas>\n14\t    <table id=\"table\"><tr><th>Category</th><th>Amount</th></tr></table>\n15\t  </main>\n16\t  <script src=\"data/march.js\"></script>\n17\t  <script src=\"src/summary.js\"></script>\n18\t  <script src=\"src/chart.js\"></script>\n19\t  <script src=\"src/app.js\"></script>\n20\t</body>\n21\t</html>\n22\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 11337
+          }
+        }
+      ],
+      "added_since_previous": 334
+    },
+    {
+      "t_ms": 21333,
+      "context_tokens": 8608,
+      "cached_tokens": 7362,
+      "new_tokens": 1246,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1244,
+      "output_tokens": 135,
+      "output": [
+        {
+          "kind": "text",
+          "text": "Check CSS for canvas sizing and how drawChart is called.",
+          "t_ms": 21333
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_0131efihzs7TU6d6hTPMxAFu",
+          "tool": "Grep",
+          "input": {
+            "pattern": "canvas|chart|resize",
+            "output_mode": "content",
+            "glob": "{style.css,src/app.js}"
+          },
+          "t_ms": 22060,
+          "result": {
+            "text": "style.css:23:#chart {\nsrc\\app.js:1:// Fills in the page: the month's total, the chart and the table.\nsrc\\app.js:7:drawChart(document.getElementById('chart'), rows);",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 22129
+          }
+        }
+      ],
+      "added_since_previous": 1244
+    },
+    {
+      "t_ms": 25364,
+      "context_tokens": 8844,
+      "cached_tokens": 8606,
+      "new_tokens": 238,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 236,
+      "output_tokens": 79,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01JtHbrPzzCyGhtQyR8PpsoQ",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-a2/style.css"
+          },
+          "t_ms": 25364,
+          "result": {
+            "text": "1\tbody {\n2\t  margin: 0;\n3\t  font: 16px/1.5 system-ui, sans-serif;\n4\t  color: #2b2b2b;\n5\t  background: #faf8f4;\n6\t}\n7\t\n8\tmain {\n9\t  max-width: 680px;\n10\t  margin: 2rem auto;\n11\t  padding: 0 1rem;\n12\t}\n13\t\n14\th1 {\n15\t  font-size: 1.5rem;\n16\t  margin: 0 0 0.25rem;\n17\t}\n18\t\n19\t.total {\n20\t  margin: 0 0 1rem;\n21\t}\n22\t\n23\t#chart {\n24\t  display: block;\n25\t  width: 640px;\n26\t  height: 320px;\n27\t  background: #fff;\n28\t  border: 1px solid #e4e0d8;\n29\t}\n30\t\n31\ttable {\n32\t  margin-top: 1rem;\n33\t  border-collapse: collapse;\n34\t}\n35\t\n36\ttd,\n37\tth {\n38\t  padding: 0.2rem 1rem 0.2rem 0;\n39\t  text-align: left;\n40\t}\n41\t\n42\ttd:last-child {\n43\t  text-align: right;\n44\t}\n45\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 25380
+          }
+        }
+      ],
+      "added_since_previous": 236
+    },
+    {
+      "t_ms": 34129,
+      "context_tokens": 9348,
+      "cached_tokens": 8842,
+      "new_tokens": 506,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 504,
+      "output_tokens": 876,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01FuaJbDKUZQ1FDsJuyV2mUp",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/ch7-a2/src\\chart.js",
+            "old_string": "  const ctx = canvas.getContext('2d');\n  const width = canvas.width;\n  const height = canvas.height;\n  const { top, right, bottom, left } = CHART.padding;\n\n  ctx.clearRect(0, 0, width, height);",
+            "new_string": "  const ctx = canvas.getContext('2d');\n  // Lay out in CSS pixels, but give the canvas one backing pixel per device\n  // pixel so it stays sharp on high-DPI (e.g. Retina / 150%-scaled) screens.\n  const width = canvas.clientWidth || canvas.width;\n  const height = canvas.clientHeight || canvas.height;\n  const dpr = window.devicePixelRatio || 1;\n  canvas.width = Math.round(width * dpr);\n  canvas.height = Math.round(height * dpr);\n  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n  const { top, right, bottom, left } = CHART.padding;\n\n  ctx.clearRect(0, 0, width, height);"
+          },
+          "t_ms": 36063,
+          "result": {
+            "text": "The file ~/ch7-a2/src\\chart.js has been updated successfully. (file state is current in your context — no need to Read it back)",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 36093
+          }
+        }
+      ],
+      "added_since_previous": 504
+    },
+    {
+      "t_ms": 45018,
+      "context_tokens": 10320,
+      "cached_tokens": 9346,
+      "new_tokens": 974,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 972,
+      "output_tokens": 347,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I fixed the blur in `src/chart.js`, but I haven't opened it in a browser, so I haven't seen the result on a high-DPI screen yet.\n\n**The change:** `drawChart` now:\n- reads the chart's on-screen size from CSS (640×320)\n- sets the canvas's internal pixel size to that size multiplied by `window.devicePixelRatio` (your screen's pixel density)\n- scales the drawing to match, so all the existing layout code still works in normal 640×320 coordinates\n\nOn your laptop the bars and text should now be sharp. Your work monitor has a ratio of 1, so the chart is drawn exactly as before there.\n\n**One case it doesn't cover:** zooming the browser (Ctrl +/–) or dragging the window to a screen with a different density after the page loads changes the pixel density. The chart only redraws when the page loads, so it would look soft again until you refresh. I can add a listener that redraws it automatically when that happens.",
+          "t_ms": 45020
+        }
+      ],
+      "added_since_previous": 972
+    }
+  ],
+  "totals": {
+    "model_calls": 6,
+    "output_tokens": 1764,
+    "cache_read_tokens": 47792,
+    "cache_write_tokens": 3710,
+    "cost_usd": 0.0746,
+    "duration_s": 44.8,
+    "ttft_ms": 6190
+  },
+  "final_answer": "I fixed the blur in `src/chart.js`, but I haven't opened it in a browser, so I haven't seen the result on a high-DPI screen yet.\n\n**The change:** `drawChart` now:\n- reads the chart's on-screen size from CSS (640×320)\n- sets the canvas's internal pixel size to that size multiplied by `window.devicePixelRatio` (your screen's pixel density)\n- scales the drawing to match, so all the existing layout code still works in normal 640×320 coordinates\n\nOn your laptop the bars and text should now be sharp. Your work monitor has a ratio of 1, so the chart is drawn exactly as before there.\n\n**One case it doesn't cover:** zooming the browser (Ctrl +/–) or dragging the window to a screen with a different density after the page loads changes the pixel density. The chart only redraws when the page loads, so it would look soft again until you refresh. I can add a listener that redraws it automatically when that happens."
+}

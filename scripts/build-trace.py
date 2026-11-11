@@ -13,6 +13,9 @@ input + cache_read + cache_creation; the growth between two calls is what the pr
 (the model's request plus the tool results). A call's output_tokens needs --session (see final_usage).
 
 A tool step whose id is in the result event's permission_denials list gets result.denied = true.
+trace.permission_mode is the mode the run started in, from the init event's permissionMode (null if the
+recording has none). The allowlist (--allowedTools) isn't in the stream or the session file, so a page has to
+say where it comes from.
 
 --then adds a manual /compact recorded on the same session (claude -p "/compact" --resume <id>) as
 trace.compaction, with any model calls of that segment in trace.compaction.calls. --session reads
@@ -536,6 +539,9 @@ def build(events, prompt, times=None, run=None, session=None, then=None, after=N
         "time_source": time_source,
         "model": init["model"],
         "claude_code_version": init["claude_code_version"],
+        # The permission mode the run started in (--permission-mode). The stream doesn't show the allowlist
+        # (--allowedTools), so it isn't here.
+        "permission_mode": init.get("permissionMode"),
         "prompt": prompt,
     }
     if run:

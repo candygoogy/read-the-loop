@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spending, March 2026</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Spending, March 2026</h1>
+    <p class="total">Total <strong id="total"></strong></p>
+    <canvas id="chart" width="640" height="320" aria-label="Spending per category"></canvas>
+    <table id="table"><tr><th>Category</th><th>Amount</th></tr></table>
+  </main>
+  <script src="data/march.js"></script>
+  <script src="src/summary.js"></script>
+  <script src="src/chart.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>

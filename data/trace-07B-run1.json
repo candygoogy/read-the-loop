@@ -1,0 +1,312 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-11",
+  "started_at": "2026-11-11T15:34:47.852Z",
+  "time_source": "arrival",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.322",
+  "permission_mode": "acceptEdits",
+  "prompt": "Can you add a --week option to `worklog total`, so it only counts this week's entries (Monday to today)?",
+  "run": {
+    "index": 1,
+    "of": 3
+  },
+  "tools_available": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 3660,
+      "context_tokens": 7024,
+      "cached_tokens": 6111,
+      "new_tokens": 913,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 911,
+      "output_tokens": 85,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01SKWXSj9JX6kgRFT8ib5KVg",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-b && ls -R | head -50"
+          },
+          "t_ms": 3660,
+          "result": {
+            "text": ".:\nREADME.md\nbin/\nlib/\npackage.json\ntest/\nworklog.json\n\n./bin:\nworklog.js*\n\n./lib:\nargs.js\ncommands.js\ndays.js\nstore.js\n\n./test:\ncommands.test.js\ndays.test.js",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 5493
+          }
+        }
+      ],
+      "added_since_previous": null
+    },
+    {
+      "t_ms": 8253,
+      "context_tokens": 7221,
+      "cached_tokens": 7022,
+      "new_tokens": 199,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 197,
+      "output_tokens": 138,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01G8b9bCHLeBLhXFZDubLFLV",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-b && cat lib/commands.js lib/days.js lib/args.js bin/worklog.js package.json; cat test/days.test.js; head -40 test/commands.test.js; cat README.md"
+          },
+          "t_ms": 8253,
+          "result": {
+            "text": "'use strict';\n\nconst { readArgs, ArgError } = require('./args');\nconst days = require('./days');\nconst { loadEntries, saveEntries } = require('./store');\n\nfunction hours(n) {\n  return `${Number(n.toFixed(2))}h`;\n}\n\nconst commands = {\n  add: {\n    usage: 'add <hours> <project> [note] [--day YYYY-MM-DD]',\n    run(argv, out) {\n      const { words, opts } = readArgs(argv, { day: 'day' });\n      const [h, project, ...note] = words;\n      const value = Number(h);\n      if (!(value > 0) || !project) throw new ArgError('usage: ' + commands.add.usage);\n      const entries = loadEntries();\n      const entry = { day: opts.day || days.today(), hours: value, project, note: note.join(' ') };\n      entries.push(entry);\n      saveEntries(entries);\n      out(`Logged ${hours(value)} on ${project} for ${entry.day}`);\n    },\n  },\n\n  list: {\n    usage: 'list [--project NAME]',\n    run(argv, out) {\n      const { opts } = readArgs(argv, { project: 'text' });\n      const entries = loadEntries().filter((e) => !opts.project || e.project === opts.project);\n      entries.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));\n      for (const e of entries) out(`${e.day}  ${hours(e.hours).padStart(6)}  ${e.project}${e.note ? '  ' + e.note : ''}`);\n      if (entries.length === 0) out('No entries.');\n    },\n  },\n\n  total: {\n    usage: 'total [--project NAME]',\n    run(argv, out) {\n      const { opts } = readArgs(argv, { project: 'text' });\n      const entries = loadEntries().filter((e) => !opts.project || e.project === opts.project);\n      const perProject = new Map();\n      for (const e of entries) perProject.set(e.project, (perProject.get(e.project) || 0) + e.hours);\n      for (const [project, sum] of [...perProject].sort()) out(`${project.padEnd(12)} ${hours(sum)}`);\n      out(`${'Total'.padEnd(12)} ${hours(entries.reduce((s, e) => s + e.hours, 0))}`);\n    },\n  },\n};\n\nfunction main(argv, out = console.log) {\n  const [name, ...rest] = argv;\n  const command = commands[name];\n  if (!command) {\n    out('usage: worklog <command>\\n' + Object.values(commands).map((c) => '  ' + c.usage).join('\\n'));\n    return name ? 1 : 0;\n  }\n  try {\n    command.run(rest, out);\n    return 0;\n  } catch (err) {\n    if (err instanceof ArgError) {\n      out(`worklog ${name}: ${err.message}`);\n      return 1;\n    }\n    throw err;\n  }\n}\n\nmodule.exports = { commands, main };\n'use strict';\n\n// Days are plain strings, 'YYYY-MM-DD', in local time. Keeping them as strings means they sort and\n// compare correctly as text and survive the round trip through worklog.json unchanged.\n\nconst DAY = /^(\\d{4})-(\\d{2})-(\\d{2})$/;\n\nfunction isDay(value) {\n  if (typeof value !== 'string') return false;\n  const m = DAY.exec(value);\n  if (!m) return false;\n  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));\n  return d.getFullYear() === Number(m[1]) && d.getMonth() === Number(m[2]) - 1 && d.getDate() === Number(m[3]);\n}\n\nfunction toDate(day) {\n  if (!isDay(day)) throw new Error(`not a day: ${day}`);\n  const [y, m, d] = day.split('-').map(Number);\n  return new Date(y, m - 1, d);\n}\n\nfunction fromDate(date) {\n  const pad = (n) => String(n).padStart(2, '0');\n  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;\n}\n\nfunction today(now = new Date()) {\n  return fromDate(now);\n}\n\n// shift('2026-11-30', 1) === '2026-12-01'; negative counts go back.\nfunction shift(day, count) {\n  const d = toDate(day);\n  d.setDate(d.getDate() + count);\n  return fromDate(d);\n}\n\n// 1 = Monday ... 7 = Sunday (ISO numbering).\nfunction weekday(day) {\n  return toDate(day).getDay() || 7;\n}\n\n// The Monday of the week the day falls in.\nfunction mondayOf(day) {\n  return shift(day, 1 - weekday(day));\n}\n\n// Inclusive on both ends: inRange('2026-11-03', '2026-11-01', '2026-11-03') === true.\nfunction inRange(day, first, last) {\n  return day >= first && day <= last;\n}\n\nmodule.exports = { isDay, toDate, fromDate, today, shift, weekday, mondayOf, inRange };\n'use strict';\n\n// A small argument reader for the CLI. Each command declares the options it takes:\n//\n//   readArgs(['acme', '--day', '2026-11-03'], { day: 'day', verbose: 'switch' })\n//   -> { words: ['acme'], opts: { day: '2026-11-03', verbose: false } }\n//\n// Option kinds: 'text' (takes a value), 'day' (takes a YYYY-MM-DD value), 'switch' (no value; true when\n// present, false otherwise). An option the command doesn't declare is an error, so typos don't pass\n// silently.\n\nconst { isDay } = require('./days');\n\nclass ArgError extends Error {}\n\nfunction readArgs(argv, options = {}) {\n  const words = [];\n  const opts = {};\n  for (const [name, kind] of Object.entries(options)) {\n    if (kind === 'switch') opts[name] = false;\n  }\n  for (let i = 0; i < argv.length; i++) {\n    const arg = argv[i];\n    if (!arg.startsWith('--')) {\n      words.push(arg);\n      continue;\n    }\n    const name = arg.slice(2);\n    const kind = options[name];\n    if (!kind) throw new ArgError(`unknown option --${name}`);\n    if (kind === 'switch') {\n      opts[name] = true;\n      continue;\n    }\n    const value = argv[++i];\n    if (value === undefined) throw new ArgError(`--${name} needs a value`);\n    if (kind === 'day' && !isDay(value)) throw new ArgError(`--${name} must be a day (YYYY-MM-DD), not ${value}`);\n    opts[name] = value;\n  }\n  return { words, opts };\n}\n\nmodule.exports = { readArgs, ArgError };\n#!/usr/bin/env node\n'use strict';\n\nconst { main } = require('../lib/commands');\n\nprocess.exitCode = main(process.argv.slice(2));\n{\n  \"name\": \"worklog\",\n  \"version\": \"0.4.0\",\n  \"description\": \"Log hours per project from the command line\",\n  \"private\": true,\n  \"bin\": { \"worklog\": \"bin/worklog.js\" },\n  \"scripts\": {\n    \"test\": \"node --test\"\n  }\n}\n'use strict';\n\nconst test = require('node:test');\nconst assert = require('node:assert');\nconst days = require('../lib/days');\n\ntest('recognises valid days only', () => {\n  assert.ok(days.isDay('2026-02-28'));\n  assert.ok(!days.isDay('2026-02-30'));\n  assert.ok(!days.isDay('26-2-28'));\n});\n\ntest('shift crosses month and year ends', () => {\n  assert.strictEqual(days.shift('2026-11-30', 1), '2026-12-01');\n  assert.strictEqual(days.shift('2026-01-01', -1), '2025-12-31');\n});\n\ntest('weekday uses 1 for Monday and 7 for Sunday', () => {\n  assert.strictEqual(days.weekday('2026-11-09'), 1);\n  assert.strictEqual(days.weekday('2026-11-15'), 7);\n});\n'use strict';\n\nconst test = require('node:test');\nconst assert = require('node:assert');\nconst fs = require('fs');\nconst os = require('os');\nconst path = require('path');\nconst { main } = require('../lib/commands');\nconst { readArgs } = require('../lib/args');\n\nfunction withLog(entries) {\n  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'worklog-')), 'worklog.json');\n  fs.writeFileSync(file, JSON.stringify({ version: 1, entries }));\n  process.env.WORKLOG_FILE = file;\n  return file;\n}\n\nfunction run(argv) {\n  const lines = [];\n  const code = main(argv, (line) => lines.push(line));\n  return { code, lines };\n}\n\ntest('total adds up hours per project', () => {\n  withLog([\n    { day: '2026-11-02', hours: 2, project: 'acme', note: '' },\n    { day: '2026-11-03', hours: 1.5, project: 'internal', note: '' },\n    { day: '2026-11-04', hours: 3, project: 'acme', note: 'review' },\n  ]);\n  const { code, lines } = run(['total']);\n  assert.strictEqual(code, 0);\n  assert.deepStrictEqual(lines, ['acme         5h', 'internal     1.5h', 'Total        6.5h']);\n});\n\ntest('total --project keeps one project', () => {\n  withLog([\n    { day: '2026-11-02', hours: 2, project: 'acme', note: '' },\n    { day: '2026-11-03', hours: 1.5, project: 'internal', note: '' },\n  ]);\n  assert.deepStrictEqual(run(['total', '--project', 'internal']).lines, ['internal     1.5h', 'Total        1.5h']);\n# worklog\n\nLog hours per project from the command line. Entries are kept in `worklog.json` in the current folder\n(or the file named by `WORKLOG_FILE`).\n\n```\nnode bin/worklog.js add 2.5 acme \"API review\"\nnode bin/worklog.js add 1 internal --day 2026-11-03\nnode bin/worklog.js list --project acme\nnode bin/worklog.js total\nnode bin/worklog.js total --project acme\n```\n\nTests: `npm test` (or `node --test`).",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 8434
+          }
+        }
+      ],
+      "added_since_previous": 197
+    },
+    {
+      "t_ms": 12898,
+      "context_tokens": 10908,
+      "cached_tokens": 7219,
+      "new_tokens": 3689,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 3687,
+      "output_tokens": 1093,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01RvMiYiNbtoYu26Mh3MqX1H",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-b && python - <<'EOF'\np='lib/commands.js'\ns=open(p).read()\ns=s.replace(\"\"\"    usage: 'total [--project NAME]',\n    run(argv, out) {\n      const { opts } = readArgs(argv, { project: 'text' });\n      const entries = loadEntries().filter((e) => !opts.project || e.project === opts.project);\n\"\"\",\"\"\"    usage: 'total [--project NAME] [--week]',\n    run(argv, out) {\n      const { opts } = readArgs(argv, { project: 'text', week: 'switch' });\n      const last = days.today();\n      const first = days.mondayOf(last);\n      const entries = loadEntries()\n        .filter((e) => !opts.project || e.project === opts.project)\n        .filter((e) => !opts.week || days.inRange(e.day, first, last));\n\"\"\")\nopen(p,'w').write(s)\np='README.md'\ns=open(p).read()\ns=s.replace(\"node bin/worklog.js total --project acme\\n\",\"node bin/worklog.js total --project acme\\nnode bin/worklog.js total --week          # only Monday to today\\n\")\nopen(p,'w').write(s)\nEOF\ncat >> test/commands.test.js <<'EOF'\n\ntest('total --week counts only Monday to today', () => {\n  const days = require('../lib/days');\n  const today = days.today();\n  const monday = days.mondayOf(today);\n  withLog([\n    { day: days.shift(monday, -1), hours: 4, project: 'acme', note: 'last Sunday' },\n    { day: monday, hours: 2, project: 'acme', note: '' },\n    { day: today, hours: 1, project: 'internal', note: '' },\n    { day: days.shift(today, 1), hours: 8, project: 'acme', note: 'tomorrow' },\n  ]);\n  const { code, lines } = run(['total', '--week']);\n  assert.strictEqual(code, 0);\n  assert.deepStrictEqual(lines, ['acme         2h', 'internal     1h', 'Total        3h']);\n});\n\ntest('total --week combines with --project', () => {\n  const days = require('../lib/days');\n  const today = days.today();\n  withLog([\n    { day: today, hours: 2, project: 'acme', note: '' },\n    { day: today, hours: 1, project: 'internal', note: '' },\n    { day: days.shift(days.mondayOf(today), -3), hours: 5, project: 'acme', note: '' },\n  ]);\n  assert.deepStrictEqual(run(['total', '--week', '--project', 'acme']).lines, ['acme         2h', 'Total        2h']);\n});\nEOF\nnpm test 2>&1 | tail -12"
+          },
+          "t_ms": 19206,
+          "result": {
+            "text": "Contains brace with quote character (expansion obfuscation)",
+            "is_error": true,
+            "denied": true,
+            "t_ms": 19212
+          }
+        }
+      ],
+      "added_since_previous": 3687
+    },
+    {
+      "t_ms": 21895,
+      "context_tokens": 12060,
+      "cached_tokens": 10906,
+      "new_tokens": 1154,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1152,
+      "output_tokens": 548,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I'll use the edit tools instead.",
+          "t_ms": 21895
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01WcdrbutjRAXtMmV1s8KRnd",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/ch7-b/lib/commands.js",
+            "old_string": "    usage: 'total [--project NAME]',\n    run(argv, out) {\n      const { opts } = readArgs(argv, { project: 'text' });\n      const entries = loadEntries().filter((e) => !opts.project || e.project === opts.project);",
+            "new_string": "    usage: 'total [--project NAME] [--week]',\n    run(argv, out) {\n      const { opts } = readArgs(argv, { project: 'text', week: 'switch' });\n      const last = days.today();\n      const first = days.mondayOf(last);\n      const entries = loadEntries()\n        .filter((e) => !opts.project || e.project === opts.project)\n        .filter((e) => !opts.week || days.inRange(e.day, first, last));"
+          },
+          "t_ms": 24145,
+          "result": {
+            "text": "The file ~/ch7-b/lib/commands.js has been updated successfully.",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 24212
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_0198muzVwZUAiBcnJ17YxRUA",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-b/README.md"
+          },
+          "t_ms": 24596,
+          "result": {
+            "text": "1\t# worklog\n2\t\n3\tLog hours per project from the command line. Entries are kept in `worklog.json` in the current folder\n4\t(or the file named by `WORKLOG_FILE`).\n5\t\n6\t```\n7\tnode bin/worklog.js add 2.5 acme \"API review\"\n8\tnode bin/worklog.js add 1 internal --day 2026-11-03\n9\tnode bin/worklog.js list --project acme\n10\tnode bin/worklog.js total\n11\tnode bin/worklog.js total --project acme\n12\t```\n13\t\n14\tTests: `npm test` (or `node --test`).\n15\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 24611
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_017aFcKNmxS96QysvYckf4hR",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-b/test/commands.test.js",
+            "offset": 38
+          },
+          "t_ms": 25144,
+          "result": {
+            "text": "38\t    { day: '2026-11-03', hours: 1.5, project: 'internal', note: '' },\n39\t  ]);\n40\t  assert.deepStrictEqual(run(['total', '--project', 'internal']).lines, ['internal     1.5h', 'Total        1.5h']);\n41\t});\n42\t\n43\ttest('add writes an entry', () => {\n44\t  const file = withLog([]);\n45\t  assert.strictEqual(run(['add', '2', 'acme', 'API', 'review', '--day', '2026-11-05']).code, 0);\n46\t  assert.deepStrictEqual(JSON.parse(fs.readFileSync(file, 'utf8')).entries, [\n47\t    { day: '2026-11-05', hours: 2, project: 'acme', note: 'API review' },\n48\t  ]);\n49\t});\n50\t\n51\ttest('unknown options are rejected', () => {\n52\t  withLog([]);\n53\t  const { code, lines } = run(['list', '--projet', 'acme']);\n54\t  assert.strictEqual(code, 1);\n55\t  assert.deepStrictEqual(lines, ['worklog list: unknown option --projet']);\n56\t});\n57\t\n58\ttest('readArgs reads switches and values', () => {\n59\t  assert.deepStrictEqual(readArgs(['a', '--v', '--day', '2026-11-01'], { v: 'switch', day: 'day' }), {\n60\t    words: ['a'],\n61\t    opts: { v: true, day: '2026-11-01' },\n62\t  });\n63\t});\n64\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 25177
+          }
+        }
+      ],
+      "added_since_previous": 1152
+    },
+    {
+      "t_ms": 28310,
+      "context_tokens": 13479,
+      "cached_tokens": 12058,
+      "new_tokens": 1421,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1419,
+      "output_tokens": 1010,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01Xf2fcgffuZYxboAoUHC4cA",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/ch7-b/README.md",
+            "old_string": "total --project acme\n",
+            "new_string": "total --project acme\nnode bin/worklog.js total --week    # only this week, Monday to today\n"
+          },
+          "t_ms": 28310,
+          "result": {
+            "text": "The file ~/ch7-b/README.md has been updated successfully. (file state is current in your context — no need to Read it back)",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 28340
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01KeawifG9RJm9xeMUJXdi3b",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/ch7-b/test/commands.test.js",
+            "old_string": "test('add writes an entry', () => {",
+            "new_string": "test('total --week counts only Monday to today', () => {\n  const today = days.today();\n  const monday = days.mondayOf(today);\n  withLog([\n    { day: days.shift(monday, -1), hours: 4, project: 'acme', note: 'last Sunday' },\n    { day: monday, hours: 2, project: 'acme', note: '' },\n    { day: today, hours: 1, project: 'internal', note: '' },\n    { day: days.shift(today, 1), hours: 8, project: 'acme', note: 'tomorrow' },\n  ]);\n  const { code, lines } = run(['total', '--week']);\n  assert.strictEqual(code, 0);\n  assert.deepStrictEqual(lines, ['acme         2h', 'internal     1h', 'Total        3h']);\n});\n\ntest('total --week combines with --project', () => {\n  const today = days.today();\n  withLog([\n    { day: today, hours: 2, project: 'acme', note: '' },\n    { day: today, hours: 1, project: 'internal', note: '' },\n    { day: days.shift(days.mondayOf(today), -3), hours: 5, project: 'acme', note: '' },\n  ]);\n  assert.deepStrictEqual(run(['total', '--week', '--project', 'acme']).lines, ['acme         2h', 'Total        2h']);\n});\n\ntest('add writes an entry', () => {"
+          },
+          "t_ms": 32013,
+          "result": {
+            "text": "The file ~/ch7-b/test/commands.test.js has been updated successfully.",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 32041
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_013mA8bmEMJ2xuUpm2xaH2cF",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/ch7-b/test/commands.test.js",
+            "old_string": "const { readArgs } = require('../lib/args');",
+            "new_string": "const { readArgs } = require('../lib/args');\nconst days = require('../lib/days');"
+          },
+          "t_ms": 33112,
+          "result": {
+            "text": "The file ~/ch7-b/test/commands.test.js has been updated successfully.",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 33131
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01Lnsod14qDARYi2vSVHMyiE",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-b && npm test 2>&1 | tail -12"
+          },
+          "t_ms": 33602,
+          "result": {
+            "text": "This Bash command contains multiple operations. The following part requires approval: cd ~/ch7-b && npm test 2>&1",
+            "is_error": true,
+            "denied": true,
+            "t_ms": 33610
+          }
+        }
+      ],
+      "added_since_previous": 1419
+    },
+    {
+      "t_ms": 35992,
+      "context_tokens": 14837,
+      "cached_tokens": 13477,
+      "new_tokens": 1360,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1358,
+      "output_tokens": 49,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01Dj5FB2GRqh217KL8gSPh7E",
+          "tool": "Bash",
+          "input": {
+            "command": "npm test"
+          },
+          "t_ms": 35992,
+          "result": {
+            "text": "This command requires approval",
+            "is_error": true,
+            "denied": true,
+            "t_ms": 35998
+          }
+        }
+      ],
+      "added_since_previous": 1358
+    },
+    {
+      "t_ms": 41813,
+      "context_tokens": 14935,
+      "cached_tokens": 14835,
+      "new_tokens": 100,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 98,
+      "output_tokens": 393,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I added `worklog total --week`, but I couldn't run the tests: running `npm test` needs your approval, so I haven't confirmed any of this works.\n\n**What changed:**\n- **`lib/commands.js`**: `total` now takes a `--week` switch. With it, only entries from this week's Monday through today are counted, including both ends. Entries dated after today are left out. It works together with `--project`, and the usage line now shows `[--week]`. It reuses the existing `days.mondayOf`, `days.today` and `days.inRange` helpers, so Sunday counts as the last day of the week. For today (Wednesday 2026-11-11), that's 2026-11-09 to 2026-11-11.\n- **`test/commands.test.js`**: two new tests:\n  - Entries from last Sunday and from tomorrow are left out, while entries from Monday and today are counted.\n  - `--week` works together with `--project`.\n\n  Both tests work out their dates from the real current day, so they won't go stale.\n- **`README.md`**: added a `total --week` example.\n\nTo check it, run `npm test`, or try `node bin/worklog.js total --week` against your `worklog.json`.",
+          "t_ms": 41815
+        }
+      ],
+      "added_since_previous": 98
+    }
+  ],
+  "totals": {
+    "model_calls": 7,
+    "output_tokens": 3316,
+    "cache_read_tokens": 71628,
+    "cache_write_tokens": 8822,
+    "cost_usd": 0.1513,
+    "duration_s": 41.6,
+    "ttft_ms": 3388
+  },
+  "final_answer": "I added `worklog total --week`, but I couldn't run the tests: running `npm test` needs your approval, so I haven't confirmed any of this works.\n\n**What changed:**\n- **`lib/commands.js`**: `total` now takes a `--week` switch. With it, only entries from this week's Monday through today are counted, including both ends. Entries dated after today are left out. It works together with `--project`, and the usage line now shows `[--week]`. It reuses the existing `days.mondayOf`, `days.today` and `days.inRange` helpers, so Sunday counts as the last day of the week. For today (Wednesday 2026-11-11), that's 2026-11-09 to 2026-11-11.\n- **`test/commands.test.js`**: two new tests:\n  - Entries from last Sunday and from tomorrow are left out, while entries from Monday and today are counted.\n  - `--week` works together with `--project`.\n\n  Both tests work out their dates from the real current day, so they won't go stale.\n- **`README.md`**: added a `total --week` example.\n\nTo check it, run `npm test`, or try `node bin/worklog.js total --week` against your `worklog.json`."
+}

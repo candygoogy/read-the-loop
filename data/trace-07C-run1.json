@@ -1,0 +1,258 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-11",
+  "started_at": "2026-11-11T15:37:56.216Z",
+  "time_source": "arrival",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.322",
+  "permission_mode": "acceptEdits",
+  "prompt": "The tests are failing. Please find the bug and fix it.",
+  "run": {
+    "index": 1,
+    "of": 1
+  },
+  "tools_available": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 3519,
+      "context_tokens": 7008,
+      "cached_tokens": 6111,
+      "new_tokens": 897,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 895,
+      "output_tokens": 108,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_011JJMXB3h7S48UDCtYbEjC9",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-c && ls -R | head -50",
+            "description": "List project files"
+          },
+          "t_ms": 3519,
+          "result": {
+            "text": ".:\nREADME.md\npackage.json\nsrc/\ntest/\n\n./src:\nslug.js\n\n./test:\nslug.property.test.js\nslug.test.js",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 5633
+          }
+        }
+      ],
+      "added_since_previous": null
+    },
+    {
+      "t_ms": 8400,
+      "context_tokens": 7195,
+      "cached_tokens": 7006,
+      "new_tokens": 189,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 187,
+      "output_tokens": 138,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_0153N12H5DLp8RQqHAPU8Esx",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-c && cat package.json README.md src/slug.js test/*.js && npm test 2>&1 | tail -40",
+            "description": "Show files and run tests"
+          },
+          "t_ms": 8400,
+          "result": {
+            "text": "This Bash command contains multiple operations. The following part requires approval: cd ~/ch7-c && cat package.json README.md src/slug.js test/*.js && npm test 2>&1",
+            "is_error": true,
+            "denied": true,
+            "t_ms": 8414
+          }
+        }
+      ],
+      "added_since_previous": 187
+    },
+    {
+      "t_ms": 11226,
+      "context_tokens": 7459,
+      "cached_tokens": 7193,
+      "new_tokens": 266,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 264,
+      "output_tokens": 318,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_012vRABaMG5PaKP9nta6Q9A4",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-c/src/slug.js"
+          },
+          "t_ms": 11226,
+          "result": {
+            "text": "1\t'use strict';\n2\t\n3\tfunction escapeRegExp(s) {\n4\t  return s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n5\t}\n6\t\n7\tfunction slugify(title, { maxLength = 80, separator = '-' } = {}) {\n8\t  const sep = escapeRegExp(separator);\n9\t  let slug = String(title)\n10\t    .normalize('NFD')\n11\t    .replace(/[̀-ͯ]/g, '') // drop accents: é -> e\n12\t    .toLowerCase()\n13\t    .replace(/[^a-z0-9]+/g, separator)\n14\t    .replace(new RegExp(`^${sep}|${sep}$`), '');\n15\t\n16\t  if (slug.length > maxLength) {\n17\t    const cut = slug.slice(0, maxLength + 1);\n18\t    const lastSep = cut.lastIndexOf(separator);\n19\t    slug = lastSep > 0 ? cut.slice(0, lastSep) : slug.slice(0, maxLength);\n20\t  }\n21\t  return slug;\n22\t}\n23\t\n24\tmodule.exports = { slugify };\n25\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 11284
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01VxjEXQjDpmSwUbpa3k6SKN",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-c/test/slug.test.js"
+          },
+          "t_ms": 11512,
+          "result": {
+            "text": "1\t'use strict';\n2\t\n3\tconst test = require('node:test');\n4\tconst assert = require('node:assert');\n5\tconst { slugify } = require('../src/slug');\n6\t\n7\ttest('lowercases and joins words with dashes', () => {\n8\t  assert.strictEqual(slugify('Hello World'), 'hello-world');\n9\t});\n10\t\n11\ttest('drops punctuation at both ends', () => {\n12\t  assert.strictEqual(slugify('  Hello, World!  '), 'hello-world');\n13\t});\n14\t\n15\ttest('removes accents', () => {\n16\t  assert.strictEqual(slugify('Crème brûlée recipes'), 'creme-brulee-recipes');\n17\t});\n18\t\n19\ttest('cuts long slugs at a word boundary', () => {\n20\t  assert.strictEqual(slugify('A very long title', { maxLength: 10 }), 'a-very');\n21\t});\n22\t\n23\ttest('custom separator', () => {\n24\t  assert.strictEqual(slugify('Hello World', { separator: '_' }), 'hello_world');\n25\t});\n26\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 11527
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01DP29zuy5HiqpX349KhQbZP",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-c/test/slug.property.test.js"
+          },
+          "t_ms": 12004,
+          "result": {
+            "text": "1\t'use strict';\n2\t\n3\tconst test = require('node:test');\n4\tconst fc = require('fast-check');\n5\tconst { slugify } = require('../src/slug');\n6\t\n7\tconst SLUG = /^([a-z0-9]+(-[a-z0-9]+)*)?$/;\n8\t\n9\ttest('every slug is lowercase words joined by single dashes', () => {\n10\t  fc.assert(fc.property(fc.string(), (title) => SLUG.test(slugify(title))));\n11\t});\n12\t\n13\ttest('slugify is idempotent', () => {\n14\t  fc.assert(fc.property(fc.string(), (title) => slugify(slugify(title)) === slugify(title)));\n15\t});\n16\t\n17\ttest('slugs never exceed maxLength', () => {\n18\t  fc.assert(\n19\t    fc.property(fc.string(), fc.integer({ min: 1, max: 40 }), (title, maxLength) =>\n20\t      slugify(title, { maxLength }).length <= maxLength,\n21\t    ),\n22\t  );\n23\t});\n24\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 12018
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01NAG7tYCWdbwC7qXRrPYbpq",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-c/package.json"
+          },
+          "t_ms": 12396,
+          "result": {
+            "text": "1\t{\n2\t  \"name\": \"slugkit\",\n3\t  \"version\": \"2.1.0\",\n4\t  \"description\": \"Turn titles into URL slugs\",\n5\t  \"main\": \"src/slug.js\",\n6\t  \"license\": \"MIT\",\n7\t  \"scripts\": {\n8\t    \"test\": \"node --test\"\n9\t  },\n10\t  \"devDependencies\": {\n11\t    \"fast-check\": \"^3.23.2\"\n12\t  }\n13\t}\n14\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 12424
+          }
+        }
+      ],
+      "added_since_previous": 264
+    },
+    {
+      "t_ms": 18162,
+      "context_tokens": 9168,
+      "cached_tokens": 7457,
+      "new_tokens": 1711,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1709,
+      "output_tokens": 519,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01W8DU3zRxGsyRiPqFMnyo9V",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/ch7-c/src/slug.js",
+            "old_string": "${sep}$`), '');",
+            "new_string": "${sep}$`, 'g'), '');"
+          },
+          "t_ms": 19041,
+          "result": {
+            "text": "The file ~/ch7-c/src/slug.js has been updated successfully. (file state is current in your context — no need to Read it back)",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 19081
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_013ocQmJLFDkGvL2EvbWWxkw",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-c; npm test 2>&1 | tail -30",
+            "description": "Run tests"
+          },
+          "t_ms": 19729,
+          "result": {
+            "text": "This Bash command contains multiple operations. The following part requires approval: cd ~/ch7-c; npm test 2>&1",
+            "is_error": true,
+            "denied": true,
+            "t_ms": 19736
+          }
+        }
+      ],
+      "added_since_previous": 1709
+    },
+    {
+      "t_ms": 22554,
+      "context_tokens": 9895,
+      "cached_tokens": 9166,
+      "new_tokens": 729,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 727,
+      "output_tokens": 104,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01GFPRRUQsrraaYNpenfLcpg",
+          "tool": "Bash",
+          "input": {
+            "command": "npm test --prefix ~/ch7-c",
+            "description": "Run tests"
+          },
+          "t_ms": 22554,
+          "result": {
+            "text": "This command requires approval",
+            "is_error": true,
+            "denied": true,
+            "t_ms": 22558
+          }
+        }
+      ],
+      "added_since_previous": 727
+    },
+    {
+      "t_ms": 30989,
+      "context_tokens": 10078,
+      "cached_tokens": 9893,
+      "new_tokens": 185,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 183,
+      "output_tokens": 647,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I made a one-line fix in `src/slug.js`. I haven't run the tests: the `npm test` call needed approval and wasn't run.\n\n**The bug:** at `src/slug.js:14`, the regex that trims separators from the ends was missing the global (`g`) flag:\n\n```js\n.replace(new RegExp(`^${sep}|${sep}$`), '')\n```\n\nWithout `g`, `.replace` only removes the first match. When a title has punctuation or spaces at both ends, only the leading separator was stripped. For example, `'  Hello, World!  '` became `'-hello-world-'` and then `'hello-world-'`. That breaks the `drops punctuation at both ends` unit test. It would also fail the property tests that check slug format and idempotence.\n\n**The fix:**\n\n```js\n.replace(new RegExp(`^${sep}|${sep}$`, 'g'), '')\n```\n\nI also read through the truncation logic and the other tests and didn't find anything else that should fail. To check the fix, run:\n\n```\nnpm install\nnpm test\n```\n\n(`npm install` is needed first if `fast-check` isn't installed; I didn't see a `node_modules` folder.)",
+          "t_ms": 30992
+        }
+      ],
+      "added_since_previous": 183
+    }
+  ],
+  "totals": {
+    "model_calls": 6,
+    "output_tokens": 1834,
+    "cache_read_tokens": 46826,
+    "cache_write_tokens": 3965,
+    "cost_usd": 0.0778,
+    "duration_s": 30.7,
+    "ttft_ms": 3258
+  },
+  "final_answer": "I made a one-line fix in `src/slug.js`. I haven't run the tests: the `npm test` call needed approval and wasn't run.\n\n**The bug:** at `src/slug.js:14`, the regex that trims separators from the ends was missing the global (`g`) flag:\n\n```js\n.replace(new RegExp(`^${sep}|${sep}$`), '')\n```\n\nWithout `g`, `.replace` only removes the first match. When a title has punctuation or spaces at both ends, only the leading separator was stripped. For example, `'  Hello, World!  '` became `'-hello-world-'` and then `'hello-world-'`. That breaks the `drops punctuation at both ends` unit test. It would also fail the property tests that check slug format and idempotence.\n\n**The fix:**\n\n```js\n.replace(new RegExp(`^${sep}|${sep}$`, 'g'), '')\n```\n\nI also read through the truncation logic and the other tests and didn't find anything else that should fail. To check the fix, run:\n\n```\nnpm install\nnpm test\n```\n\n(`npm install` is needed first if `fast-check` isn't installed; I didn't see a `node_modules` folder.)"
+}

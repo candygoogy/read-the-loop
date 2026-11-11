@@ -105,6 +105,7 @@ class BuildTraceTest(unittest.TestCase):
             self.assertEqual(calls[1]["output"][1]["result"]["t_ms"], 3450)
             self.assertEqual(trace["run"], {"index": 2, "of": 3})
             self.assertEqual(trace["prompt"], "Fix it.")
+            self.assertEqual(trace["permission_mode"], "acceptEdits")
 
             # Timing from a record.py sidecar: t_ms is the arrival of each line.
             times = tmp / "sample.times.json"

@@ -1,0 +1,14 @@
+{
+  "name": "taskrun",
+  "version": "0.3.0",
+  "description": "Run the project's tasks from tasks.json",
+  "private": true,
+  "type": "module",
+  "bin": { "taskrun": "bin/taskrun.js" },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "execa": "^10.2.1"
+  }
+}

@@ -1,0 +1,7 @@
+# check: node A2-check.js ~/ch7-a2
+# run folder: ~/ch7-a2 (run 2 of fixture A2, as the agent left it)
+# ran: 2026-11-11T16:25:39Z, node v26.13.0, python 3.14.5
+dpr 1: css 640x320 backing 640x320 sharp=true size=true bars=true (8 runs: 51,128,205,282,359,436,513,590) errors=[]
+dpr 2: css 640x320 backing 1280x640 sharp=true size=true bars=true (8 runs: 51,128,205,282,359,436,513,590) errors=[]
+REPORTED SYMPTOM FIXED
+# exit code 0

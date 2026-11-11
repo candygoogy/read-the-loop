@@ -3,6 +3,7 @@ __pycache__/
 raw*.jsonl
 raw*.times.json
 node_modules/
+!fixtures/ch7/B2/node_modules/
 out/
 CLAUDE.local.md
 .claude/settings.local.json

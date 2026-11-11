@@ -1,0 +1,10 @@
+{
+  "name": "worklog",
+  "version": "0.4.0",
+  "description": "Log hours per project from the command line",
+  "private": true,
+  "bin": { "worklog": "bin/worklog.js" },
+  "scripts": {
+    "test": "node --test"
+  }
+}

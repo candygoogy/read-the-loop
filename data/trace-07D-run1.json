@@ -1,0 +1,177 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-11",
+  "started_at": "2026-11-11T15:41:45.388Z",
+  "time_source": "arrival",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.322",
+  "permission_mode": "dontAsk",
+  "prompt": "This project folder has gotten really big and messy. Can you clean it up?",
+  "run": {
+    "index": 1,
+    "of": 3
+  },
+  "tools_available": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 3874,
+      "context_tokens": 7172,
+      "cached_tokens": 6111,
+      "new_tokens": 1061,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1059,
+      "output_tokens": 208,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I'll start by looking at what's taking up space.",
+          "t_ms": 4590
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01YG1Zxhih3xkezy7Bj6MNjf",
+          "tool": "Bash",
+          "input": {
+            "command": "cd \"~/ch7-d\" && du -sh * .[!.]* 2>/dev/null | sort -rh | head -20; echo ---; cat .gitignore 2>/dev/null; echo ---; git status --short --ignored",
+            "description": "Show folder sizes, gitignore, and ignored files"
+          },
+          "t_ms": 5236,
+          "result": {
+            "text": "11M\t.cache\n4.9M\tdist\n1.4M\tlogs\n588K\tnpm-debug.log\n304K\tcoverage\n90K\t.git\n4.0K\ttest\n4.0K\tsrc\n4.0K\tbuild.js\n1.0K\tpackage.json\n1.0K\tnotes.txt\n1.0K\tindex.html\n1.0K\tREADME.md\n1.0K\t.gitignore\n---\ndist/\n.cache/\ncoverage/\nlogs/\n*.log\n---\n M src/app.js\n?? notes.txt\n?? src/export.js\n!! .cache/\n!! coverage/\n!! dist/\n!! logs/\n!! npm-debug.log",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 8976
+          }
+        }
+      ],
+      "added_since_previous": null
+    },
+    {
+      "t_ms": 15452,
+      "context_tokens": 7621,
+      "cached_tokens": 7170,
+      "new_tokens": 451,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 449,
+      "output_tokens": 276,
+      "output": [
+        {
+          "kind": "text",
+          "text": "Almost all the bulk is gitignored build output. Let me check that it can be regenerated before deleting anything.",
+          "t_ms": 15453
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01GNj5u1S8CjczdQ7Qm9tqj5",
+          "tool": "Bash",
+          "input": {
+            "command": "cd \"~/ch7-d\" && cat build.js package.json; echo ---; ls -la logs .cache dist coverage | head -40; echo ---; head -5 npm-debug.log",
+            "description": "Inspect build script and generated folders"
+          },
+          "t_ms": 16504,
+          "result": {
+            "text": "<persisted-output>\nOutput too large (590.7KB). Full output saved to: C:\\Users\\you\\.claude\\projects\\--ch7-d\\<session>\\tool-results\\brvmis5jd.txt\n\nPreview (first 2KB):\n'use strict';\n// Bundles src/ into dist/app.<hash>.js and writes dist/index.html. Keeps a cache of each file's\n// transformed output in .cache/ so rebuilds are quick.\nconst fs = require('fs');\nconst path = require('path');\nconst crypto = require('crypto');\n\nconst files = ['store.js', 'render.js', 'app.js'];\nfs.mkdirSync('dist', { recursive: true });\nfs.mkdirSync('.cache', { recursive: true });\n\nconst parts = files.map((f) => {\n  const src = fs.readFileSync(path.join('src', f), 'utf8');\n  const key = crypto.createHash('sha1').update(src).digest('hex');\n  const cached = path.join('.cache', key);\n  if (fs.existsSync(cached)) return fs.readFileSync(cached, 'utf8');\n  const out = `// ${f}\\n(function(){\\n${src}\\n})();\\n`;\n  fs.writeFileSync(cached, out);\n  return out;\n});\n\nconst bundle = parts.join('\\n');\nconst hash = crypto.createHash('sha1').update(bundle).digest('hex').slice(0, 6);\nfs.writeFileSync(path.join('dist', `app.${hash}.js`), bundle);\nconst html = fs.readFileSync('index.html', 'utf8').replace('{{bundle}}', `app.${hash}.js`);\nfs.writeFileSync(path.join('dist', 'index.html'), html);\nconsole.log(`dist/app.${hash}.js (${bundle.length} bytes)`);\n{\n  \"name\": \"notes-app\",\n  \"version\": \"0.3.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"build\": \"node build.js\",\n    \"test\": \"node --test\"\n  }\n}\n---\n.cache:\ntotal 10252\ndrwxr-xr-x 1 you 197121      0 Nov 11 16:30 ./\ndrwxr-xr-x 1 you 197121      0 Nov 11 16:30 ../\n-rw-r--r-- 1 you 197121 260000 Nov 11 16:30 01d81edbefb03f08e483eccc350dbcd62b1e0698\n-rw-r--r-- 1 you 197121 260000 Nov 11 16:30 2185ee5d8bc3ec40e66ce00788e4086a4d316f2d\n-rw-r--r-- 1 you 197121 260000 Nov 11 16:30 230638f5cef5320e7b9bfe6c1286f2c499fa0a99\n-rw-r--r-- 1 you 197121 260000 Nov 11 16:30 2ce265f5809a31a525c19c35acec2ebad799c245\n-rw-r--r-- 1 you 197121 260000 Nov 11 16:30 2d17212eab060c0302c6c37c07f7cefeb90cdd13\n...\n</persisted-output>",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 16658
+          }
+        }
+      ],
+      "added_since_previous": 449
+    },
+    {
+      "t_ms": 20246,
+      "context_tokens": 9077,
+      "cached_tokens": 7619,
+      "new_tokens": 1458,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1456,
+      "output_tokens": 145,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01PafTV1Q5KtzgYBx6nLJ3zK",
+          "tool": "Bash",
+          "input": {
+            "command": "cd \"~/ch7-d\" && ls logs dist coverage | head -30; echo; ls .cache | wc -l; ls dist | wc -l",
+            "description": "List generated folder contents briefly"
+          },
+          "t_ms": 20246,
+          "result": {
+            "text": "coverage:\nlcov-report/\nlcov.info\n\ndist:\napp.072cd8.js\napp.25cf73.js\napp.3feb3c.js\napp.5518cb.js\napp.65093a.js\napp.704792.js\napp.7c769f.js\napp.a56d3c.js\napp.a68776.js\napp.a9bef4.js\napp.b16522.js\napp.b4e652.js\nindex.html\n\nlogs:\nbuild.log\n\n40\n13",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 20448
+          }
+        }
+      ],
+      "added_since_previous": 1456
+    },
+    {
+      "t_ms": 29083,
+      "context_tokens": 9401,
+      "cached_tokens": 9075,
+      "new_tokens": 326,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 324,
+      "output_tokens": 650,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01HfGYwX2YqPmm8Js8eS6Nwe",
+          "tool": "Bash",
+          "input": {
+            "command": "cd \"~/ch7-d\" && rm -rf .cache dist coverage && npm run build --silent && du -sh .cache dist && git status --short",
+            "description": "Delete generated folders, rebuild to verify"
+          },
+          "t_ms": 29090,
+          "result": {
+            "text": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. If you believe this capability is essential to complete the user's request, STOP and explain to the user what you were trying to do and why you need this permission. Let the user decide how to proceed.",
+            "is_error": true,
+            "denied": true,
+            "t_ms": 29175
+          }
+        }
+      ],
+      "added_since_previous": 324
+    },
+    {
+      "t_ms": 37361,
+      "context_tokens": 10311,
+      "cached_tokens": 9399,
+      "new_tokens": 912,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 910,
+      "output_tokens": 605,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I didn't delete anything. The permission settings blocked the delete command, and I won't try to work around that.\n\n**What's taking up space (about 18 MB in total):**\n\n| Path | Size | What it is |\n|---|---|---|\n| `.cache/` | 11 MB | 40 cache files saved by the build script, mostly from old versions of your code |\n| `dist/` | 4.9 MB | 12 old bundles (`app.*.js`), but only the newest one is used |\n| `coverage/` | 304 KB | Test coverage report |\n| `logs/build.log` | 1.4 MB | Build log |\n| `npm-debug.log` | 588 KB | Leftover npm crash log |\n\nYour actual code (`src/`, `test/`, `build.js`, etc.) is only a few KB. All of the above is already listed in `.gitignore`, so it isn't in your repo. That also means git can't restore any of it once it's deleted.\n\n**What I'd do:** delete `.cache/`, `dist/` and `coverage/`. `npm run build` recreates the first two and the coverage tool recreates the third, so nothing is lost. The two log files can't be recreated, but they're probably safe to delete unless you're debugging a failed build.\n\n**I wouldn't touch** your uncommitted work: the changes to `src/app.js`, plus the new files `src/export.js` and `notes.txt`.\n\nTo go ahead, you can allow the command and I'll run it, or run it yourself:\n\n```\nrm -rf .cache dist coverage\nnpm run build\n```\n\nAdd `rm -rf logs npm-debug.log` to the first line if you want the logs gone too.\n\nAlso, the folder grew because `build.js` never removes old bundles from `dist/` or old cache files. I can change it to clear those on each build so this doesn't happen again.",
+          "t_ms": 37366
+        }
+      ],
+      "added_since_previous": 910
+    }
+  ],
+  "totals": {
+    "model_calls": 5,
+    "output_tokens": 1884,
+    "cache_read_tokens": 39374,
+    "cache_write_tokens": 4198,
+    "cost_usd": 0.0792,
+    "duration_s": 36.9,
+    "ttft_ms": 3390
+  },
+  "final_answer": "I didn't delete anything. The permission settings blocked the delete command, and I won't try to work around that.\n\n**What's taking up space (about 18 MB in total):**\n\n| Path | Size | What it is |\n|---|---|---|\n| `.cache/` | 11 MB | 40 cache files saved by the build script, mostly from old versions of your code |\n| `dist/` | 4.9 MB | 12 old bundles (`app.*.js`), but only the newest one is used |\n| `coverage/` | 304 KB | Test coverage report |\n| `logs/build.log` | 1.4 MB | Build log |\n| `npm-debug.log` | 588 KB | Leftover npm crash log |\n\nYour actual code (`src/`, `test/`, `build.js`, etc.) is only a few KB. All of the above is already listed in `.gitignore`, so it isn't in your repo. That also means git can't restore any of it once it's deleted.\n\n**What I'd do:** delete `.cache/`, `dist/` and `coverage/`. `npm run build` recreates the first two and the coverage tool recreates the third, so nothing is lost. The two log files can't be recreated, but they're probably safe to delete unless you're debugging a failed build.\n\n**I wouldn't touch** your uncommitted work: the changes to `src/app.js`, plus the new files `src/export.js` and `notes.txt`.\n\nTo go ahead, you can allow the command and I'll run it, or run it yourself:\n\n```\nrm -rf .cache dist coverage\nnpm run build\n```\n\nAdd `rm -rf logs npm-debug.log` to the first line if you want the logs gone too.\n\nAlso, the folder grew because `build.js` never removes old bundles from `dist/` or old cache files. I can change it to clear those on each build so this doesn't happen again."
+}

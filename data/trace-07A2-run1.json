@@ -1,0 +1,221 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-11",
+  "started_at": "2026-11-11T16:04:30.601Z",
+  "time_source": "arrival",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.322",
+  "permission_mode": "acceptEdits",
+  "prompt": "The spending chart looks blurry on my laptop, but it's sharp on my old monitor at work. Can you fix it?",
+  "run": {
+    "index": 1,
+    "of": 3
+  },
+  "tools_available": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 4631,
+      "context_tokens": 7030,
+      "cached_tokens": 6111,
+      "new_tokens": 919,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 917,
+      "output_tokens": 114,
+      "output": [
+        {
+          "kind": "text",
+          "text": "Likely a canvas devicePixelRatio issue. Let me find the chart code.",
+          "t_ms": 4631
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01M3jLrd1KU85qJeA6KresNb",
+          "tool": "Grep",
+          "input": {
+            "pattern": "canvas|getContext|devicePixelRatio",
+            "-i": true
+          },
+          "t_ms": 5224,
+          "result": {
+            "text": "Found 2 files\nindex.html\nsrc\\chart.js",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 5303
+          }
+        }
+      ],
+      "added_since_previous": null
+    },
+    {
+      "t_ms": 9345,
+      "context_tokens": 7195,
+      "cached_tokens": 7028,
+      "new_tokens": 167,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 165,
+      "output_tokens": 209,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_015d8sKB7D1MiB41WBFNKD9k",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-a2/src\\chart.js"
+          },
+          "t_ms": 9345,
+          "result": {
+            "text": "1\t// Draws the bar chart: one bar per category, its amount above it and its name below.\n2\t\n3\tconst CHART = {\n4\t  padding: { top: 28, right: 12, bottom: 44, left: 12 },\n5\t  bar: '#3b7a57',\n6\t  text: '#2b2b2b',\n7\t  font: '12px system-ui, sans-serif',\n8\t};\n9\t\n10\tfunction drawChart(canvas, rows) {\n11\t  const ctx = canvas.getContext('2d');\n12\t  const width = canvas.width;\n13\t  const height = canvas.height;\n14\t  const { top, right, bottom, left } = CHART.padding;\n15\t\n16\t  ctx.clearRect(0, 0, width, height);\n17\t  if (rows.length === 0) return;\n18\t\n19\t  const max = Math.max(...rows.map((r) => r.total));\n20\t  const slot = (width - left - right) / rows.length;\n21\t  const barWidth = Math.min(56, slot * 0.7);\n22\t  const plotHeight = height - top - bottom;\n23\t\n24\t  ctx.font = CHART.font;\n25\t  ctx.textAlign = 'center';\n26\t\n27\t  rows.forEach((row, i) => {\n28\t    const h = Math.max(2, (row.total / max) * plotHeight);\n29\t    const x = left + i * slot + (slot - barWidth) / 2;\n30\t    const y = height - bottom - h;\n31\t    ctx.fillStyle = CHART.bar;\n32\t    ctx.fillRect(x, y, barWidth, h);\n33\t\n34\t    ctx.fillStyle = CHART.text;\n35\t    ctx.textBaseline = 'bottom';\n36\t    ctx.fillText(formatMoney(row.total), x + barWidth / 2, y - 4);\n37\t    ctx.textBaseline = 'top';\n38\t    ctx.fillText(row.category, x + barWidth / 2, height - bottom + 8);\n39\t  });\n40\t}\n41\t",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 9377
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01Qzsqn9Z5pHAL1od5vEaVp5",
+          "tool": "Grep",
+          "input": {
+            "pattern": "canvas|chart",
+            "path": "~/ch7-a2/index.html",
+            "output_mode": "content"
+          },
+          "t_ms": 10080,
+          "result": {
+            "text": "13:    <canvas id=\"chart\" width=\"640\" height=\"320\" aria-label=\"Spending per category\"></canvas>\n18:  <script src=\"src/chart.js\"></script>",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 10138
+          }
+        }
+      ],
+      "added_since_previous": 165
+    },
+    {
+      "t_ms": 14355,
+      "context_tokens": 8209,
+      "cached_tokens": 7193,
+      "new_tokens": 1016,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1014,
+      "output_tokens": 135,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01SdhsaNrVbU4Qm2bUoaJ7cw",
+          "tool": "Grep",
+          "input": {
+            "pattern": "#chart|canvas|drawChart",
+            "output_mode": "content",
+            "glob": "!src/chart.js"
+          },
+          "t_ms": 15032,
+          "result": {
+            "text": "style.css:23:#chart {\nindex.html:13:    <canvas id=\"chart\" width=\"640\" height=\"320\" aria-label=\"Spending per category\"></canvas>\nsrc\\app.js:7:drawChart(document.getElementById('chart'), rows);",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 15102
+          }
+        }
+      ],
+      "added_since_previous": 1014
+    },
+    {
+      "t_ms": 19676,
+      "context_tokens": 8457,
+      "cached_tokens": 8207,
+      "new_tokens": 250,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 248,
+      "output_tokens": 123,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01H4uw8namn7HQoXXuKVciGh",
+          "tool": "Read",
+          "input": {
+            "file_path": "~/ch7-a2/style.css",
+            "offset": 20,
+            "limit": 10
+          },
+          "t_ms": 19676,
+          "result": {
+            "text": "20\t  margin: 0 0 1rem;\n21\t}\n22\t\n23\t#chart {\n24\t  display: block;\n25\t  width: 640px;\n26\t  height: 320px;\n27\t  background: #fff;\n28\t  border: 1px solid #e4e0d8;\n29\t}",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 19702
+          }
+        }
+      ],
+      "added_since_previous": 248
+    },
+    {
+      "t_ms": 25630,
+      "context_tokens": 8704,
+      "cached_tokens": 8455,
+      "new_tokens": 249,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 247,
+      "output_tokens": 658,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01PkccekqGPemiMi9QgFYMXQ",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/ch7-a2/src\\chart.js",
+            "old_string": "  const ctx = canvas.getContext('2d');\n  const width = canvas.width;\n  const height = canvas.height;\n  const { top, right, bottom, left } = CHART.padding;",
+            "new_string": "  // Lay out in CSS pixels, but back the canvas with device pixels so it stays\n  // sharp on high-DPI (scaled) displays.\n  const width = canvas.clientWidth || canvas.width;\n  const height = canvas.clientHeight || canvas.height;\n  const dpr = window.devicePixelRatio || 1;\n  canvas.width = Math.round(width * dpr);\n  canvas.height = Math.round(height * dpr);\n\n  const ctx = canvas.getContext('2d');\n  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n  const { top, right, bottom, left } = CHART.padding;"
+          },
+          "t_ms": 26951,
+          "result": {
+            "text": "The file ~/ch7-a2/src\\chart.js has been updated successfully. (file state is current in your context — no need to Read it back)",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 26979
+          }
+        }
+      ],
+      "added_since_previous": 247
+    },
+    {
+      "t_ms": 35717,
+      "context_tokens": 9461,
+      "cached_tokens": 8702,
+      "new_tokens": 759,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 757,
+      "output_tokens": 387,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I fixed the blurry chart in `src/chart.js:10`. I haven't seen it running in a browser, so please reload the page on your laptop to check that it's sharp.\n\n**Why it was blurry:** the chart is drawn as an image that's 640×320 pixels. Your laptop screen is high-resolution and Windows scales everything up, typically to 150% or 200%. That means the browser has to stretch those 640×320 pixels over more physical pixels than they have, which blurs them. Your work monitor isn't scaled, so the image fits one-to-one and stays sharp.\n\n**The fix:** `drawChart` now checks how much the screen is scaled and draws the chart at that higher resolution. For example, at 200% it draws at 1280×640 while the chart still appears 640×320 on the page. The layout and padding values are unchanged, so it looks the same everywhere, just sharper on your laptop.\n\nIf you drag the browser window from your laptop screen to a monitor with different scaling, the chart won't redraw by itself; a page reload will fix it.",
+          "t_ms": 35720
+        }
+      ],
+      "added_since_previous": 757
+    }
+  ],
+  "totals": {
+    "model_calls": 6,
+    "output_tokens": 1626,
+    "cache_read_tokens": 45696,
+    "cache_write_tokens": 3348,
+    "cost_usd": 0.0685,
+    "duration_s": 35.5,
+    "ttft_ms": 4366
+  },
+  "final_answer": "I fixed the blurry chart in `src/chart.js:10`. I haven't seen it running in a browser, so please reload the page on your laptop to check that it's sharp.\n\n**Why it was blurry:** the chart is drawn as an image that's 640×320 pixels. Your laptop screen is high-resolution and Windows scales everything up, typically to 150% or 200%. That means the browser has to stretch those 640×320 pixels over more physical pixels than they have, which blurs them. Your work monitor isn't scaled, so the image fits one-to-one and stays sharp.\n\n**The fix:** `drawChart` now checks how much the screen is scaled and draws the chart at that higher resolution. For example, at 200% it draws at 1280×640 while the chart still appears 640×320 on the page. The layout and padding values are unchanged, so it looks the same everywhere, just sharper on your laptop.\n\nIf you drag the browser window from your laptop screen to a monitor with different scaling, the chart won't redraw by itself; a page reload will fix it."
+}

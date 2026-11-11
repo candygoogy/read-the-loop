@@ -1,0 +1,4 @@
+{
+  "build": { "script": "scripts/build.js", "args": ["--minify"] },
+  "hello": { "script": "scripts/hello.js" }
+}

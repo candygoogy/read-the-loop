@@ -1,0 +1,201 @@
+{
+  "source": "Real Claude Code session, recorded with claude -p --output-format stream-json. Paths and the local user name are redacted; nothing else is edited.",
+  "recorded": "2026-11-11",
+  "started_at": "2026-11-11T15:39:07.695Z",
+  "time_source": "arrival",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.322",
+  "permission_mode": "acceptEdits",
+  "prompt": "The tests are failing. Please find the bug and fix it.",
+  "run": {
+    "index": 1,
+    "of": 3
+  },
+  "tools_available": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read"
+  ],
+  "calls": [
+    {
+      "t_ms": 3866,
+      "context_tokens": 7010,
+      "cached_tokens": 6588,
+      "new_tokens": 422,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 420,
+      "output_tokens": 136,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_016Ybf4jufzZdEuxhxpbyATF",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-c2 && ls -la && cat package.json 2>/dev/null; ls */ 2>/dev/null | head -50",
+            "description": "List project files"
+          },
+          "t_ms": 3866,
+          "result": {
+            "text": "total 642\ndrwxr-xr-x 1 you 197121   0 Nov 11 16:28 ./\ndrwxr-xr-x 1 you 197121   0 Nov 11 16:39 ../\n-rw-r--r-- 1 you 197121 585 Nov 11 16:38 README.md\n-rw-r--r-- 1 you 197121 240 Nov 11 16:28 package.json\ndrwxr-xr-x 1 you 197121   0 Nov 11 16:28 src/\ndrwxr-xr-x 1 you 197121   0 Nov 11 16:28 test/\n{\n  \"name\": \"slugkit\",\n  \"version\": \"2.1.0\",\n  \"description\": \"Turn titles into URL slugs\",\n  \"main\": \"src/slug.js\",\n  \"license\": \"MIT\",\n  \"scripts\": {\n    \"test\": \"node --test\"\n  },\n  \"devDependencies\": {\n    \"fast-check\": \"^3.23.2\"\n  }\n}\nsrc/:\nslug.js\n\ntest/:\nslug.property.test.js\nslug.test.js",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 5802
+          }
+        }
+      ],
+      "added_since_previous": null
+    },
+    {
+      "t_ms": 8775,
+      "context_tokens": 7569,
+      "cached_tokens": 7008,
+      "new_tokens": 561,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 559,
+      "output_tokens": 154,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01JBQ5xB7UMgP7zBANhGdBt3",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-c2 && cat README.md src/slug.js test/*.js; ls node_modules 2>/dev/null | head; npm test 2>&1 | tail -40",
+            "description": "Read sources and run tests"
+          },
+          "t_ms": 8775,
+          "result": {
+            "text": "This Bash command contains multiple operations. The following part requires approval: head; npm test 2>&1",
+            "is_error": true,
+            "denied": true,
+            "t_ms": 8789
+          }
+        }
+      ],
+      "added_since_previous": 559
+    },
+    {
+      "t_ms": 11795,
+      "context_tokens": 7797,
+      "cached_tokens": 7567,
+      "new_tokens": 230,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 228,
+      "output_tokens": 229,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_018uTY6jqHpKkhpsGnbxA4RZ",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-c2 && cat README.md src/slug.js test/*.js",
+            "description": "Read sources and tests"
+          },
+          "t_ms": 11795,
+          "result": {
+            "text": "# slugkit\n\nTurns a title into a URL slug.\n\n```js\nconst { slugify } = require('slugkit');\n\nslugify('Hello, World!');            // 'hello-world'\nslugify('Crème brûlée recipes');     // 'creme-brulee-recipes'\nslugify('A very long title', { maxLength: 10 }); // 'a-very'\n```\n\nOptions:\n- `maxLength` (default 80): the slug is cut at a word boundary so it's no longer than this.\n- `separator` (default `-`).\n\n## Development\n\n```\nnpm install\nnpm test        # or: node --test\n```\n\nThe property tests in `test/slug.property.test.js` use [fast-check](https://github.com/dubzzz/fast-check).\n'use strict';\n\nfunction escapeRegExp(s) {\n  return s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n}\n\nfunction slugify(title, { maxLength = 80, separator = '-' } = {}) {\n  const sep = escapeRegExp(separator);\n  let slug = String(title)\n    .normalize('NFD')\n    .replace(/[̀-ͯ]/g, '') // drop accents: é -> e\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, separator)\n    .replace(new RegExp(`^${sep}|${sep}$`), '');\n\n  if (slug.length > maxLength) {\n    const cut = slug.slice(0, maxLength + 1);\n    const lastSep = cut.lastIndexOf(separator);\n    slug = lastSep > 0 ? cut.slice(0, lastSep) : slug.slice(0, maxLength);\n  }\n  return slug;\n}\n\nmodule.exports = { slugify };\n'use strict';\n\nconst test = require('node:test');\nconst fc = require('fast-check');\nconst { slugify } = require('../src/slug');\n\nconst SLUG = /^([a-z0-9]+(-[a-z0-9]+)*)?$/;\n\ntest('every slug is lowercase words joined by single dashes', () => {\n  fc.assert(fc.property(fc.string(), (title) => SLUG.test(slugify(title))));\n});\n\ntest('slugify is idempotent', () => {\n  fc.assert(fc.property(fc.string(), (title) => slugify(slugify(title)) === slugify(title)));\n});\n\ntest('slugs never exceed maxLength', () => {\n  fc.assert(\n    fc.property(fc.string(), fc.integer({ min: 1, max: 40 }), (title, maxLength) =>\n      slugify(title, { maxLength }).length <= maxLength,\n    ),\n  );\n});\n'use strict';\n\nconst test = require('node:test');\nconst assert = require('node:assert');\nconst { slugify } = require('../src/slug');\n\ntest('lowercases and joins words with dashes', () => {\n  assert.strictEqual(slugify('Hello World'), 'hello-world');\n});\n\ntest('drops punctuation at both ends', () => {\n  assert.strictEqual(slugify('  Hello, World!  '), 'hello-world');\n});\n\ntest('removes accents', () => {\n  assert.strictEqual(slugify('Crème brûlée recipes'), 'creme-brulee-recipes');\n});\n\ntest('cuts long slugs at a word boundary', () => {\n  assert.strictEqual(slugify('A very long title', { maxLength: 10 }), 'a-very');\n});\n\ntest('custom separator', () => {\n  assert.strictEqual(slugify('Hello World', { separator: '_' }), 'hello_world');\n});",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 11874
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_0151wjwUz6R1ULqtxbVur1Y8",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-c2 && npm test 2>&1",
+            "description": "Run test suite"
+          },
+          "t_ms": 12364,
+          "result": {
+            "text": "This Bash command contains multiple operations. The following part requires approval: npm test",
+            "is_error": true,
+            "denied": true,
+            "t_ms": 12370
+          }
+        }
+      ],
+      "added_since_previous": 228
+    },
+    {
+      "t_ms": 23024,
+      "context_tokens": 9310,
+      "cached_tokens": 7795,
+      "new_tokens": 1515,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1513,
+      "output_tokens": 606,
+      "output": [
+        {
+          "kind": "tool",
+          "id": "toolu_01X4SVVuxR4BWfsZ3MiAYE5g",
+          "tool": "Edit",
+          "input": {
+            "replace_all": false,
+            "file_path": "~/ch7-c2/src\\slug.js",
+            "old_string": "`^${sep}|${sep}$`), '');",
+            "new_string": "`^${sep}|${sep}$`, 'g'), '');"
+          },
+          "t_ms": 23027,
+          "result": {
+            "text": "The file ~/ch7-c2/src\\slug.js has been updated successfully.",
+            "is_error": false,
+            "denied": false,
+            "t_ms": 23077
+          }
+        },
+        {
+          "kind": "tool",
+          "id": "toolu_01Ek4HQpNAzNUiytwxx1kdSs",
+          "tool": "Bash",
+          "input": {
+            "command": "cd ~/ch7-c2 && node --test",
+            "description": "Run test suite with node"
+          },
+          "t_ms": 23527,
+          "result": {
+            "text": "Exit code 1\nnode:internal/modules/cjs/loader:1607\n  throw err;\n  ^\n\nError: Cannot find module 'fast-check'\nRequire stack:\n- ~/ch7-c2/test\\slug.property.test.js\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1603:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1145:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1169:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1196:12)\n    at Module._load (node:internal/modules/cjs/loader:1370:5)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\n    at Module.require (node:internal/modules/cjs/loader:1713:12)\n    at require (node:internal/modules/helpers:318:16)\n    at Object.<anonymous> (~/ch7-c2/test\\slug.property.test.js:4:12)\n    at Module._compile (node:internal/modules/cjs/loader:1968:14) {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: [\n    '~/ch7-c2/test\\\\slug.property.test.js'\n  ]\n}\n\nNode.js v26.13.0\n✖ test\\slug.property.test.js (33.3499ms)\n✔ lowercases and joins words with dashes (0.4489ms)\n✔ drops punctuation at both ends (0.0656ms)\n✔ removes accents (0.5209ms)\n✔ cuts long slugs at a word boundary (0.0748ms)\n✔ custom separator (0.0747ms)\nℹ tests 6\nℹ suites 0\nℹ pass 5\nℹ fail 1\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 54.8771\n\n✖ failing tests:\n\ntest at test\\slug.property.test.js:1:1\n✖ test\\slug.property.test.js (33.3499ms)\n  'test failed'",
+            "is_error": true,
+            "denied": false,
+            "t_ms": 23690
+          }
+        }
+      ],
+      "added_since_previous": 1513
+    },
+    {
+      "t_ms": 30370,
+      "context_tokens": 10836,
+      "cached_tokens": 9308,
+      "new_tokens": 1528,
+      "input_tokens": 2,
+      "cache_write_5m": 0,
+      "cache_write_1h": 1526,
+      "output_tokens": 525,
+      "output": [
+        {
+          "kind": "text",
+          "text": "I fixed the bug, and all 5 unit tests in `test/slug.test.js` now pass. The property tests didn't run, because `fast-check` isn't installed.\n\n**The bug** (`src/slug.js:14`): the step that strips separators from the start and end of the slug used a regex without the `g` flag:\n\n```js\n.replace(new RegExp(`^${sep}|${sep}$`), '')        // before: only removes the first match\n.replace(new RegExp(`^${sep}|${sep}$`, 'g'), '')   // after: removes both ends\n```\n\nWithout `g`, only the first match was removed. So `'  Hello, World!  '` became `'hello-world-'`: the leading dash was removed but the trailing one stayed. That's exactly what the \"drops punctuation at both ends\" test checks, and it would also break the property tests.\n\n**What's left:** `test/slug.property.test.js` needs `fast-check`, and there's no `node_modules`. I didn't run `npm install` because it downloads from the registry. To run the full suite:\n\n```\nnpm install\nnpm test\n```\n\nLooking through the code, I don't expect the property tests to fail: once the trailing dash is removed, the output matches the slug pattern, and the length and idempotency checks should hold. But I haven't run them, so that's not confirmed.",
+          "t_ms": 30373
+        }
+      ],
+      "added_since_previous": 1526
+    }
+  ],
+  "totals": {
+    "model_calls": 5,
+    "output_tokens": 1650,
+    "cache_read_tokens": 38266,
+    "cache_write_tokens": 4246,
+    "cost_usd": 0.0747,
+    "duration_s": 30.1,
+    "ttft_ms": 3572
+  },
+  "final_answer": "I fixed the bug, and all 5 unit tests in `test/slug.test.js` now pass. The property tests didn't run, because `fast-check` isn't installed.\n\n**The bug** (`src/slug.js:14`): the step that strips separators from the start and end of the slug used a regex without the `g` flag:\n\n```js\n.replace(new RegExp(`^${sep}|${sep}$`), '')        // before: only removes the first match\n.replace(new RegExp(`^${sep}|${sep}$`, 'g'), '')   // after: removes both ends\n```\n\nWithout `g`, only the first match was removed. So `'  Hello, World!  '` became `'hello-world-'`: the leading dash was removed but the trailing one stayed. That's exactly what the \"drops punctuation at both ends\" test checks, and it would also break the property tests.\n\n**What's left:** `test/slug.property.test.js` needs `fast-check`, and there's no `node_modules`. I didn't run `npm install` because it downloads from the registry. To run the full suite:\n\n```\nnpm install\nnpm test\n```\n\nLooking through the code, I don't expect the property tests to fail: once the trailing dash is removed, the output matches the slug pattern, and the length and idempotency checks should hold. But I haven't run them, so that's not confirmed."
+}

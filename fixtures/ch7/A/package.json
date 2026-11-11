@@ -1,0 +1,10 @@
+{
+  "name": "spend",
+  "version": "1.2.0",
+  "description": "Totals per category from a bank statement export",
+  "private": true,
+  "bin": { "spend-summary": "bin/summary.js" },
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -1,2 +1,6 @@
 fixtures/** text eol=lf
 site/game/** text eol=lf
+# Kept byte for byte as the agent saw them: fixture A's bank exports have CRLF line endings on purpose,
+# and B2's vendored packages are npm's files as installed (one .cmd shim has CRLF).
+fixtures/ch7/A/statements/*.csv -text
+fixtures/ch7/B2/node_modules/** -text
