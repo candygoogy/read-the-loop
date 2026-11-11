@@ -45,10 +45,10 @@
 
 <section class="prose" aria-labelledby="s-reads">
   <h2 id="s-reads">每次都从头读一遍</h2>
-  <p>第一章讲了这个循环：模型在两次调用之间什么都不保留，所以外壳程序（harness）每次都要把整段对话发给它。在一个小游戏上，这只是寥寥几次调用。本章看一次更长的会话。我们从 Black（一个格式化 Python 代码的工具）的问题跟踪器里找了一份真实的 bug 报告，连同 Black 的源代码一起交给 Claude Code。报告的标题是：</p>
+  <p>第一章讲了这个循环：模型在两次调用之间什么都不保留，所以外壳程序（harness）每次都要把整段对话发给它。在一个小游戏上，这只是寥寥几次调用。本章回到第二章那次更长的会话：Claude Code 处理了 black（一个格式化 Python 代码的工具）的一份真实 bug 报告。报告的标题是：</p>
   <blockquote class="prompt" data-v="issueTitle"></blockquote>
   <p>这次会话共调用模型 <span data-v="calls"></span> 次，用时 <span data-v="duration"></span> 秒，录制于 <span data-v="date"></span>，模型是 <span data-v="model"></span>。对话从第一次调用时的 <span data-v="first"></span> 个 token（词元，一个词或词的一部分）涨到最后一次的 <span data-v="last"></span> 个。把所有调用加起来，模型一共读了 <strong data-v="sumRead"></strong> 个 token。</p>
-  <p>这些读取大多来自<strong>缓存</strong>（cache）：模型提供方为它最近见过的文本存下的一份副本。API 为每次调用报告的用量，把模型读取的内容分成两部分：从这份副本读取的 token，和新的 token。下图逐次调用画出这两部分。</p>
+  <p>这些读取大多来自<strong>缓存</strong>（cache）：模型提供方为它最近见过的文本存下的一份副本。API（程序用来把文本发给模型的服务）为每次调用报告的用量，把模型读取的内容分成两部分：从这份副本读取的 token，和新的 token。下图逐次调用画出这两部分。</p>
 
   <figure class="viz wide" id="reads" aria-labelledby="reads-title">
     <figcaption class="viz-head">
@@ -123,7 +123,7 @@
 
 <footer class="colophon band">
   <h2>关于录制</h2>
-  <p>这是一次真实的 Claude Code 会话，用 <code>claude -p --output-format stream-json</code> 录制。路径和本地用户名做了脱敏处理，其他内容没有改动。会话信息：模型 <code data-v="model"></code>，Claude Code <code data-v="ccv"></code>，推理强度（effort）保持默认。允许使用的工具：<span data-v="tools"></span>。提示就是这个 issue 提交时的标题和正文，原样未改。文件夹里是 Black 在修复提交之前那个提交的源代码，本页称它为 <code data-v="alias"></code>。</p>
+  <p>这是一次真实的 Claude Code 会话，用 <code>claude -p --output-format stream-json</code> 录制。路径和本地用户名做了脱敏处理，其他内容没有改动。会话信息：模型 <code data-v="model"></code>，Claude Code <code data-v="ccv"></code>，推理强度（effort）保持默认。允许使用的工具：<span data-v="tools"></span>。提示就是这个 issue 提交时的标题和正文，原样未改。文件夹里是 black 在修复提交之前那个提交的源代码，本页称它为 <code data-v="alias"></code>。</p>
   <p>token 数是 API 在每次调用中报告的用量：从缓存读取的 token、写入缓存的 token（保留时间较短的和保留一小时的分开计）、少量既不是读取也不是写入的输入 token，以及模型写出的 token。一次调用读取的量是前三项之和。</p>
   <p id="price-note"></p>
   <p>实验：<span data-v="spikeList"></span>。每个实验都用 <code>claude -p --resume</code> 恢复同一段对话。其中一个用 <code data-v="sysFlag"></code> 改了开场设定，一个用 <code data-v="modelFlag"></code> 换了模型。Claude Code 给出的恢复会话的费用，是到当时为止整段对话的累计费用，所以本页不显示这些实验的费用。</p>

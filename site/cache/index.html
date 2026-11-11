@@ -40,10 +40,10 @@
 
 <section class="prose" aria-labelledby="s-reads">
   <h2 id="s-reads">Reading it all again</h2>
-  <p>Chapter 1 showed the loop: the model keeps nothing between calls, so the harness sends it the whole conversation every time. On a toy game that was a handful of calls. This chapter follows a longer session. We gave Claude Code a real bug report from the issue tracker of Black, a tool that formats Python code, along with Black's source code. The report's title:</p>
+  <p>Chapter 1 showed the loop: the model keeps nothing between calls, so the harness sends it the whole conversation every time. On a toy game that was a handful of calls. This chapter goes back to the longer session from chapter 2, where Claude Code worked on a real bug report for black, a tool that formats Python code. The report's title:</p>
   <blockquote class="prompt" data-v="issueTitle"></blockquote>
   <p>The session made <span data-v="calls"></span> model calls in <span data-v="duration"></span> seconds. It was recorded on <span data-v="date"></span> with <span data-v="model"></span>. The conversation grew from <span data-v="first"></span> tokens on the first call to <span data-v="last"></span> on the last (a token is a word or a piece of one). Added up over all the calls, the model read <strong data-v="sumRead"></strong> tokens.</p>
-  <p>Most of that reading came from the <strong>cache</strong>: a stored copy of text the model's provider saw recently. The usage the API reports for each call splits what the model read into two parts: tokens read from that stored copy, and tokens that were new. The chart shows both, call by call.</p>
+  <p>Most of that reading came from the <strong>cache</strong>: a stored copy of text the model's provider saw recently. The API, the service programs use to send text to the model, reports each call's usage, and it splits what the model read into two parts: tokens read from that stored copy, and tokens that were new. The chart shows both, call by call.</p>
 
   <figure class="viz wide" id="reads" aria-labelledby="reads-title">
     <figcaption class="viz-head">
@@ -118,7 +118,7 @@
 
 <footer class="colophon band">
   <h2>About the recordings</h2>
-  <p><span data-v="source"></span> The session: model <code data-v="model"></code>, Claude Code <code data-v="ccv"></code>, effort left at its default. Tools allowed: <span data-v="tools"></span>. The prompt was the issue's title and text, as filed. The folder held Black's source code at the commit just before the fix; this page calls it <code data-v="alias"></code>.</p>
+  <p><span data-v="source"></span> The session: model <code data-v="model"></code>, Claude Code <code data-v="ccv"></code>, effort left at its default. Tools allowed: <span data-v="tools"></span>. The prompt was the issue's title and text, as filed. The folder held black's source code at the commit just before the fix; this page calls it <code data-v="alias"></code>.</p>
   <p>Token counts are the usage the API reported on each call: tokens read from the cache, tokens written to it (the shorter and the hour-long kind separately), the few input tokens that were neither, and the tokens the model wrote. A call's reading is the first three added up.</p>
   <p id="price-note"></p>
   <p>The experiments: <span data-v="spikeList"></span>. Each resumed the same conversation with <code>claude -p --resume</code>. One changed the set-up with <code data-v="sysFlag"></code>, one switched the model with <code data-v="modelFlag"></code>. Claude Code reports a resumed session's cost added up over the whole conversation so far, so this page shows no cost for them.</p>

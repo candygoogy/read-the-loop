@@ -49,7 +49,7 @@ window.COPY = {
     youMeta: "typed into Claude Code",
     setup: "Set-up",
     setupMeta: (d) => `${d.setup} tokens with your sentence`,
-    setupBody: "The recording shows the size of this block, not its text, so it isn't shown here. What a request like this holds (instructions, the tools the model may ask for, the conversation so far) is how Anthropic's public API documentation describes a request; this page doesn't show the actual contents.",
+    setupBody: "The recording shows the size of this block, not its text. Claude Code sends it through Anthropic's API, the service programs use to send text to the model. What a request like this holds (instructions, the tools the model may ask for, the conversation so far) comes from Anthropic's public API documentation, not from this recording.",
     request: "Request",
     result: "Result",
     modelWrites: "The model writes",
@@ -73,16 +73,16 @@ window.COPY = {
     },
     you: {
       title: () => "You type one sentence",
-      text: (d) => `Claude Code is the <strong>harness</strong>: the program around the model that sends it text, does what it asks and reports back. Your sentence doesn't travel alone. In front of it goes a set-up with instructions and a description of each tool the model may ask for (${d.toolList}). Together that's <strong>${d.setup} tokens</strong>. A token is a word or a piece of one.`,
+      text: (d) => `Claude Code is the <strong>harness</strong>: the program around the model that sends it text, does what it asks and reports back. A model plus a harness that runs its requests, in a loop, is an <strong>agent</strong>. Your sentence is sent with a set-up in front of it: instructions, and a description of each tool the model may ask for (${d.toolList}). Together that's <strong>${d.setup} tokens</strong>. A token is a word or a piece of one.`,
     },
     c1req: {
       title: (d, n) => `Call ${n}: what's in the folder?`,
-      text: (d) => `The model reads all ${d.c[0]} tokens and writes a reply. It can't look at the folder, so the reply is a <strong>request</strong>, written in a format the harness understands. This one asks for every file name: <code>${d.globPattern}</code> matches any file in any folder. ${d.cached[0]} of the tokens came from the <strong>cache</strong>, a stored copy of text the model's provider saw recently, probably because run ${d.prevRun} of this recording had finished about ${d.gapMin} minutes earlier. Chapter 3 is about the cache.`,
+      text: (d) => `The model reads all ${d.c[0]} tokens and writes a reply. It can't look at the folder, so the reply is a <strong>request</strong>, written in a format the harness understands. This one asks for every file name: <code>${d.globPattern}</code> matches any file in any folder. ${d.cached[0]} of the tokens came from the <strong>cache</strong>, a stored copy of recent text that is cheaper to read again (chapter 3).`,
     },
     round1: {
       title: (d, n) => `Round ${n}: you are the harness`,
       text: () => `The model can't run anything, so the harness does it. This round, you're the harness. Run the request, then put its output into the conversation: drag it there, or use the paste button.`,
-      textDone: (d) => `That's one round of the loop. A request went out, its result came back, and the model will read it on the next call. The conversation grew by ${d.added[1]} tokens. From here the harness carries on by itself.`,
+      textDone: (d) => `That's one round of the loop. A <strong>call</strong> is the model reading the conversation and writing one reply; a <strong>round</strong> is the harness running that reply's requests and adding their results. The model will read this result on the next call. The conversation grew by ${d.added[1]} tokens. From here the harness carries on by itself.`,
     },
     c2req: {
       title: (d, n) => `Call ${n}: read the code`,
@@ -94,11 +94,11 @@ window.COPY = {
     },
     c3req: {
       title: (d, n) => `Call ${n}: run the tests first`,
-      text: (d) => `Before it changes anything, the model asks to run the game's tests. This reply has no words for you, only the request. <code>${d.tail1cmd}</code> keeps the last ${d.tail1} lines of the output. The command says <code>${d.alias}</code> because this page hides the real folder name.`,
+      text: (d) => `Before it changes anything, the model asks to run the game's tests and keep only the last ${d.tail1} lines of their output. This reply has no words for you, only the request.`,
     },
     c3res: {
       title: () => "A test fails",
-      text: (d) => `${d.bashWait} seconds pass between the request and its result. The recording doesn't show how that time splits between Claude Code and the tests. The output shows a failing test, <q>${d.failName}</q>, and the check that failed, <code>${d.assertion}</code>: after landing, the ball should be moving up. The totals aren't in those ${d.tail1} lines, so the model sees which test failed but not how many passed.`,
+      text: (d) => `The result comes back ${d.bashWait} seconds later. It shows a failing test, <q>${d.failName}</q>, and the check that failed, <code>${d.assertion}</code>: after landing, the ball should be moving up. The totals aren't in those ${d.tail1} lines, so the model sees which test failed but not how many passed.`,
     },
     c4req: {
       title: (d, n) => `Call ${n}: the fix, then a check`,
@@ -110,7 +110,7 @@ window.COPY = {
     },
     final: {
       title: (d, n) => `Call ${n}: a reply with no request`,
-      text: (d) => `The model reads everything once more, ${d.c[d.last]} tokens, and writes to you. The reply has <strong>no request</strong> in it, and that's the harness's signal to stop. It points at <code>${d.loc}</code>, the line where the function it fixed begins; the changed line is ${d.bugLine}. Its last paragraph says it checked that a fast ball can't skip past the paddle. That check is arithmetic written in the reply. No command ran for it.`,
+      text: (d) => `The model reads everything once more, ${d.c[d.last]} tokens, and writes to you. The reply has <strong>no request</strong> in it, and that's the harness's signal to stop. Its last paragraph says it checked that a fast ball can't skip past the paddle. That check is arithmetic written in the reply. No command ran for it.`,
     },
   },
 

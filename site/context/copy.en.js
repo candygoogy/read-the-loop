@@ -13,25 +13,27 @@ window.COPY = {
 
   // What the model was asked, in plain words.
   intro: {
-    ch1: (d) => `Chapter 1's agent fixed a toy game in ${d.ch1Calls} calls. This time the project is real: <a href="${d.repoUrl}">black</a>, an open-source tool that rewrites Python code in one consistent style. We took a copy of black's code from just before its own fix for this bug and gave Claude Code one of its GitHub issues, word for word. Its title:`,
+    ch1: (d) => `Chapter 1's agent fixed a toy game in ${d.ch1Calls} calls. This time the project is real: <a href="${d.repoUrl}">black</a>, a tool that rewrites Python code in one consistent style. black is open source: its code is public, and anyone may read it, change it and suggest fixes. The code is kept on GitHub, a website where many projects keep theirs, and people report bugs there in posts called issues. We gave Claude Code a copy of black's code and one of those issues, word for word. The issue's title:`,
     showPrompt: "The whole prompt, as the model got it",
-    plain: () => `In plain words: black is meant to change how code looks, never what it does. Here it added one comma, and that comma turned a small function (a <code>lambda</code>) into a tuple, a bundle of values. Any code that called the function would then crash.`,
+    plain: () => `In plain words: black is meant to change how code looks, never what it does. Here it added one comma, and that comma turned a small function (a <code>lambda</code>) into a tuple, a bundle of values. Any code that called the function would then crash. The project fixed this bug later. The code we gave the agent is from just before that fix.`,
     run: (d) => `The session took ${d.durationLong}. The model was called ${d.calls} times and made ${d.toolCalls} requests: ${d.toolCountList}. It was recorded on ${d.date} with ${d.model}. We recorded it once and show that one run as it happened.`,
   },
 
   context: {
-    define: () => `In chapter 1 you saw the loop. The model writes a request, the <strong>harness</strong> (here Claude Code) runs it and pastes the result back, and the model is called again. Each call sends everything: the set-up (instructions and a description of each tool the model may ask for), your message, and every request and result so far. All of that is the model's <strong>context</strong>. The most a model can take in on one call is its <strong>context window</strong>. Both are counted in <strong>tokens</strong>; a token is a word or a piece of one.`,
+    define: () => `In chapter 1 you saw the loop. The model writes a request, the <strong>harness</strong> (the program around the model, here Claude Code) runs it and pastes the result back, and the model is called again.`,
+    define2: () => `Each call sends everything: the set-up (instructions and a description of each tool the model may ask for), your message, and every request and result so far. All of that is the model's <strong>context</strong>. It is counted in <strong>tokens</strong>. A token is a word or a piece of one.`,
+    define3: () => `The most a model can take in on one call is its <strong>context window</strong>.`,
     compare: (d) => `Chapter 1's last call read ${d.ch1Last} tokens. This session's last call read ${d.last}, ${d.ch1Ratio} times as many.`,
     figTitle: "What the last call read, in tokens",
     ch1Bar: (d) => `Chapter 1: the game, call ${d.ch1Calls}`,
     ch2Bar: (d) => `This chapter: black, call ${d.calls}`,
     markLabel: (d) => `compact at ${d.autocompactShort} (our setting)`,
-    caption: (d) => `Both sessions drawn to the same scale. The line at ${d.autocompact} tokens is where we told Claude Code to compact the conversation, a setting we passed when we started it; chapter 4 is about compaction. The model's own limit isn't in the recording, so it isn't drawn here.`,
+    caption: (d) => `Both sessions drawn to the same scale. The line at ${d.autocompact} tokens is a setting we passed when we started Claude Code. Past that point, Claude Code would compact the conversation: replace it with a shorter summary. Chapter 4 is about compaction. The model's own limit isn't in the recording, so it isn't drawn here.`,
     chartLabel: (d) => `Bar chart. Chapter 1's last call read ${d.ch1Last} tokens; this chapter's last call read ${d.last}. A line marks ${d.autocompact} tokens, where we set Claude Code to compact.`,
   },
 
   explore: {
-    intro: (d) => `Drag the slider through the ${d.calls} calls. The squares are the conversation that call reads, drawn to scale: one square is ${d.unit} tokens. Point at a block, or Tab to it and use the arrow keys, to see which request and result it holds. The phases are our grouping, from reading the recording.`,
+    intro: (d) => `Drag the slider through the ${d.calls} calls. The squares are the conversation that call reads, drawn to scale: one square is ${d.unit} tokens. A call is one turn of the model: it reads the conversation and writes a reply. Each call adds one round to the conversation: what the model wrote, and the results that came back. So a call reads the set-up and every round before it, and its newest block is the round from the call before. Point at a block, or Tab to it and use the arrow keys, to see which request and result it holds. The phases are our grouping, from reading the recording.`,
     title: "Scrub through the session",
     scrub: "Call",
     prev: "Previous call",
@@ -70,7 +72,7 @@ window.COPY = {
     },
     diagnose: {
       name: "Find the cause",
-      text: () => `It pulls up the helper functions that add trailing commas, writes a small script to watch the splitting step at work, and reads how black keeps track of brackets.`,
+      text: () => `It pulls up the helper functions that add a trailing comma (a comma after the last item in a list), writes a small script to watch black split a line, and reads how black keeps track of brackets.`,
     },
     fix1: {
       name: "First fix",
@@ -78,19 +80,19 @@ window.COPY = {
     },
     subscript: {
       name: "A second case",
-      text: (d, p) => `With <code>-C</code>, black's option to ignore "magic" trailing commas, a one-item subscript like <code>${d.subCase}</code> lost the comma it needs. The agent reads more of black and edits <code>${p.edited}</code>, then reports: <q>${p.say(/stability/)}</q>`,
+      text: (d, p) => `With <code>-C</code>, an option that tells black to ignore a comma left after the last item (a "magic" trailing comma), square brackets holding one item, like <code>${d.subCase}</code>, lost the comma they need. The agent reads more of black and edits <code>${p.edited}</code>, then reports: <q>${p.say(/stability/)}</q>`,
     },
     suite: {
       name: "Run the tests",
-      text: (d, p) => `It runs black's own tests, stopping at the first failure: <code>${p.firstTest}</code>. More edits keep an older expected result as it was, and the next full run gives <code>${p.lastTest}</code>. In the model's words: <q>${p.say(/instability/)}</q>`,
+      text: (d, p) => `It runs black's own tests, stopping at the first failure: <code>${p.firstTest}</code>. More edits keep an older expected result as it was, and the next full run gives <code>${p.lastTest}</code>. The failing test runs black a second time on its own output, and the result changes again. In the model's words: <q>${p.say(/instability/)}</q>`,
     },
     instability: {
-      name: "Chase the instability",
-      text: (d, p) => `It instruments its new helper and finds out why: <q>${p.say(/repeated calls/)}</q> One more edit to <code>${p.edited}</code>, and the full run passes: <code>${p.lastTest}</code>.`,
+      name: "Chase a result that won't settle",
+      text: (d, p) => `It adds print lines to its new helper function to watch it work, and finds out why: <q>${p.say(/repeated calls/)}</q> One more edit to <code>${p.edited}</code>, and the full run passes: <code>${p.lastTest}</code>.`,
     },
     wrapup: {
-      name: "Tests, changelog, tidy-up",
-      text: (d, p) => `It adds the issue's examples to black's test files and runs the tests again (<code>${p.lastTest}</code>). It writes a changelog entry, tries to type-check its changes (the checker isn't installed), formats its own code with black and deletes its scratch folder.`,
+      name: "Tests and tidy-up",
+      text: (d, p) => `It adds the issue's examples to black's test files and runs the tests again (<code>${p.lastTest}</code>). It adds an entry to the changelog, the file where the project lists what changed in each release. It tries to run a type checker, a tool that catches values of the wrong kind, but the checker isn't installed. Then it formats its own code with black and deletes its scratch folder.`,
     },
     answer: {
       name: "The answer",
@@ -116,13 +118,13 @@ window.COPY = {
       refused: "Refused commands",
     },
     value: (n, pct) => `${n} · ${pct}`,
-    note: () => `How we split it. The API reports how many tokens each call read and wrote, not what each result weighed. So the model's part of a round is what the API says it wrote on that call, and the rest of the round's growth counts as what came back. When a round has several results, that rest is shared out by their length in characters. The parts are estimates; the totals are exact.`,
+    note: () => `How we split it. The API (the service programs use to send text to the model and get its reply) reports how many tokens each call read and wrote, not what each result weighed. So the model's part of a round is what the API says it wrote on that call, and the rest of the round's growth counts as what came back. When a round has several results, that rest is shared out by their length in characters. The parts are estimates; the totals are exact.`,
   },
 
   reread: {
     title: "Every call reads it all again",
     p1: (d) => `The model doesn't remember the call before. Every call reads the conversation from the top, so a result pasted in early is read again on every call after it. Over the ${d.calls} calls, the model read <strong>${d.sumRead}</strong> tokens, ${d.sumRatio} times the size of the final conversation.`,
-    p2: (d) => `That's the real cost of a long session. The conversation grows one round at a time, but the reading adds up the whole conversation on every call. By call ${d.half}, halfway, the model had read ${d.halfSum} tokens. The second half read ${d.secondHalf}, ${d.halfRatio} times as much.`,
+    p2: (d) => `The conversation grows one round at a time, but every call reads all of it, so the total read climbs faster as the session goes on. By call ${d.half}, halfway, the model had read ${d.halfSum} tokens. The second half read ${d.secondHalf}, ${d.halfRatio} times as much.`,
     figTitle: "Tokens, call by call",
     seriesSum: "read so far",
     seriesCtx: "the conversation",

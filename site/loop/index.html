@@ -34,7 +34,7 @@
 <header class="masthead band">
   <p class="kicker"><a href="../index.html">Read the Loop</a> · Chapter 1 of 8</p>
   <h1>An agent is a loop</h1>
-  <p class="dek">A language model can do one thing: read text and write more text. It can't open a file, run a test or play a game. Below, one fixes a bug in a small game it never sees. Try the game first. The bug shows up within seconds.</p>
+  <p class="dek">A language model can do one thing: read text and write more text. It can't open a file, run a test or play a game. Below, a model fixes a bug in a small game it never sees. Try the game first. The bug shows up within seconds.</p>
 </header>
 
 <main class="band">
@@ -118,7 +118,7 @@
       </svg>
 
       <figure class="code-fig">
-        <figcaption>The whole idea, in 10 lines</figcaption>
+        <figcaption>The same loop as a short program. If you don't read code, skip it.</figcaption>
 <pre class="loopcode" id="loopcode"><code><span data-l="1">messages = [instructions, your_message]</span>
 <span data-l="2">while True:</span>
 <span data-l="3">    reply = model(messages)  <i># reads all of it, every time</i></span>
@@ -163,7 +163,7 @@
 </section>
 
 <section class="prose">
-  <h2>Three things worth noticing</h2>
+  <h2>What this run shows</h2>
 
   <h3>It checked before and after</h3>
   <p>The model never saw the game. Before it changed anything, it ran the tests, and a failing test came back: <q data-v="failName"></q>. The edit came on the next call, along with a second test run in which all <span data-v="tests"></span> passed. Each of those was a round of the loop, and each result was text the harness pasted in. That's also why the rule picked this run: <span data-v="otherRuns"></span></p>
@@ -194,7 +194,9 @@
   <h2>About the recording</h2>
   <p><span data-v="source"></span> Model <code data-v="model"></code>, Claude Code <code data-v="ccv"></code>, effort left at its default. Tools allowed: <span data-v="tools"></span>.</p>
   <p>The model saw the real folder path. This page replaces it with <code data-v="alias"></code>, which is why the commands read <code data-v="cdPart"></code>: a real shell wouldn't expand <code>~</code> inside quotes.</p>
-  <p>Token counts are the usage the API reported on each call. Times are when each line of output arrived, counted from the moment the recorder started Claude Code. Claude Code's own timer puts the session at <span data-v="duration"></span> seconds; the live clock ends at <span data-v="clockEnd"></span>.</p>
+  <p>Token counts are the usage the API reported on each call. Times are when each line of output arrived, counted from the moment the recorder started Claude Code. Claude Code's own timer puts the session at <span data-v="duration"></span> seconds; the live clock ends at <span data-v="clockEnd"></span>. The wait between a request and its result is spent in Claude Code and in the command it ran; the recording doesn't show how it splits.</p>
+  <p>Call 1 already read tokens from the cache, probably because run <span data-v="prevRun"></span> of this recording had finished about <span data-v="gapMin"></span> minutes earlier.</p>
+  <p>The final reply points at <code data-v="loc"></code>, the line where the function it fixed begins. The line it changed is <span data-v="bugLine"></span>.</p>
   <p>We recorded <span data-v="runOf"></span> runs. The rule, fixed before recording: the first run that runs the tests before and after its fix; if none does, run 1.</p>
   <ul class="runs" id="runs"></ul>
   <p>An earlier batch of three runs was thrown out because of how it was recorded, not how it went: the recorded sessions inherited settings from the session that launched them, including a higher effort level. All three made the same fix. Their raw recordings are kept outside the repo, and their traces were deleted.</p>

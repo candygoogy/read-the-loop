@@ -8,7 +8,7 @@ window.COPY = {
 
   manual: {
     p1: (d) => `第一章里，模型请求列出文件、读代码、改一个文件、运行测试。这些事它一件都没有亲手做。每一项都是一个<strong>工具（tool）</strong>：模型可以使用的一种请求格式，由外壳程序来执行。<strong>外壳程序（harness）</strong>是包在模型外面的那个程序，这里就是 Claude Code。它执行请求，再把结果贴回对话里。第一章把每次调用的开头画成一整块，也就是开场设定，长 ${d.ch1Setup} 个 token（词元，一个词或词的一部分），但没法显示里面装了什么。`,
-    p2: (d) => `为了看看里面有什么，我们在 ${d.date} 把第一章的任务又跑了一遍，模型相同，设置也几乎相同（文末的说明列出了不同之处）。这次运行经过我们自己写的一个小程序，它位于 Claude Code 和 Anthropic 的服务器之间，在每个请求发出时把它存下来。它保存的是每个请求的内容，从不保存随请求一起发送的请求头（header）。这次会话一共调用了 ${d.requests} 次模型。结果发现，每个请求里最大的部分是一份工具说明：每个工具一条，写着它的名字、一段描述，以及请求这个工具时可以给出哪些输入。`,
+    p2: (d) => `为了看看里面有什么，我们在 ${d.date} 把第一章的任务又跑了一遍，模型相同，设置也几乎相同（文末的说明列出了不同之处）。这次运行经过我们自己写的一个小程序，它位于 Claude Code 和 Anthropic 的服务器之间，在每个请求发出时把它存下来。它保存的是每个请求的内容，从不保存请求头（header）。请求头就像套在请求外面的信封，里面装着登录密钥之类的信息。这次会话一共调用了 ${d.requests} 次模型。结果发现，每个请求里最大的部分是一份工具说明：每个工具一条，写着它的名字、一段描述，以及请求这个工具时可以给出哪些输入。`,
     p3: (d) => `一共 ${d.nTools} 条，${d.toolsChars} 个字符的 JSON（请求所用的文本格式），占第一次调用发送内容的 ${d.toolsPct}。最长的是 ${d.big} 这一条，${d.bigChars} 个字符，其中 ${d.bigDesc} 个是它的描述。每一条还列出了它的输入，并注明哪些是请求必须给出的。`,
     p4: (d) => `有一条与众不同。会话开始时 Claude Code 报告了自己的工具列表（${d.initTools}），<code>${d.placeholder}</code> 不在其中。它不接受任何输入，描述里写着永远不要调用它。录制记录看不出它是做什么用的。`,
     p5: (d) => `工具说明在整个会话里没有变过。我们把这 ${d.requests} 个请求逐字节比较了一遍：所有请求里的工具都一样，系统指令也一样。只有对话在增长，从第一次调用时的 ${d.m0} 条消息，到最后一次的 ${d.mLast} 条。第二次调用的 ${d.c2ctx} 个 token 里，有 ${d.c2cached} 个是从缓存读取的。缓存是模型提供方存下的一份最近见过的文本副本（第三章专门讲缓存）。`,
@@ -53,16 +53,16 @@ window.COPY = {
     label: (d) => `按比例绘制的条形。第一个请求共 ${d.total} 个字符，其中工具占 ${d.tools}（${d.toolsPct}），系统占 ${d.system}（${d.systemPct}），消息占 ${d.messages}（${d.messagesPct}）。你写的那句话是其中的 ${d.prompt} 个字符。下面三个列表分别列出各部分由哪些块组成。`,
     // 请求还携带了哪些本页没有展示的内容。只列种类，不列任何值。
     identity: (d) => `请求携带的内容里，有一些没有出现在本页上。来自用户的第一条消息以 Claude Code 附带的 ${d.notes} 条说明开头，其中一条给出了账号的电子邮件地址。一条系统角色的消息给出了工作文件夹、操作系统、日期，以及本次会话的预算还剩多少；每个工具结果之后，还有一条同样的消息给出剩下的预算。在对话之外，一个名叫 <code>metadata</code> 的字段里有一个设备 ID 和一个账号 ID。我们在这里只列出这些信息的种类，不列出它们的值。录制记录没有说明每一项为什么在那里。`,
-    settings: (d) => `每个请求还带着同样的设置：推理强度（effort）<code>${d.effort}</code>，思考（thinking）<code>${d.thinking}</code>，<code>max_tokens</code> ${d.maxTokens}（允许的最长回复，以 token 计），以及一个 <code>context_management</code> 条目 <code>${d.cm}</code>，设为保留 <code>${d.cmKeep}</code>。这些设置的含义见 Anthropic 的 API 文档；本页只展示发送了什么。`,
+    settings: (d) => `每个请求还带着同样的设置。它们的作用出自 Anthropic 的 API 文档；本页只展示发送了什么。推理强度（effort）是 <code>${d.effort}</code>：模型有多卖力，也就是想得多深、花多少 token。思考（thinking）是 <code>${d.thinking}</code>。思考是模型在回复之前为了把问题想清楚而写下的文字，这个值让模型自己决定要不要思考、想多久。<code>max_tokens</code> 是 ${d.maxTokens}：允许的最长回复，以 token 计。最后还有一个 <code>context_management</code> 条目 <code>${d.cm}</code>，它是一条把模型之前的思考从对话里清掉的规则。这里设为保留 <code>${d.cmKeep}</code>。`,
   },
 
   decide: {
     p1: () => `所以模型从头到尾都只是在请求。它写出一个请求，由外壳程序决定执行不执行。<strong>权限（permission）</strong>是你交给外壳程序的规则，规定哪些请求它可以不先问你就执行。规则没有覆盖到的请求，需要有人批准。`,
-    p2: () => `第二章和第三章的那次会话里就能看到这一点。那一次，我们把 Black（一个格式化 Python 代码的工具）的一份真实 bug 报告交给 Claude Code，连同 Black 的源代码，还有下面这份<strong>允许列表（allowlist）</strong>，列出它不用询问就可以做的事：`,
+    p2: () => `第二章和第三章的那次会话里就能看到这一点。那一次，我们把 black（一个格式化 Python 代码的工具）的一份真实 bug 报告交给 Claude Code，连同 black 的源代码，还有下面这份<strong>允许列表（allowlist）</strong>，列出它不用询问就可以做的事：`,
     allowTitle: "无需询问即可执行",
     tools: "整个工具",
     bash: "Bash 命令，写成模式",
-    p3: (d) => `${d.wholeTools} 这几项放行的是整个工具。<code>Bash(…)</code> 这几项则是 shell 命令的模式：Python，以及 ${d.nGit} 个只报告项目状况的 git 命令（<code>diff</code>、<code>status</code> 和 <code>log</code>）。`,
+    p3: (d) => `${d.wholeTools} 这几项放行的是整个工具。<code>Bash(…)</code> 这几项针对的是 Bash 工具：它运行一条命令，就像有人在终端里敲进去一样。终端是程序员输入命令用的文字窗口。每一项都是一个模式：<code>Bash(python *)</code> 覆盖以 <code>python</code> 开头的命令。另外 ${d.nGit} 项是给 git 的，git 是记录代码改动的程序。每一项覆盖一个只报告项目状况的 git 命令：<code>diff</code>、<code>status</code> 或 <code>log</code>。`,
     p4: (d) => `我们用 <code>claude -p</code> 运行这次会话。这种方式执行一个任务时，键盘前没有人，所以需要批准的请求得不到批准。模型一共发出了 ${d.bash} 个 Bash 请求，外壳程序拒绝了其中 ${d.denied} 个。每一次，模型拿回的都只有外壳程序的一条消息，标记为错误，没有任何输出。然后它接着往下做。`,
   },
 
@@ -127,7 +127,7 @@ window.COPY = {
   stats: {
     tools: "条工具说明，每个请求都带着",
     chars: "个字符的工具说明",
-    bash: "个 Bash 请求（Black 会话）",
+    bash: "个 Bash 请求（black 会话）",
     denied: "个被拒绝",
   },
 
@@ -144,11 +144,11 @@ window.COPY = {
     proxy: () => `请求由 <code>scripts/capture-proxy.py</code> 保存，这是本项目仓库里的一个小代理程序。只在那一条命令里，我们用 <code>ANTHROPIC_BASE_URL</code> 让 Claude Code 把请求发给它，它再把每个请求原样转发给 Anthropic。它只保存请求体，从不保存请求头。之后 <code>scripts/extract-tools.py</code> 从中取出工具名称、大小、输入名称、每段描述的第一句话、其他部分的大小，以及各项设置。请求里的其他文字一概不公布。`,
     differ: (d) => `这次运行的第一次调用读了 ${d.c1} 个 token，而第一章运行同一个任务时是 ${d.ch1Setup} 个。我们没有查明两者为什么不同，所以这些请求准确描述的是这次运行；对第一章那次运行，它们很接近，但不完全一样。这次运行的预算上限也更小，还多了让请求经过代理的那项设置。`,
     est: () => `字符数按发送时的 JSON 计算。各部分的 token 数是估算：把第一次调用准确的 token 数，按各部分的字符数分摊。JSON 的标点、代码和普通文字换算成 token 的比率并不相同，所以这些数只能作粗略参考。`,
-    black: (d) => `<strong>Black 会话。</strong>录制于 ${d.date03}，模型 <code>${d.model03}</code>，Claude Code <code>${d.ccv03}</code>，共 ${d.calls03} 次调用，和第二章、第三章用的是同一次会话。启动命令：`,
+    black: (d) => `<strong>black 会话。</strong>录制于 ${d.date03}，模型 <code>${d.model03}</code>，Claude Code <code>${d.ccv03}</code>，共 ${d.calls03} 次调用，和第二章、第三章用的是同一次会话。启动命令：`,
     denied: () => `这里说的拒绝，是 Claude Code 在它的记录流里标记为 denied 的工具结果；它的文字就是模型收到的那条外壳程序消息。`,
     paths: (d) => `模型看到的是真实的文件夹路径，本页把它们显示为 ${d.aliases}。`,
     traces: "数据：",
-    links: { tools: "请求大小和工具条目", ch5: "捕获请求的那次会话", black: "Black 会话", ch1: "第一章的会话" },
+    links: { tools: "请求大小和工具条目", ch5: "捕获请求的那次会话", black: "black 会话", ch1: "第一章的会话" },
     json: "同样的数据也以 JSON 格式放在仓库的 <code>data/</code> 文件夹里。",
   },
 };

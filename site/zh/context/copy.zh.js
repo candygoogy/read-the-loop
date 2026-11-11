@@ -13,25 +13,27 @@ window.COPY = {
   toolCount: (n, tool) => `${n} 次 ${tool}`,
 
   intro: {
-    ch1: (d) => `第一章的智能体修一个小游戏，用了 ${d.ch1Calls} 次调用。这一次是真实的项目：<a href="${d.repoUrl}">black</a>，一个把 Python 代码统一改写成同一种风格的开源工具。我们取了 black 在它自己修复这个 bug 之前的代码，把它的一个 GitHub issue 一字不改地交给 Claude Code。issue 的标题是：`,
+    ch1: (d) => `第一章的智能体修一个小游戏，用了 ${d.ch1Calls} 次调用。这一次是真实的项目：<a href="${d.repoUrl}">black</a>，一个把 Python 代码统一改写成同一种风格的工具。black 是开源的：代码公开，任何人都可以阅读、修改，并提出修复。它的代码放在 GitHub 上，这是很多项目存放代码的网站；人们在那里报告 bug 的帖子叫作 issue。我们把 black 代码的一份副本和其中一个 issue 一字不改地交给了 Claude Code。issue 的标题是：`,
     showPrompt: "模型收到的完整提示",
-    plain: () => `说白了：black 只应该改变代码的样子，绝不能改变代码的行为。可在这里它多加了一个逗号，这个逗号把一个小函数（<code>lambda</code>）变成了元组，也就是一组打包在一起的值。之后任何调用这个函数的代码都会崩溃。`,
+    plain: () => `说白了：black 只应该改变代码的样子，绝不能改变代码的行为。可在这里它多加了一个逗号，这个逗号把一个小函数（<code>lambda</code>）变成了元组，也就是一组打包在一起的值。之后任何调用这个函数的代码都会崩溃。这个项目后来修复了这个 bug，我们交给智能体的代码取自那次修复之前。`,
     run: (d) => `整个会话用了 ${d.durationLong}。模型被调用了 ${d.calls} 次，发出了 ${d.toolCalls} 个请求：${d.toolCountList}。录制于 ${d.date}，模型是 ${d.model}。这个会话我们只录了一次，下面展示的就是那一次的原貌。`,
   },
 
   context: {
-    define: () => `第一章讲的是循环：模型写出一个请求，由<strong>外壳程序（harness）</strong>执行并把结果贴回去（这里的外壳程序就是 Claude Code），然后再次调用模型。每次调用都会把全部内容发过去：开场设定（指令，以及模型可以请求的每个工具的说明）、你的消息，以及到目前为止的每个请求和结果。这些合起来就是模型的<strong>上下文</strong>。模型在一次调用中最多能读入多少，就是它的<strong>上下文窗口（context window）</strong>。两者都以 <strong>token</strong>（词元，一个词或词的一部分）计数。`,
+    define: () => `第一章讲的是循环：模型写出一个请求，由<strong>外壳程序（harness）</strong>执行并把结果贴回去（外壳程序是包在模型外面的程序，这里就是 Claude Code），然后再次调用模型。`,
+    define2: () => `每次调用都会把全部内容发过去：开场设定（指令，以及模型可以请求的每个工具的说明）、你的消息，以及到目前为止的每个请求和结果。这些合起来就是模型的<strong>上下文</strong>。上下文以 <strong>token</strong> 计数。token（词元）是一个词或词的一部分。`,
+    define3: () => `模型在一次调用中最多能读入多少，就是它的<strong>上下文窗口（context window）</strong>。`,
     compare: (d) => `第一章最后一次调用读了 ${d.ch1Last} 个 token。这个会话的最后一次调用读了 ${d.last} 个，是前者的 ${d.ch1Ratio} 倍。`,
     figTitle: "最后一次调用读了多少 token",
     ch1Bar: (d) => `第一章：小游戏，第 ${d.ch1Calls} 次调用`,
     ch2Bar: (d) => `本章：black，第 ${d.calls} 次调用`,
     markLabel: (d) => `到 ${d.autocompactShort} 时压缩（我们的设置）`,
-    caption: (d) => `两个会话按同一比例绘制。${d.autocompact} 个 token 处的竖线，是我们让 Claude Code 压缩（compaction）对话的位置，这是启动时我们传给它的设置；第四章专门讲压缩。录制记录里没有模型本身的上限，所以图上没有画。`,
+    caption: (d) => `两个会话按同一比例绘制。${d.autocompact} 个 token 处的竖线，是我们启动 Claude Code 时传给它的一项设置。对话超过这个长度，Claude Code 就会压缩（compaction）它：用一份更短的摘要代替整段对话。第四章专门讲压缩。录制记录里没有模型本身的上限，所以图上没有画。`,
     chartLabel: (d) => `条形图。第一章最后一次调用读了 ${d.ch1Last} 个 token；本章最后一次调用读了 ${d.last} 个。一条竖线标在 ${d.autocompact} 个 token 处，也就是我们设定 Claude Code 压缩的位置。`,
   },
 
   explore: {
-    intro: (d) => `拖动滑块，逐一查看这 ${d.calls} 次调用。方块就是那次调用读到的对话，按比例绘制：一个方块代表 ${d.unit} 个 token。把指针移到某一块上，或者用 Tab 键移过去再按方向键，就能看到它装的是哪个请求和结果。各个阶段是我们读录制记录后自己划分的。`,
+    intro: (d) => `拖动滑块，逐一查看这 ${d.calls} 次调用。方块就是那次调用读到的对话，按比例绘制：一个方块代表 ${d.unit} 个 token。一次调用就是模型的一个回合：读入对话，写出回复。每次调用给对话加上一轮：模型写的内容，加上返回的结果。所以一次调用读到的是开场设定和它之前的每一轮，最新的一块是上一次调用留下的那一轮。把指针移到某一块上，或者用 Tab 键移过去再按方向键，就能看到它装的是哪个请求和结果。各个阶段是我们读录制记录后自己划分的。`,
     title: "逐次浏览整个会话",
     scrub: "调用",
     prev: "上一次调用",
@@ -69,7 +71,7 @@ window.COPY = {
     },
     diagnose: {
       name: "找原因",
-      text: () => `它调出添加尾随逗号的几个辅助函数，写了一个小脚本观察拆分这一步实际怎么运行，又读了 black 记录括号的方式。`,
+      text: () => `它调出几个添加尾随逗号（列表最后一项后面的逗号）的辅助函数，写了一个小脚本观察 black 怎样拆分一行，又读了 black 记录括号的方式。`,
     },
     fix1: {
       name: "第一次修复",
@@ -77,19 +79,19 @@ window.COPY = {
     },
     subscript: {
       name: "第二种情况",
-      text: (d, p) => `加上 <code>-C</code>（black 用来忽略“魔术”尾随逗号的选项）之后，像 <code>${d.subCase}</code> 这样只有一项的下标，丢掉了它必需的逗号。智能体又读了 black 的更多代码，修改了 <code>${p.edited}</code>，然后报告：<q lang="en">${p.say(/stability/)}</q>`,
+      text: (d, p) => `加上 <code>-C</code>（一个让 black 忽略最后一项后面那个逗号的选项，这种逗号叫“魔术”尾随逗号）之后，像 <code>${d.subCase}</code> 这样方括号里只有一项的写法，丢掉了它必需的逗号。智能体又读了 black 的更多代码，修改了 <code>${p.edited}</code>，然后报告：<q lang="en">${p.say(/stability/)}</q>`,
     },
     suite: {
       name: "跑测试",
-      text: (d, p) => `它运行 black 自己的测试，遇到第一个失败就停下：<code>${p.firstTest}</code>。又做了几处修改，让一个原有的预期结果保持不变，下一次完整运行的结果是 <code>${p.lastTest}</code>。用模型自己的话说：<q lang="en">${p.say(/instability/)}</q>`,
+      text: (d, p) => `它运行 black 自己的测试，遇到第一个失败就停下：<code>${p.firstTest}</code>。又做了几处修改，让一个原有的预期结果保持不变，下一次完整运行的结果是 <code>${p.lastTest}</code>。失败的那个测试会对 black 自己的输出再运行一次 black，结果又变了。用模型自己的话说：<q lang="en">${p.say(/instability/)}</q>`,
     },
     instability: {
-      name: "追查不稳定",
-      text: (d, p) => `它给新写的辅助函数加上调试输出，找到了原因：<q lang="en">${p.say(/repeated calls/)}</q>再改一次 <code>${p.edited}</code>，完整测试就通过了：<code>${p.lastTest}</code>。`,
+      name: "追查前后不一致的结果",
+      text: (d, p) => `它在新写的辅助函数里加了几行打印语句，观察它怎么运行，找到了原因：<q lang="en">${p.say(/repeated calls/)}</q>再改一次 <code>${p.edited}</code>，完整测试就通过了：<code>${p.lastTest}</code>。`,
     },
     wrapup: {
-      name: "测试、变更日志、收尾",
-      text: (d, p) => `它把 issue 里的例子加进 black 的测试文件，再跑一遍测试（<code>${p.lastTest}</code>）。它写了一条变更日志，试着对改动做类型检查（检查工具没有安装），用 black 格式化了自己的代码，最后删掉了临时文件夹。`,
+      name: "测试和收尾",
+      text: (d, p) => `它把 issue 里的例子加进 black 的测试文件，再跑一遍测试（<code>${p.lastTest}</code>）。它在变更日志里加了一条，变更日志是项目列出每个版本改了什么的文件。它还想运行类型检查工具（一种找出类型用错的值的工具），但这个工具没有安装。然后它用 black 格式化了自己的代码，最后删掉了临时文件夹。`,
     },
     answer: {
       name: "最终回答",
@@ -115,13 +117,13 @@ window.COPY = {
       refused: "被拒绝的命令",
     },
     value: (n, pct) => `${n} · ${pct}`,
-    note: () => `我们是这样划分的：API 会报告每次调用读了多少 token、写了多少 token，但不报告每个结果各占多少。所以一轮中模型的部分，就是 API 说它在那次调用里写出的量；这一轮增长的其余部分，算作返回的结果。一轮有多个结果时，这部分再按各结果的字符数分摊。各部分是估算，总数是准确的。`,
+    note: () => `我们是这样划分的：API（程序用来把文本发给模型、再取回回复的服务）会报告每次调用读了多少 token、写了多少 token，但不报告每个结果各占多少。所以一轮中模型的部分，就是 API 说它在那次调用里写出的量；这一轮增长的其余部分，算作返回的结果。一轮有多个结果时，这部分再按各结果的字符数分摊。各部分是估算，总数是准确的。`,
   },
 
   reread: {
     title: "每次调用都从头再读一遍",
     p1: (d) => `模型不记得上一次调用。每次调用都从头读整段对话，所以早先贴进来的结果，在之后的每次调用里都会被再读一遍。这 ${d.calls} 次调用下来，模型一共读了 <strong>${d.sumRead}</strong> 个 token，是最终对话长度的 ${d.sumRatio} 倍。`,
-    p2: (d) => `长会话真正的开销就在这里。对话每次只增长一轮，读取量却是每次调用都把整段对话加一遍。到第 ${d.half} 次调用，也就是一半的时候，模型已经读了 ${d.halfSum} 个 token。后一半读了 ${d.secondHalf} 个，是前一半的 ${d.halfRatio} 倍。`,
+    p2: (d) => `对话每次只增长一轮，但每次调用都要把整段对话读一遍，所以越往后，累计读取量涨得越快。到第 ${d.half} 次调用，也就是一半的时候，模型已经读了 ${d.halfSum} 个 token。后一半读了 ${d.secondHalf} 个，是前一半的 ${d.halfRatio} 倍。`,
     figTitle: "逐次调用的 token 数",
     seriesSum: "累计已读",
     seriesCtx: "对话长度",

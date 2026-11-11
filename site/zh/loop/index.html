@@ -120,7 +120,7 @@
       </svg>
 
       <figure class="code-fig">
-        <figcaption>整个思路，十行代码</figcaption>
+        <figcaption>同一个循环，写成一段小程序。不读代码的话，可以跳过。</figcaption>
 <pre class="loopcode" id="loopcode"><code><span data-l="1">messages = [instructions, your_message]</span>
 <span data-l="2">while True:</span>
 <span data-l="3">    reply = model(messages)  <i># 每次都读入全部内容</i></span>
@@ -165,7 +165,7 @@
 </section>
 
 <section class="prose">
-  <h2>值得注意的三件事</h2>
+  <h2>这次运行说明了什么</h2>
 
   <h3>修改前后它都检查了</h3>
   <p>模型从来没看到过这个游戏。改动任何东西之前，它先跑了测试，传回来一个失败的测试：<q data-v="failName" lang="en"></q>。修改出现在下一次调用里，同时还有第二次测试运行，这一次全部 <span data-v="tests"></span> 个都通过了。这两步各是循环的一轮，每次的结果都是外壳程序贴进来的文本。规则选中这一次运行，也是这个原因：<span data-v="otherRuns"></span></p>
@@ -197,7 +197,9 @@
   <p class="zh-note">录制内容保持英文原文。中文由 Claude 翻译，<a data-repo="issues" href="https://github.com/candygoogy/read-the-loop/issues">欢迎指正</a>。</p>
   <p><span data-v="source" lang="en"></span> 模型 <code data-v="model"></code>，Claude Code <code data-v="ccv"></code>，推理强度（effort）保持默认。允许使用的工具：<span data-v="tools" lang="en"></span>。</p>
   <p>模型看到的是真实的文件夹路径。本页把它换成了 <code data-v="alias"></code>，所以命令里写的是 <code data-v="cdPart"></code>：真实的 shell 不会展开引号里的 <code>~</code>。</p>
-  <p>token 数是 API 在每次调用时报告的用量。时间是每一行输出到达的时刻，从录制程序启动 Claude Code 时算起。按 Claude Code 自己的计时，这次会话用了 <span data-v="duration"></span> 秒；实时时钟停在 <span data-v="clockEnd"></span>。</p>
+  <p>token 数是 API 在每次调用时报告的用量。时间是每一行输出到达的时刻，从录制程序启动 Claude Code 时算起。按 Claude Code 自己的计时，这次会话用了 <span data-v="duration"></span> 秒；实时时钟停在 <span data-v="clockEnd"></span>。从发出请求到拿到结果的这段时间，花在 Claude Code 和它运行的命令上；录制记录看不出两者各占多少。</p>
+  <p>第一次调用就已经有 token 从缓存读取，大概是因为同一批录制的第 <span data-v="prevRun"></span> 次运行在大约 <span data-v="gapMin"></span> 分钟前刚刚结束。</p>
+  <p>最后那条回复提到 <code data-v="loc"></code>，那是被修复的函数开头的那一行。真正改动的是第 <span data-v="bugLine"></span> 行。</p>
   <p>我们一共录了 <span data-v="runOf"></span> 次。录制前定下的规则是：选第一个在修复前后都跑了测试的运行；一个都没有的话，就选第一次。</p>
   <ul class="runs" id="runs"></ul>
   <p>更早还录过一批，共三次，因为录制方式有问题被弃用了，和运行得好不好无关：那几次录下的会话继承了启动它们的那个会话的设置，其中包括更高的推理强度。三次做的都是同样的修复。它们的原始录制保存在仓库之外，录制记录已经删除。</p>

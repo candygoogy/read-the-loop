@@ -7,7 +7,7 @@ window.COPY = {
 
   manual: {
     p1: (d) => `In chapter 1 the model asked to list the files, read the code, change one file and run the tests. It did none of that itself. Each of those was a <strong>tool</strong>: a request format the model may use, which the harness carries out. The <strong>harness</strong> is the program around the model, here Claude Code. It runs the request and pastes the result back into the conversation. Chapter 1 drew the start of every call as one block, the set-up, ${d.ch1Setup} tokens long, and couldn't show what was in it. (A token is a word or a piece of one.)`,
-    p2: (d) => `To look inside, we ran chapter 1's task again on ${d.date}, with the same model and nearly the same settings (the notes at the end list the differences), through a small program of ours that sits between Claude Code and Anthropic's servers and saves each request on its way out. It saved what each request said, never the headers that travel with it. The session made ${d.requests} calls. The biggest part of every request turned out to be a manual: one entry per tool, with its name, a description, and the inputs a request for it can give.`,
+    p2: (d) => `To look inside, we ran chapter 1's task again on ${d.date}, with the same model and nearly the same settings (the notes at the end list the differences). This time the requests went through a small program of ours, which sits between Claude Code and Anthropic's servers and saves each request on its way out. It saved what each request said, but never its headers: the envelope around a request, which carries things like the login key. The session made ${d.requests} calls. The biggest part of every request turned out to be a manual: one entry per tool, with its name, a description, and the inputs a request for it can give.`,
     p3: (d) => `That's ${d.nTools} entries in ${d.toolsChars} characters of JSON, the text format the request is written in: ${d.toolsPct} of everything the first call sent. The ${d.big} entry is the longest at ${d.bigChars} characters, ${d.bigDesc} of them its description. Each entry also lists its inputs, and which of them a request has to give.`,
     p4: (d) => `One entry is different. <code>${d.placeholder}</code> wasn't in the list of tools Claude Code reported when the session started (${d.initTools}). It takes no inputs, and its description says never to call it. The recording doesn't show what it's for.`,
     p5: (d) => `The manual didn't change during the session. We compared the ${d.requests} requests byte for byte: the tools were the same in all of them, and so were the system instructions. Only the conversation grew, from ${d.m0} messages on the first call to ${d.mLast} on the last. The second call read ${d.c2cached} of its ${d.c2ctx} tokens from the cache, a stored copy of text the model's provider saw recently (chapter 3 is about the cache).`,
@@ -52,16 +52,16 @@ window.COPY = {
     label: (d) => `A bar drawn to scale. Of the first request's ${d.total} characters, tools take ${d.tools} (${d.toolsPct}), system ${d.system} (${d.systemPct}) and messages ${d.messages} (${d.messagesPct}). Your sentence is ${d.prompt} characters of it. The three lists below give each part's pieces.`,
     // The paragraph on what the request carries that the page doesn't show. Categories only, no values.
     identity: (d) => `Some of what a request carries isn't on this page. The first message from the user starts with ${d.notes} notes from Claude Code, and one of them gives the account's email address. A message with the system role gives the working folder, the operating system, the date and how much of the session's budget is left, and after each tool result another message like it gives the budget left. Outside the conversation, a field called <code>metadata</code> holds a device ID and an account ID. We list the kinds of detail here, not their values. The recording doesn't say why each one is there.`,
-    settings: (d) => `Every request also carried the same settings: effort <code>${d.effort}</code>, thinking <code>${d.thinking}</code>, <code>max_tokens</code> ${d.maxTokens} (the longest reply allowed, in tokens), and a <code>context_management</code> entry, <code>${d.cm}</code>, set to keep <code>${d.cmKeep}</code>. Anthropic's API documentation describes these settings; this page only shows what was sent.`,
+    settings: (d) => `Every request also carried the same settings. What they do comes from Anthropic's API documentation; this page only shows what was sent. Effort was <code>${d.effort}</code>: how hard the model works, meaning how deeply it thinks and how many tokens it spends. Thinking was <code>${d.thinking}</code>. Thinking is text the model can write to work a problem out before it replies, and this value lets the model decide whether to think and for how long. <code>max_tokens</code> was ${d.maxTokens}: the longest reply allowed, in tokens. Last, a <code>context_management</code> entry, <code>${d.cm}</code>, is a rule for clearing the model's earlier thinking out of the conversation. Here it was set to keep <code>${d.cmKeep}</code>.`,
   },
 
   decide: {
     p1: () => `So the model only ever asks. It writes a request, and the harness decides whether to carry it out. A <strong>permission</strong> is a rule you give the harness about which requests it may carry out without asking you first. A request the rules don't cover needs someone's approval.`,
-    p2: () => `The session from chapters 2 and 3 shows this at work. There we gave Claude Code a real bug report for Black, a tool that formats Python code, with Black's source code, and this list of what it could do without asking:`,
+    p2: () => `The session from chapters 2 and 3 shows this at work. There we gave Claude Code a real bug report for black, a tool that formats Python code, with black's source code, and this list of what it could do without asking:`,
     allowTitle: "Allowed without asking",
     tools: "Whole tools",
     bash: "Bash commands, as patterns",
-    p3: (d) => `${d.wholeTools} are whole tools. The <code>Bash(…)</code> entries are patterns for shell commands: Python, and ${d.nGit} git commands that only report on the project (<code>diff</code>, <code>status</code> and <code>log</code>).`,
+    p3: (d) => `${d.wholeTools} are whole tools. The <code>Bash(…)</code> entries are for the Bash tool, which runs a command as if someone had typed it into a terminal, the text window where programmers type commands. Each entry is a pattern: <code>Bash(python *)</code> covers commands that start with <code>python</code>. The other ${d.nGit} are for git, the program that keeps track of changes to code. Each covers one git command that only reports on the project: <code>diff</code>, <code>status</code> or <code>log</code>.`,
     p4: (d) => `We ran the session with <code>claude -p</code>, which runs one task with no one at the keyboard, so a request that needed approval couldn't get it. The model made ${d.bash} Bash requests, and the harness refused ${d.denied}. Each time the model got the harness's message back in place of any output, marked as an error, and carried on.`,
   },
 
@@ -126,7 +126,7 @@ window.COPY = {
   stats: {
     tools: "tool entries in every request",
     chars: "characters of tool manual",
-    bash: "Bash requests in the Black session",
+    bash: "Bash requests in the black session",
     denied: "of them refused",
   },
 
@@ -142,11 +142,11 @@ window.COPY = {
     proxy: () => `The requests were saved by <code>scripts/capture-proxy.py</code>, a small proxy in this project's repository. For that one command we pointed Claude Code at it with <code>ANTHROPIC_BASE_URL</code>, and it passed every request on to Anthropic unchanged. It saved request bodies only, never headers. <code>scripts/extract-tools.py</code> then took out the tool names, sizes, input names and the first sentence of each description, the sizes of the other parts, and the settings. No other text from the requests is published.`,
     differ: (d) => `This run's first call read ${d.c1} tokens, against ${d.ch1Setup} in chapter 1's run of the same task. We didn't find out why they differ, so these requests describe this run exactly and chapter 1's closely, not exactly. This run also had a smaller budget limit, and the setting that sent its requests through the proxy.`,
     est: () => `Characters are counted on the JSON as it was sent. The token counts per part are estimates: the first call's exact token count, shared out by each part's characters. JSON punctuation, code and prose don't turn into tokens at the same rate, so treat them as rough.`,
-    black: (d) => `<strong>The Black session.</strong> Recorded on ${d.date03} with <code>${d.model03}</code> and Claude Code <code>${d.ccv03}</code>, ${d.calls03} calls, as in chapters 2 and 3. Started with:`,
+    black: (d) => `<strong>The black session.</strong> Recorded on ${d.date03} with <code>${d.model03}</code> and Claude Code <code>${d.ccv03}</code>, ${d.calls03} calls, as in chapters 2 and 3. Started with:`,
     denied: () => `A refusal is a tool result that Claude Code marked as denied in its stream; its text is the harness's message as the model received it.`,
     paths: (d) => `The model saw the real folder paths. This page shows them as ${d.aliases}.`,
     traces: "The data:",
-    links: { tools: "the request sizes and tool entries", ch5: "the captured session", black: "the Black session", ch1: "chapter 1's session" },
+    links: { tools: "the request sizes and tool entries", ch5: "the captured session", black: "the black session", ch1: "chapter 1's session" },
     json: "The same data as JSON is in the repo's <code>data/</code> folder.",
   },
 };
